@@ -1,0 +1,167 @@
+{
+  "tool": "dotnet-autodecompiler",
+  "schemaVersion": 2,
+  "decompilerVersion": "10.1.1.8388",
+  "languageVersion": "CSharp10_0",
+  "resources": "none",
+  "assemblies": [
+    {
+      "outputDirectory": "QoL Unknown",
+      "fileName": "QoL.Unknown.dll",
+      "assemblyName": "QoL Unknown",
+      "assemblyVersion": "1.0.4.8",
+      "targetFramework": ".NETFramework,Version=v4.8",
+      "sha256": "61415f75fe7843b88da6f86e8758597929ca2d2d72e4bc575923ebfb409f34bc",
+      "sourceUrl": "https://github.com/jimmyking9999999/QoL-Unknown/releases/tag/v1.0.4.8",
+      "sourceRef": "v1.0.4.8",
+      "sourceFileCount": 122,
+      "references": [
+        {
+          "name": "0Harmony",
+          "version": "2.7.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "Assembly-CSharp",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "BepInEx",
+          "version": "5.4.20.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "DiscordRPC",
+          "version": "1.6.1.70",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "Newtonsoft.Json",
+          "version": "13.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "System",
+          "version": "4.0.0.0",
+          "resolved": true,
+          "framework": true
+        },
+        {
+          "name": "System.Core",
+          "version": "4.0.0.0",
+          "resolved": true,
+          "framework": true
+        },
+        {
+          "name": "System.Net.Http",
+          "version": "4.2.0.0",
+          "resolved": false,
+          "framework": true
+        },
+        {
+          "name": "Unity.RenderPipelines.Universal.Runtime",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "Unity.TextMeshPro",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.AssetBundleModule",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.AudioModule",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.CoreModule",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.IMGUIModule",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.ImageConversionModule",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.InputLegacyModule",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.Physics2DModule",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.TextRenderingModule",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.TilemapModule",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.UI",
+          "version": "1.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.UIModule",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.UnityWebRequestModule",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "mscorlib",
+          "version": "4.0.0.0",
+          "resolved": true,
+          "framework": true
+        },
+        {
+          "name": "netstandard",
+          "version": "2.0.0.0",
+          "resolved": true,
+          "framework": true
+        }
+      ]
+    }
+  ],
+  "notDecompiled": []
+}
