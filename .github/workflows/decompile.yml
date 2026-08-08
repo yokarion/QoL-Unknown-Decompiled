@@ -1,0 +1,37 @@
+# Watches QoL Unknown and mirrors it here as decompiled source.
+#
+# The mod is a single DLL attached directly to each GitHub release, so the
+# default *.dll pattern matches it without any archive handling. The author
+# also commits the same build to their repository root as "QoL Unknown.dll";
+# release mode is used here because it gives a version tag to record.
+
+name: Decompile
+
+on:
+  schedule:
+    # Weekly, Sunday 05:43 UTC. Offset from the hour, and from the other
+    # mirror's schedule, so the runs do not queue up together.
+    - cron: "43 5 * * 0"
+  workflow_dispatch:
+    inputs:
+      source-ref:
+        description: "Specific release tag to decompile (empty = latest)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  decompile:
+    uses: Yokarion/dotnet-autodecompiler/.github/workflows/decompile.yml@master
+    with:
+      source-repo: jimmyking9999999/QoL-Unknown
+      source-mode: release
+
+      patterns: |
+        *.dll
+
+      output-dir: decompiled
+
+      source-ref: ${{ inputs.source-ref }}
