@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using BepInEx.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace QoL_Unknown;
 
-internal static class KrokoshaMpSaveBundle
+internal static class MultiplayerSaveBundle
 {
 	public const string SaveKindSingleplayer = "Singleplayer";
 
@@ -20,6 +21,13 @@ internal static class KrokoshaMpSaveBundle
 	private const string MpSaveFolderName = "mp_save";
 
 	private const string WorldgenStateFileName = "qol_worldgen_state.txt";
+
+	private static ManualLogSource Logger;
+
+	internal static void SetLogger(ManualLogSource logger)
+	{
+		Logger = logger;
+	}
 
 	public static string GetBundleName(string slotFileName)
 	{
@@ -72,12 +80,11 @@ internal static class KrokoshaMpSaveBundle
 			return false;
 		}
 		string bundlePath = GetBundlePath(saveFolder, slotFileName);
-		if (Directory.Exists(bundlePath))
+		if (!SaveFileStore.TryReplaceDirectory(liveMpSavePath, bundlePath, Logger, "save multiplayer bundle '" + GetBundleName(slotFileName) + "'"))
 		{
-			Directory.Delete(bundlePath, recursive: true);
+			return false;
 		}
-		CopyDirectory(liveMpSavePath, bundlePath);
-		if (KrokoshaMpCompat.TryCaptureHostWorldgenState(out var payload))
+		if (MultiplayerCompat.TryCaptureHostWorldgenState(out var payload))
 		{
 			File.WriteAllText(Path.Combine(bundlePath, "qol_worldgen_state.txt"), payload);
 		}
@@ -95,14 +102,17 @@ internal static class KrokoshaMpSaveBundle
 		{
 			return false;
 		}
-		File.WriteAllText(snapshotPath, text);
+		if (!SaveFileStore.TryWriteAllTextAtomic(snapshotPath, text, Logger, "save client inventory snapshot '" + Path.GetFileName(snapshotPath) + "'"))
+		{
+			return false;
+		}
 		meta.SaveKind = "MultiplayerClientInventory";
 		meta.MultiplayerBundleName = Path.GetFileName(snapshotPath);
-		meta.LocalPersistentPlayerId = KrokoshaMpCompat.TryGetLocalPersistentPlayerId();
+		meta.LocalPersistentPlayerId = MultiplayerCompat.TryGetLocalPersistentPlayerId();
 		return true;
 	}
 
-	public static bool RestoreHostBundleToKrokoshaMpSave(string saveFolder, string slotFileName)
+	public static bool RestoreHostBundleToMultiplayerSave(string saveFolder, string slotFileName)
 	{
 		string bundlePath = GetBundlePath(saveFolder, slotFileName);
 		if (!Directory.Exists(bundlePath))
@@ -110,19 +120,18 @@ internal static class KrokoshaMpSaveBundle
 			return false;
 		}
 		string liveMpSavePath = GetLiveMpSavePath();
-		if (Directory.Exists(liveMpSavePath))
+		if (!SaveFileStore.TryReplaceDirectory(bundlePath, liveMpSavePath, Logger, "restore multiplayer host bundle"))
 		{
-			Directory.Delete(liveMpSavePath, recursive: true);
+			return false;
 		}
-		CopyDirectory(bundlePath, liveMpSavePath);
 		string path = Path.Combine(liveMpSavePath, "qol_worldgen_state.txt");
 		if (File.Exists(path))
 		{
-			KrokoshaMpCompat.SetPendingHostWorldgenStatePayload(File.ReadAllText(path));
+			MultiplayerCompat.SetPendingHostWorldgenStatePayload(File.ReadAllText(path));
 		}
 		else
 		{
-			KrokoshaMpCompat.ClearPendingHostWorldgenStatePayload();
+			MultiplayerCompat.ClearPendingHostWorldgenStatePayload();
 		}
 		return File.Exists(Path.Combine(liveMpSavePath, "save.sv")) && File.Exists(Path.Combine(liveMpSavePath, "mp_rules.json"));
 	}
@@ -135,22 +144,39 @@ internal static class KrokoshaMpSaveBundle
 			return false;
 		}
 		string liveMpSavePath = GetLiveMpSavePath();
-		if (Directory.Exists(liveMpSavePath))
+		string text2 = liveMpSavePath + ".qol-import-" + Guid.NewGuid().ToString("N");
+		try
 		{
-			Directory.Delete(liveMpSavePath, recursive: true);
+			Directory.CreateDirectory(text2);
+			File.Copy(text, Path.Combine(text2, "save.sv"), overwrite: true);
+			string text3 = MultiplayerCompat.TryGetExpectedHostPersistentPlayerId();
+			if (!string.IsNullOrEmpty(text3))
+			{
+				string text4 = Path.Combine(text2, text3);
+				Directory.CreateDirectory(text4);
+				File.Copy(text, Path.Combine(text4, "save.sv"), overwrite: true);
+			}
+			WriteImportedSingleplayerRules(Path.Combine(text2, "mp_rules.json"), meta, text3);
+			if (!SaveFileStore.TryReplaceDirectory(text2, liveMpSavePath, Logger, "stage singleplayer slot as multiplayer host bundle"))
+			{
+				return false;
+			}
+			MultiplayerCompat.ClearPendingHostWorldgenStatePayload();
+			return true;
 		}
-		Directory.CreateDirectory(liveMpSavePath);
-		File.Copy(text, Path.Combine(liveMpSavePath, "save.sv"), overwrite: true);
-		string text2 = KrokoshaMpCompat.TryGetExpectedHostPersistentPlayerId();
-		if (!string.IsNullOrEmpty(text2))
+		catch (Exception arg)
 		{
-			string text3 = Path.Combine(liveMpSavePath, text2);
-			Directory.CreateDirectory(text3);
-			File.Copy(text, Path.Combine(text3, "save.sv"), overwrite: true);
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogError((object)$"Failed to stage singleplayer slot '{slotFileName}' as a multiplayer host bundle: {arg}");
+			}
+			return false;
 		}
-		WriteImportedSingleplayerRules(Path.Combine(liveMpSavePath, "mp_rules.json"), meta, text2);
-		KrokoshaMpCompat.ClearPendingHostWorldgenStatePayload();
-		return true;
+		finally
+		{
+			SaveFileStore.TryDeleteDirectory(text2, Logger, "clean up multiplayer import staging directory");
+		}
 	}
 
 	public static bool TryRequestClientInventoryRestore(string saveFolder, string slotFileName, out string message)
@@ -168,12 +194,12 @@ internal static class KrokoshaMpSaveBundle
 			message = "Client inventory snapshot is empty.";
 			return false;
 		}
-		if (!KrokoshaMpCompat.SendClientInventoryRestoreRequest(text))
+		if (!MultiplayerCompat.SendClientInventoryRestoreRequest(text))
 		{
 			message = "Could not send inventory restore request. The host needs QoL and client commands enabled.";
 			return false;
 		}
-		message = "Client saves can only be loaded in a singleplayer game";
+		message = "Inventory restore request sent to the host.";
 		return true;
 	}
 
@@ -234,7 +260,7 @@ internal static class KrokoshaMpSaveBundle
 
 	public static SaveMetadata BuildBaseMetadata()
 	{
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
 		float radLinePosY = 0f;
 		bool radLineActive = false;
@@ -247,7 +273,9 @@ internal static class KrokoshaMpSaveBundle
 		{
 			SeedInput = SeedManager.InputString,
 			SeedValue = SeedManager.CurrentSeed,
+			SeedFormatVersion = SeedManager.SeedFormatVersion,
 			PlayerPosition = new SerialVec3(((Component)PlayerCamera.main.body).transform.position),
+			UseVanillaLayerSpawn = false,
 			LocationName = WorldGeneration.world.TotalDepthString() + " Deep",
 			Timestamp = DateTime.Now.ToString("g"),
 			BiomeIndex = WorldGeneration.world.biomeDepth,
@@ -256,25 +284,28 @@ internal static class KrokoshaMpSaveBundle
 			IGTSeconds = TimerMenuPatcher.GetIGT(),
 			RTASeconds = (float)TimerMenuPatcher.GetRTA().TotalSeconds,
 			LoadedFromMenu = SaveSystemPatcher.LoadedFromMenu,
-			SavedDuringMultiplayer = KrokoshaMpCompat.IsNetworkRunning,
+			SavedDuringMultiplayer = MultiplayerCompat.IsNetworkRunning,
 			SaveKind = "Singleplayer"
 		};
 	}
 
 	public static void ApplyMetadataForLoad(SaveMetadata meta)
 	{
-		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
 		if (meta == null)
 		{
 			SeedManager.SetSeed("");
 			SaveSystemPatcher.PendingLoadPosition = null;
 			return;
 		}
-		if (string.IsNullOrEmpty(meta.SeedInput) && meta.SeedValue != 0)
+		if (meta.SeedFormatVersion > 0 || meta.SeedValue != 0)
 		{
-			SeedManager.IsSeeded = true;
-			SeedManager.CurrentSeed = meta.SeedValue;
-			SeedManager.InputString = "";
+			SeedManager.RestorePersistedSeed(meta.SeedValue, meta.SeedInput, meta.SeedFormatVersion);
+		}
+		else if (!string.IsNullOrWhiteSpace(meta.SeedInput))
+		{
+			SeedManager.SetSeed(meta.SeedInput);
+			SeedManager.SeedFormatVersion = 1;
 		}
 		else
 		{
@@ -282,7 +313,7 @@ internal static class KrokoshaMpSaveBundle
 		}
 		SaveSystemPatcher.PendingRadLineY = meta.RadLinePosY;
 		SaveSystemPatcher.PendingRadLineActive = meta.RadLineActive;
-		SaveSystemPatcher.PendingLoadPosition = meta.PlayerPosition.ToVector3();
+		SaveSystemPatcher.PendingLoadPosition = (meta.UseVanillaLayerSpawn ? ((Vector3?)null) : new Vector3?(meta.PlayerPosition.ToVector3()));
 		SaveSystemPatcher.PendingIGTSeconds = meta.IGTSeconds;
 		SaveSystemPatcher.PendingRTASeconds = meta.RTASeconds;
 		SaveSystemPatcher.LoadedFromMenu = true;
@@ -299,7 +330,7 @@ internal static class KrokoshaMpSaveBundle
 			{
 				File.Copy(text, text2, overwrite: true);
 			}
-			using (KrokoshaMpCompat.BeginVanillaSaveSnapshot())
+			using (MultiplayerCompat.BeginVanillaSaveSnapshot())
 			{
 				SaveSystem.SaveGame();
 			}
@@ -332,9 +363,12 @@ internal static class KrokoshaMpSaveBundle
 		try
 		{
 			JObject val = JObject.Parse(File.ReadAllText(rulesPath));
-			meta.KrokoshaSaveId = ((object)val["SAVEID"])?.ToString();
-			meta.KrokoshaMpVersion = ((object)val["MPVERSION"])?.ToString();
-			meta.KrokoshaGameVersion = ((object)val["GAMEVERSION"])?.ToString();
+			meta.MultiplayerSaveId = ((object)val["SAVEID"])?.ToString();
+			meta.MultiplayerVersion = ((object)val["MPVERSION"])?.ToString();
+			meta.MultiplayerGameVersion = ((object)val["GAMEVERSION"])?.ToString();
+			meta.KrokoshaSaveId = meta.MultiplayerSaveId;
+			meta.KrokoshaMpVersion = meta.MultiplayerVersion;
+			meta.KrokoshaGameVersion = meta.MultiplayerGameVersion;
 		}
 		catch
 		{
@@ -346,24 +380,24 @@ internal static class KrokoshaMpSaveBundle
 		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
 		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a2: Expected O, but got Unknown
-		//IL_00a4: Expected O, but got Unknown
-		//IL_00cb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ec: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010d: Expected O, but got Unknown
+		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0068: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d2: Expected O, but got Unknown
+		//IL_00d4: Expected O, but got Unknown
+		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0100: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013d: Expected O, but got Unknown
 		JObject val = new JObject
 		{
-			["hello"] = JToken.op_Implicit("QoL Unknown imported singleplayer slot for Krokosha MP host"),
-			["MPVERSION"] = JToken.op_Implicit("3.0.0"),
+			["hello"] = JToken.op_Implicit("QoL Unknown imported singleplayer slot for Together host"),
+			["MPVERSION"] = JToken.op_Implicit(meta?.MultiplayerVersion ?? meta?.KrokoshaMpVersion ?? "5.0.0"),
 			["GAMEVERSION"] = JToken.op_Implicit(Application.version),
-			["SAVEID"] = JToken.op_Implicit(meta?.KrokoshaSaveId ?? "0"),
+			["SAVEID"] = JToken.op_Implicit(meta?.MultiplayerSaveId ?? meta?.KrokoshaSaveId ?? "0"),
 			["LEVEL"] = JToken.op_Implicit(false),
 			["MODIFIER"] = JToken.op_Implicit(-1),
 			["PLRPOS"] = (JToken)new JObject()
@@ -467,7 +501,7 @@ internal static class KrokoshaMpSaveBundle
 				components = ((obj4 is JObject) ? obj4 : null);
 			}
 			ApplyItemComponents(val3, (JObject)components);
-			KrokoshaMpCompat.RegisterAndSyncItemTree(val4);
+			MultiplayerCompat.RegisterAndSyncItemTree(val4);
 		}
 	}
 

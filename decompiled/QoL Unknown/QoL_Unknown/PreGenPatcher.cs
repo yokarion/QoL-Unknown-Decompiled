@@ -12,16 +12,12 @@ internal class PreGenPatcher
 
 	private static ManualLogSource Logger;
 
-	private static bool _hasRunOnce;
-
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.pregen_ui");
-		val.PatchAll(typeof(PreGenPatcher));
-		Logger.LogInfo((object)"PreGenPatcher initialized");
+		if (!RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.pregen_ui", typeof(PreGenPatcher), logger))
+		{
+		}
 	}
 
 	[HarmonyPatch(typeof(PreRunScript), "Start")]

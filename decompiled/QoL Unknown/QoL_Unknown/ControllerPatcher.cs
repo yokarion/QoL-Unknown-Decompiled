@@ -10,21 +10,12 @@ internal class ControllerPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0043: Expected O, but got Unknown
-		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0029: Expected O, but got Unknown
 		Logger = logger;
 		ControllerBindings.Initialize(logger);
-		if ((Object)(object)Object.FindObjectOfType<ControllerInputManager>() == (Object)null)
+		ControllerInputManager.EnsureInstance();
+		if (!RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.controller", typeof(ControllerPatcher), logger))
 		{
-			GameObject val = new GameObject("ControllerManager");
-			Object.DontDestroyOnLoad((Object)(object)val);
-			val.AddComponent<ControllerInputManager>();
 		}
-		Harmony val2 = new Harmony("org.bepinex.plugins.qol.controller");
-		val2.PatchAll(typeof(ControllerPatcher));
-		Logger.LogInfo((object)"ControllerPatcher initialized");
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "HandleInput")]

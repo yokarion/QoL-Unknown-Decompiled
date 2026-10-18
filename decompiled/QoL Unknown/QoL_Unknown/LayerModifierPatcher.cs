@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -31,13 +32,13 @@ internal class LayerModifierPatcher
 		}
 	}
 
-	private const float DefaultChance = 3.6363637f;
-
 	private const float MaxMultiplier = 5f;
 
 	private const string ModifierMultiplierPrefPrefix = "LayerModifierMult_";
 
 	private static readonly float[] modifierMultipliers = new float[11];
+
+	private static bool initialized;
 
 	public static readonly List<string> ModifierNames = new List<string>
 	{
@@ -47,11 +48,15 @@ internal class LayerModifierPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
-		LoadMultipliers();
-		Harmony val = new Harmony("org.bepinex.plugins.qol.layermod");
-		val.PatchAll(typeof(LayerModifierPatcher));
+		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0024: Expected O, but got Unknown
+		if (!initialized)
+		{
+			initialized = true;
+			LoadMultipliers();
+			Harmony val = new Harmony("org.bepinex.plugins.qol.layermod");
+			val.PatchAll(typeof(LayerModifierPatcher));
+		}
 	}
 
 	public static float GetMultiplier(string modifierName)
@@ -120,22 +125,27 @@ internal class LayerModifierPatcher
 	[HarmonyPrefix]
 	private static bool ApplyLayerModifiers_Prefix(WorldGeneration __instance)
 	{
-		if (KrokoshaMpCompat.IsActive && KrokoshaMpCompat.IsClient)
+		if (!QoLModuleManager.IsEnabled("qol_game_modifiers") || (MultiplayerCompat.IsActive && MultiplayerCompat.IsClient))
 		{
 			return true;
 		}
-		float num = Random.Range(0f, 100f);
-		float num2 = 0f;
-		for (int i = 0; i < modifierMultipliers.Length; i++)
+		List<LayerModifier> list = LayerModifier.availableModifiers.Where((LayerModifier mod) => mod != null && (__instance.biomeDepth > 1 || !mod.hideOnFirstLayer)).ToList();
+		if (list.Count == 0)
 		{
-			num2 += 3.6363637f * modifierMultipliers[i];
-			if (num < num2)
+			return false;
+		}
+		float num = WorldGeneration.GetRunSettingFloat("layermodifierchance") / (float)list.Count;
+		float num2 = Random.Range(0f, 100f);
+		float num3 = 0f;
+		foreach (LayerModifier item in list)
+		{
+			num3 += num * GetMultiplier(item.modifierIndex);
+			if (num2 < num3)
 			{
-				LayerModifier val = LayerModifier.availableModifiers[i];
-				val.Initialize(__instance);
-				val.active = true;
-				Traverse.Create((object)__instance).Field("layerPrefix").SetValue((object)Locale.GetOther("layermodifier" + val.modifierIndex));
-				Traverse.Create((object)__instance).Field("layerDescription").SetValue((object)Locale.GetOther("layermodifier" + val.modifierIndex + "dsc"));
+				item.Initialize(__instance);
+				item.active = true;
+				Traverse.Create((object)__instance).Field("layerPrefix").SetValue((object)Locale.GetOther("layermodifier" + item.modifierIndex));
+				Traverse.Create((object)__instance).Field("layerDescription").SetValue((object)Locale.GetOther("layermodifier" + item.modifierIndex + "dsc"));
 				break;
 			}
 		}

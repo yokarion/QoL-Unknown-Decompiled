@@ -75,10 +75,19 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 
 	internal void RefreshVisibleTab()
 	{
+		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)menu == (Object)null))
 		{
+			Vector2 anchoredPosition = (((Object)(object)menu.content != (Object)null) ? menu.content.anchoredPosition : Vector2.zero);
 			RebuildButtons();
 			menu.SelectTab(activeCategoryIndex);
+			if ((Object)(object)menu.content != (Object)null)
+			{
+				menu.content.anchoredPosition = anchoredPosition;
+			}
 		}
 	}
 
@@ -89,6 +98,8 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 		//IL_0144: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0152: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0157: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0198: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a2: Expected O, but got Unknown
 		//IL_01b2: Unknown result type (might be due to invalid IL or missing references)
 		//IL_01bc: Expected O, but got Unknown
 		RemoveCustomButtons();
@@ -137,7 +148,7 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 				continue;
 			}
 			int categoryIndex = modOptionCategoryEntry.CategoryIndex;
-			((UnityEventBase)component.onClick).RemoveAllListeners();
+			component.onClick = new ButtonClickedEvent();
 			((UnityEvent)component.onClick).AddListener((UnityAction)delegate
 			{
 				menu.SelectTab(categoryIndex);
@@ -296,27 +307,25 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 	{
 		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0188: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0179: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0193: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01be: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0163: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0154: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0168: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0175: Unknown result type (might be due to invalid IL or missing references)
+		//IL_018f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0199: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)menu == (Object)null || menu.buttons == null || menu.buttons.Count == 0 || builtInAnchoredPositions.Count == 0)
 		{
 			return;
 		}
-		int num = Mathf.Min(5, builtInAnchoredPositions.Count);
+		int builtInCount = Mathf.Min(5, builtInAnchoredPositions.Count);
 		int count = menu.buttons.Count;
-		float num2 = builtInAnchoredPositions[0].x - builtInSizes[0].x * 0.5f;
-		float num3 = builtInAnchoredPositions[num - 1].x + builtInSizes[num - 1].x * 0.5f;
-		float num4 = Mathf.Max(0f, num3 - num2);
-		float num5 = ((count > 1) ? 2f : 0f);
-		float num6 = ((count > 0) ? Mathf.Max(1f, (num4 - num5 * (float)(count - 1)) / (float)count) : num4);
-		float num7 = num2;
+		float num = builtInAnchoredPositions[0].x - builtInSizes[0].x * 0.5f;
+		float tabStripRightEdge = GetTabStripRightEdge(num, builtInCount);
+		float num2 = Mathf.Max(0f, tabStripRightEdge - num);
+		float num3 = ((count > 1) ? 2f : 0f);
+		float num4 = ((count > 0) ? Mathf.Max(1f, (num2 - num3 * (float)(count - 1)) / (float)count) : num2);
+		float num5 = num;
 		for (int i = 0; i < count; i++)
 		{
 			Button val = menu.buttons[i];
@@ -334,9 +343,9 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 			if (!((Object)(object)val2 == (Object)null))
 			{
 				Vector2 val3 = ((i < builtInSizes.Count) ? builtInSizes[i] : builtInSizes[builtInSizes.Count - 1]);
-				val2.sizeDelta = new Vector2(num6, val3.y);
-				val2.anchoredPosition = new Vector2(num7 + num6 * 0.5f, val2.anchoredPosition.y);
-				num7 += num6 + num5;
+				val2.sizeDelta = new Vector2(num4, val3.y);
+				val2.anchoredPosition = new Vector2(num5 + num4 * 0.5f, val2.anchoredPosition.y);
+				num5 += num4 + num3;
 				TextMeshProUGUI componentInChildren = ((Component)val).GetComponentInChildren<TextMeshProUGUI>(true);
 				if ((Object)(object)componentInChildren != (Object)null)
 				{
@@ -344,6 +353,35 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 				}
 			}
 		}
+	}
+
+	private float GetTabStripRightEdge(float firstLeft, int builtInCount)
+	{
+		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
+		object obj;
+		if (!((Object)(object)menu.buttons[0] != (Object)null))
+		{
+			obj = null;
+		}
+		else
+		{
+			Transform parent = ((Component)menu.buttons[0]).transform.parent;
+			obj = ((parent is RectTransform) ? parent : null);
+		}
+		RectTransform val = (RectTransform)obj;
+		if ((Object)(object)val == (Object)null)
+		{
+			return builtInAnchoredPositions[builtInCount - 1].x + builtInSizes[builtInCount - 1].x * 0.5f;
+		}
+		Rect rect = val.rect;
+		float num = firstLeft - ((Rect)(ref rect)).xMin;
+		rect = val.rect;
+		return ((Rect)(ref rect)).xMax - num;
 	}
 
 	private void NormalizeTabLabel(TMP_Text label)

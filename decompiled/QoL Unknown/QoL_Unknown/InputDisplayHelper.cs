@@ -95,7 +95,13 @@ public static class InputDisplayHelper
 
 	public unsafe static string GetFriendlyName(KeyCode key)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
+		if (KeybindCombos.IsCombo(key))
+		{
+			return KeybindCombos.Format(key);
+		}
 		if (friendlyNames.TryGetValue(key, out var value))
 		{
 			return value;

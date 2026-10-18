@@ -208,12 +208,11 @@ internal static class MultiplayerHoverArbitrationPatcher
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.multiplayer_hover_arbitration");
 		val.PatchAll(typeof(MultiplayerHoverArbitrationPatcher));
-		Logger.LogInfo((object)"MultiplayerHoverArbitrationPatcher initialized");
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "HandleWorldHover")]
 	[HarmonyPostfix]
-	[HarmonyAfter(new string[] { "KrokoshaCasualtiesMP" })]
+	[HarmonyAfter(new string[] { "CasualtiesMP" })]
 	[HarmonyPriority(0)]
 	private static void HandleWorldHover_Postfix(PlayerCamera __instance, ref UsableObject usableObject)
 	{
@@ -222,7 +221,7 @@ internal static class MultiplayerHoverArbitrationPatcher
 		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		if (!KrokoshaMpCompat.IsActive || (Object)(object)__instance == (Object)null || (Object)(object)__instance.body == (Object)null || !__instance.body.conscious || __instance.radialOpen || (Object)(object)GlobalDark.main == (Object)null || (Object)(object)Camera.main == (Object)null)
+		if (!MultiplayerCompat.IsActive || (Object)(object)__instance == (Object)null || (Object)(object)__instance.body == (Object)null || !__instance.body.conscious || __instance.radialOpen || (Object)(object)GlobalDark.main == (Object)null || (Object)(object)Camera.main == (Object)null)
 		{
 			return;
 		}

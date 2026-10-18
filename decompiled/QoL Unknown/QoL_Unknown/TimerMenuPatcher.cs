@@ -44,7 +44,6 @@ internal class TimerMenuPatcher
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.timerpanel");
 		val.PatchAll(typeof(TimerMenuPatcher));
-		Logger.LogInfo((object)"TimerMenuPatcher initialized");
 		SceneManager.sceneUnloaded += delegate
 		{
 			pausePanelRef = null;
@@ -337,8 +336,7 @@ internal class TimerMenuPatcher
 		}
 		if ((Object)(object)rtaText != (Object)null)
 		{
-			TimeSpan ts2 = _rtaStartOffset + rtaStopwatch.Elapsed;
-			((TMP_Text)rtaText).text = FormatTime(ts2);
+			((TMP_Text)rtaText).text = FormatTime(GetCurrentRTA());
 		}
 	}
 
@@ -358,12 +356,13 @@ internal class TimerMenuPatcher
 
 	public static TimeSpan GetRTA()
 	{
-		return rtaStopwatch.Elapsed;
+		return GetCurrentRTA();
 	}
 
 	public static void ResetTimers()
 	{
 		inGameTime = 0f;
+		_rtaStartOffset = TimeSpan.Zero;
 		rtaStopwatch.Reset();
 		rtaStopwatch.Start();
 		timersStarted = true;
@@ -373,10 +372,13 @@ internal class TimerMenuPatcher
 	{
 		inGameTime = Mathf.Max(0f, igtSeconds);
 		_rtaStartOffset = TimeSpan.FromSeconds(Mathf.Max(0f, rtaSeconds));
-		if (!rtaStopwatch.IsRunning)
-		{
-			rtaStopwatch.Start();
-		}
+		rtaStopwatch.Reset();
+		rtaStopwatch.Start();
 		timersStarted = true;
+	}
+
+	private static TimeSpan GetCurrentRTA()
+	{
+		return _rtaStartOffset + rtaStopwatch.Elapsed;
 	}
 }

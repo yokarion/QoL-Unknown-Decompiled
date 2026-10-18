@@ -17,7 +17,6 @@ internal class ExitConfirmationPatcher
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.exitconfirm");
 		val.PatchAll(typeof(ExitConfirmationPatcher));
-		Logger.LogInfo((object)"ExitConfirmationPatcher initialized");
 	}
 
 	internal static bool IsSkipExitAnimationEnabled()

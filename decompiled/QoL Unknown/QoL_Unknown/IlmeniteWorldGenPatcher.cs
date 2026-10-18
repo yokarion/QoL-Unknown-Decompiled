@@ -20,11 +20,6 @@ internal static class IlmeniteWorldGenPatcher
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.ilmeniteworldgen");
 		val.PatchAll(typeof(IlmeniteWorldGenPatcher));
-		ManualLogSource logger2 = Logger;
-		if (logger2 != null)
-		{
-			logger2.LogInfo((object)"IlmeniteWorldGenPatcher initialized");
-		}
 	}
 
 	public static bool IsEnabled()

@@ -139,7 +139,6 @@ internal class AudioSafetyPatcher
 		LoadOverrides();
 		Harmony val = new Harmony("org.bepinex.plugins.qol.audiosafety");
 		val.PatchAll(typeof(AudioSafetyPatcher));
-		Logger.LogInfo((object)"AudioSafetyPatcher initialized");
 	}
 
 	private static void SaveOverrides()
@@ -388,24 +387,6 @@ internal class AudioSafetyPatcher
 		}
 	}
 
-	[HarmonyPatch(typeof(Sound), "Play", new Type[]
-	{
-		typeof(string),
-		typeof(Vector2),
-		typeof(bool),
-		typeof(bool),
-		typeof(Transform),
-		typeof(float),
-		typeof(float),
-		typeof(bool),
-		typeof(bool)
-	})]
-	[HarmonyPrefix]
-	private static void Sound_Play_String_Prefix(string clip, [HarmonyArgument(5)] ref float volume, [HarmonyArgument(6)] ref float pitch)
-	{
-		ApplyAudioSafety(clip, ref volume, ref pitch);
-	}
-
 	private static void ApplyAudioSafety(string soundId, ref float volume, ref float pitch)
 	{
 		if (string.IsNullOrWhiteSpace(soundId))
@@ -488,30 +469,33 @@ internal class AudioSafetyPatcher
 				}
 			}
 		}
-		if (!flag || (Object)(object)PlayerCamera.main?.body == (Object)null)
+		if ((Object)(object)PlayerCamera.main?.body == (Object)null)
 		{
 			return;
 		}
-		___maxDroneAmount = 0f;
-		if (__instance.droneVolume > 0.01f)
+		if (flag)
 		{
-			foreach (AudioSource ___droneSource in ___droneSources)
+			___maxDroneAmount = 0f;
+			if (__instance.droneVolume > 0.01f)
 			{
-				if ((Object)(object)___droneSource != (Object)null)
+				foreach (AudioSource ___droneSource in ___droneSources)
 				{
-					___maxDroneAmount = Mathf.Max(___maxDroneAmount, ___droneSource.volume / __instance.droneVolume);
+					if ((Object)(object)___droneSource != (Object)null)
+					{
+						___maxDroneAmount = Mathf.Max(___maxDroneAmount, ___droneSource.volume / __instance.droneVolume);
+					}
 				}
 			}
-		}
-		if ((Object)(object)WorldGeneration.world?.caveAudio != (Object)null)
-		{
-			float num3 = 0.07f;
-			if (((Object)(object)___source == (Object)null || !___source.isPlaying) && ___maxDroneAmount < 0.5f)
+			if ((Object)(object)WorldGeneration.world?.caveAudio != (Object)null)
 			{
-				num3 = 0.38f;
+				float num3 = 0.07f;
+				if (((Object)(object)___source == (Object)null || !___source.isPlaying) && ___maxDroneAmount < 0.5f)
+				{
+					num3 = 0.38f;
+				}
+				float num4 = (Object.op_Implicit((Object)(object)SettingsMenu.instance) ? Time.unscaledDeltaTime : Time.deltaTime);
+				WorldGeneration.world.caveAudio.volume = Mathf.MoveTowards(WorldGeneration.world.caveAudio.volume, num3, num4 * 0.1f);
 			}
-			float num4 = (Object.op_Implicit((Object)(object)SettingsMenu.instance) ? Time.unscaledDeltaTime : Time.deltaTime);
-			WorldGeneration.world.caveAudio.volume = Mathf.MoveTowards(WorldGeneration.world.caveAudio.volume, num3, num4 * 0.1f);
 		}
 		if ((Object)(object)___source != (Object)null)
 		{
@@ -521,7 +505,8 @@ internal class AudioSafetyPatcher
 			{
 				num5 = Mathf.Clamp01((30f - body.harmer.timeWasStill) * 0.1f);
 			}
-			___source.volume = __instance.origVolume * num5 * (1f - ___maxDroneAmount * 0.85f);
+			float num6 = (((Object)(object)___source.clip != (Object)null) ? GetVolumeMultiplierOrDefault(((Object)___source.clip).name) : 1f);
+			___source.volume = Mathf.Clamp01(__instance.origVolume * num5 * (1f - ___maxDroneAmount * 0.85f) * num6);
 		}
 	}
 }

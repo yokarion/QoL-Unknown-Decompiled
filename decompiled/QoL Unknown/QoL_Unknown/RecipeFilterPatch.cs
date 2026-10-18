@@ -23,8 +23,13 @@ internal class RecipeFilterPatch
 
 	[HarmonyPatch(typeof(PlayerCamera), "RefreshRecipeList")]
 	[HarmonyPrefix]
+	[HarmonyBefore(new string[] { "org.bepinex.plugins.qol.bulkcrafting" })]
 	private static bool RefreshRecipeList_Prefix(PlayerCamera __instance)
 	{
+		if (QoLModuleManager.IsEnabled("qol_craft_bulk"))
+		{
+			return true;
+		}
 		if (RecipeObjectsField == null || SelectedRecipeCategoryField == null || RecipeItemFilterField == null)
 		{
 			return true;
@@ -41,7 +46,8 @@ internal class RecipeFilterPatch
 		{
 			return false;
 		}
-		RebuildRecipeList(camera, itemFilter);
+		RecipeItemFilterField.SetValue(camera, itemFilter);
+		camera.RefreshRecipeList();
 		return true;
 	}
 

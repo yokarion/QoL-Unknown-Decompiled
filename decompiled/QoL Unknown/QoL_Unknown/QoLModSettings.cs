@@ -16,6 +16,8 @@ internal static class QoLModSettings
 
 	private const string SkillPointAllocationPrefKey = "Setting_SkillPointAllocation";
 
+	internal const string BestToolByEfficiencyPrefKey = "Setting_BestToolByEfficiency";
+
 	private const string UiScalePrefKey = "UIScale";
 
 	private const string ShowFpsPrefKey = "ShowFPSCounter";
@@ -118,6 +120,10 @@ internal static class QoLModSettings
 		{
 			LineOfSightPatcher.SetLineOfSightDisabled(value);
 		}));
+		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.game.etomophobia", "Etomophobia", "Prevents vomit and blood vomit visuals, particles, and text. Stat loss is preserved.", (SettingCategory)2, defaultValue: false, delegate(bool value)
+		{
+			EtomophobiaPatcher.SetEnabled(value);
+		}));
 		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.game.minigameqol", "Faster minigames", "Makes lockpicking faster and shortens keypad codes to 5-9 digits.", (SettingCategory)2, defaultValue: false, delegate(bool value)
 		{
 			PlayerPrefs.SetInt("Setting_Minigame_QoL", value ? 1 : 0);
@@ -126,6 +132,11 @@ internal static class QoLModSettings
 		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.game.skillallocation", "Skill point allocation", "Enables the QoL skill allocation adjustments for starting stats.", (SettingCategory)2, defaultValue: true, delegate(bool value)
 		{
 			PlayerPrefs.SetInt("Setting_SkillPointAllocation", value ? 1 : 0);
+			PlayerPrefs.Save();
+		}));
+		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.game.besttoolefficiency", "Use best tool by efficiency", "Crafting selects the most efficient tool rather than the first one found.", (SettingCategory)2, defaultValue: true, delegate(bool value)
+		{
+			PlayerPrefs.SetInt("Setting_BestToolByEfficiency", value ? 1 : 0);
 			PlayerPrefs.Save();
 		}));
 		RegisterStartingStat("qol.game.skillallocation.str", "Starting STR", "StartSTR", 9);

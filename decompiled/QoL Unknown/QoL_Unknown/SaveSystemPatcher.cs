@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -17,13 +18,13 @@ internal class SaveSystemPatcher
 	{
 		public static readonly _003C_003Ec _003C_003E9 = new _003C_003Ec();
 
-		public static Action _003C_003E9__13_0;
+		public static Action _003C_003E9__20_0;
 
-		public static Predicate<Command> _003C_003E9__19_0;
+		public static Predicate<Command> _003C_003E9__28_0;
 
-		public static Action _003C_003E9__19_1;
+		public static Action _003C_003E9__28_1;
 
-		internal void _003CRegisterCommands_Postfix_003Eb__13_0(string[] args)
+		internal void _003CRegisterCommands_Postfix_003Eb__20_0(string[] args)
 		{
 			if (SeedManager.IsSeeded && !string.IsNullOrEmpty(SeedManager.InputString))
 			{
@@ -35,12 +36,12 @@ internal class SaveSystemPatcher
 			}
 		}
 
-		internal bool _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__19_0(Command c)
+		internal bool _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__28_0(Command c)
 		{
 			return c != null && c.name == "saveandquit";
 		}
 
-		internal void _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__19_1(string[] args)
+		internal void _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__28_1(string[] args)
 		{
 			ConsoleHelper.CheckForWorld(ConsoleScript.instance);
 			SaveSystem.SaveGame();
@@ -53,23 +54,25 @@ internal class SaveSystemPatcher
 
 	private static ManualLogSource Logger;
 
-	public static bool IsAutosaveOperation;
+	public static bool IsAutosaveOperation = false;
 
 	private static bool deletedAutosaveForCurrentDeath;
 
-	public static Vector3? PendingLoadPosition;
+	public static Vector3? PendingLoadPosition = null;
 
-	public static float? PendingRadLineY;
+	public static float? PendingRadLineY = null;
 
-	public static bool? PendingRadLineActive;
+	public static bool? PendingRadLineActive = null;
 
-	public static bool BypassDepthFix;
+	public static bool BypassDepthFix = false;
 
-	public static float? PendingIGTSeconds;
+	public static float? PendingIGTSeconds = null;
 
-	public static float? PendingRTASeconds;
+	public static float? PendingRTASeconds = null;
 
-	public static bool LoadedFromMenu;
+	public static bool LoadedFromMenu = false;
+
+	internal static bool LastSaveRedirectSucceeded { get; private set; } = true;
 
 	public static void Initialize(ManualLogSource logger)
 	{
@@ -78,15 +81,18 @@ internal class SaveSystemPatcher
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.savesystem");
 		val.PatchAll(typeof(SaveSystemPatcher));
-		Logger.LogInfo((object)"SaveSystemPatcher initialized");
 	}
 
 	[HarmonyPatch(typeof(SaveSystem), "SaveGame")]
 	[HarmonyPrefix]
-	private static void SaveGame_Prefix_AdjustDepth()
+	[HarmonyPriority(800)]
+	private static void SaveGame_Prefix_AdjustDepth(out int? __state)
 	{
+		__state = null;
+		LastSaveRedirectSucceeded = false;
 		if (!BypassDepthFix && (Object)(object)WorldGeneration.world != (Object)null)
 		{
+			__state = WorldGeneration.world.biomeDepth;
 			WorldGeneration world = WorldGeneration.world;
 			world.biomeDepth--;
 		}
@@ -94,58 +100,109 @@ internal class SaveSystemPatcher
 
 	[HarmonyPatch(typeof(SaveSystem), "SaveGame")]
 	[HarmonyPostfix]
-	private static void SaveGame_Postfix_RestoreDepth()
+	[HarmonyPriority(0)]
+	[HarmonyBefore(new string[] { "net.cucorelib" })]
+	private static void SaveGame_Postfix_RestoreDepthForCapture(int? __state)
 	{
-		if (BypassDepthFix)
-		{
-			HandleFileMove();
-			return;
-		}
-		if ((Object)(object)WorldGeneration.world != (Object)null)
-		{
-			WorldGeneration world = WorldGeneration.world;
-			world.biomeDepth++;
-		}
-		HandleFileMove();
+		RestoreSavedDepth(__state);
 	}
 
-	private static void HandleFileMove()
+	[HarmonyPatch(typeof(SaveSystem), "SaveGame")]
+	[HarmonyFinalizer]
+	private static Exception SaveGame_Finalizer_RestoreState(Exception __exception, int? __state)
 	{
-		string text = Application.persistentDataPath + "\\save.sv";
-		string text2 = Path.Combine(Application.persistentDataPath, SaveManager.CurrentSaveFile);
-		if (SaveManager.CurrentSaveFile != "save.sv" && File.Exists(text))
+		try
 		{
-			if (File.Exists(text2))
+			RestoreSavedDepth(__state);
+			if (__exception == null)
 			{
-				File.Delete(text2);
-			}
-			File.Move(text, text2);
-			if (!IsAutosaveOperation)
-			{
-				File.Copy(text2, text, overwrite: true);
+				LastSaveRedirectSucceeded = HandleFileMove();
 			}
 		}
+		catch (Exception arg)
+		{
+			LastSaveRedirectSucceeded = false;
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogError((object)$"Failed to restore state after SaveGame: {arg}");
+			}
+		}
+		return __exception;
+	}
+
+	[HarmonyPatch(typeof(SaveSystem), "TryLoadGame")]
+	[HarmonyFinalizer]
+	private static Exception TryLoadGame_Finalizer(Exception __exception)
+	{
+		CuCoreLibTransitionCompat.SkipWorldRestore = false;
+		return __exception;
+	}
+
+	private static void RestoreSavedDepth(int? state)
+	{
+		if (state.HasValue && !((Object)(object)WorldGeneration.world == (Object)null))
+		{
+			WorldGeneration.world.biomeDepth = state.Value;
+		}
+	}
+
+	private static bool HandleFileMove()
+	{
+		string persistentDataPath = Application.persistentDataPath;
+		string text = Path.Combine(persistentDataPath, "save.sv");
+		if (!SaveFileStore.TryGetSavePath(persistentDataPath, SaveManager.CurrentSaveFile, out var path))
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogError((object)("Refusing to redirect save to invalid file name '" + SaveManager.CurrentSaveFile + "'."));
+			}
+			return false;
+		}
+		if (!string.Equals(path, text, StringComparison.OrdinalIgnoreCase) && File.Exists(text))
+		{
+			if (!SaveFileStore.TryCopyAtomic(text, path, Logger, "write redirected save '" + Path.GetFileName(path) + "'"))
+			{
+				return false;
+			}
+			if (IsAutosaveOperation)
+			{
+				SaveFileStore.TryDelete(text, Logger, "remove autosave staging file");
+			}
+		}
+		return File.Exists(path);
 	}
 
 	[HarmonyPatch(typeof(SaveSystem), "TryLoadGame")]
 	[HarmonyPrefix]
+	[HarmonyPriority(800)]
+	[HarmonyBefore(new string[] { "net.cucorelib" })]
 	private static void TryLoadGame_Prefix()
 	{
 		if (!SaveSystem.loadedRun)
 		{
 			return;
 		}
-		string text = Application.persistentDataPath + "\\save.sv";
-		string text2 = Path.Combine(Application.persistentDataPath, SaveManager.CurrentSaveFile);
-		if (SaveManager.CurrentSaveFile != "save.sv" && File.Exists(text2))
+		string persistentDataPath = Application.persistentDataPath;
+		string text = Path.Combine(persistentDataPath, "save.sv");
+		if (!SaveFileStore.TryGetSavePath(persistentDataPath, SaveManager.CurrentSaveFile, out var path))
 		{
-			if (File.Exists(text))
+			ManualLogSource logger = Logger;
+			if (logger != null)
 			{
-				File.Delete(text);
+				logger.LogError((object)("Refusing to load invalid save file name '" + SaveManager.CurrentSaveFile + "'."));
 			}
-			File.Copy(text2, text);
+			SaveSystem.loadedRun = false;
 		}
-		TryRestoreRunSettingsFromSave(text);
+		else if (!string.Equals(path, text, StringComparison.OrdinalIgnoreCase) && !SaveFileStore.TryCopyAtomic(path, text, Logger, "stage save '" + Path.GetFileName(path) + "' for loading"))
+		{
+			SaveSystem.loadedRun = false;
+		}
+		else
+		{
+			TryRestoreRunSettingsFromSave(text);
+		}
 	}
 
 	internal static bool TryRestoreRunSettingsFromSave(string savePath)
@@ -221,7 +278,7 @@ internal class SaveSystemPatcher
 		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
 		//IL_002f: Expected O, but got Unknown
 		List<Command> commands = ConsoleScript.Commands;
-		object obj = _003C_003Ec._003C_003E9__13_0;
+		object obj = _003C_003Ec._003C_003E9__20_0;
 		if (obj == null)
 		{
 			Action val = delegate
@@ -235,7 +292,7 @@ internal class SaveSystemPatcher
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, $"<color=grey>{SeedManager.CurrentSeed}</color>");
 				}
 			};
-			_003C_003Ec._003C_003E9__13_0 = val;
+			_003C_003Ec._003C_003E9__20_0 = val;
 			obj = (object)val;
 		}
 		commands.Add(new Command("seed", "Displays the current world seed.", (Action)obj, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>()));
@@ -243,7 +300,29 @@ internal class SaveSystemPatcher
 
 	[HarmonyPatch(typeof(WorldGeneration), "FinishWorldGeneration")]
 	[HarmonyPostfix]
-	private static void FinishWorldGeneration_Postfix()
+	[HarmonyPriority(0)]
+	private static void FinishWorldGeneration_Postfix(ref IEnumerator __result)
+	{
+		if (__result == null)
+		{
+			ApplyPendingLoadStateAfterWorldGeneration();
+		}
+		else
+		{
+			__result = RunAfterCoroutineCompletes(__result, ApplyPendingLoadStateAfterWorldGeneration);
+		}
+	}
+
+	private static IEnumerator RunAfterCoroutineCompletes(IEnumerator inner, Action onCompleted)
+	{
+		while (inner.MoveNext())
+		{
+			yield return inner.Current;
+		}
+		onCompleted?.Invoke();
+	}
+
+	private static void ApplyPendingLoadStateAfterWorldGeneration()
 	{
 		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
@@ -258,9 +337,9 @@ internal class SaveSystemPatcher
 		deletedAutosaveForCurrentDeath = false;
 		bool isLoadingMultiplayerSlot = MultiplayerSaveLoadPatcher.IsLoadingMultiplayerSlot;
 		MultiplayerSaveLoadPatcher.ClearMultiplayerSlotLoad();
-		if (isLoadingMultiplayerSlot && KrokoshaMpCompat.IsNetworkRunning && KrokoshaMpCompat.IsServer)
+		if (isLoadingMultiplayerSlot && MultiplayerCompat.IsNetworkRunning && MultiplayerCompat.IsServer)
 		{
-			KrokoshaMpCompat.TeleportClientsToHostAfterDelay(1f);
+			MultiplayerCompat.TeleportClientsToHostAfterDelay(1f);
 		}
 		if (PendingLoadPosition.HasValue)
 		{
@@ -335,7 +414,7 @@ internal class SaveSystemPatcher
 			{
 				return;
 			}
-			object obj = _003C_003Ec._003C_003E9__19_1;
+			object obj = _003C_003Ec._003C_003E9__28_1;
 			if (obj == null)
 			{
 				Action val = delegate
@@ -347,7 +426,7 @@ internal class SaveSystemPatcher
 					PlayerCamera.main.ToMainMenu();
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, "Saved the game and quit to menu.");
 				};
-				_003C_003Ec._003C_003E9__19_1 = val;
+				_003C_003Ec._003C_003E9__28_1 = val;
 				obj = (object)val;
 			}
 			commands[num] = new Command("saveandquit", "!! NOT RECOMMENDED !!. Instantly saves the game and exits to the main menu as per vanilla. Loading the save will put you at the beginning of the current layer.", (Action)obj, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>());
@@ -366,9 +445,22 @@ internal class SaveSystemPatcher
 	[HarmonyPrefix]
 	private static void SaveAndExit_Prefix()
 	{
-		WorldGeneration world = WorldGeneration.world;
-		world.biomeDepth++;
 		SaveManager.PerformAutosaveOnExit();
+		BypassDepthFix = true;
+	}
+
+	[HarmonyPatch(typeof(WorldGeneration), "SaveAndExit")]
+	[HarmonyFinalizer]
+	private static void SaveAndExit_Finalizer()
+	{
+		BypassDepthFix = false;
+	}
+
+	[HarmonyPatch(typeof(PlayerCamera), "ToMainMenu")]
+	[HarmonyPrefix]
+	private static void ToMainMenu_Prefix()
+	{
+		ResetRunLoadStateForMainMenu();
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "HandleDeathScreen")]
@@ -393,6 +485,11 @@ internal class SaveSystemPatcher
 	{
 		SaveSystem.loadedRun = false;
 		LoadedFromMenu = false;
+		SaveManager.CurrentSaveFile = "save.sv";
+		SeedManager.SetSeed("");
+		IsAutosaveOperation = false;
+		LastSaveRedirectSucceeded = true;
+		BypassDepthFix = false;
 		deletedAutosaveForCurrentDeath = false;
 		PendingLoadPosition = null;
 		PendingRadLineY = null;

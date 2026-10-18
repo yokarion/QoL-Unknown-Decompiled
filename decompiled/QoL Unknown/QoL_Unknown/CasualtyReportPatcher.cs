@@ -55,7 +55,6 @@ internal class CasualtyReportPatcher
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.casualtyreports");
 		val.PatchAll(typeof(CasualtyReportPatcher));
-		Logger.LogInfo((object)"CasualtyReportPatcher initialized");
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "Update")]

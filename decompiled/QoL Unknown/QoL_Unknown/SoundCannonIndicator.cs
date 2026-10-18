@@ -80,10 +80,10 @@ internal class SoundCannonIndicator
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0063: Expected O, but got Unknown
-		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Expected O, but got Unknown
+		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0060: Expected O, but got Unknown
+		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0079: Expected O, but got Unknown
 		if (initialized)
 		{
 			return;
@@ -104,11 +104,6 @@ internal class SoundCannonIndicator
 		val.AddComponent<RuntimeCleaner>();
 		Harmony val2 = new Harmony("org.bepinex.plugins.qol.soundcannonindicator");
 		val2.PatchAll(typeof(SoundCannonIndicator));
-		ManualLogSource logger3 = Logger;
-		if (logger3 != null)
-		{
-			logger3.LogInfo((object)"SoundCannonIndicator initialized");
-		}
 	}
 
 	[HarmonyPatch(typeof(SoundCannon), "Update")]
@@ -163,7 +158,7 @@ internal class SoundCannonIndicator
 
 	private static bool GetChargingState(SoundCannon cannon)
 	{
-		if (KrokoshaMpCompat.TryGetSoundCannonCharging(cannon, out var charging))
+		if (MultiplayerCompat.TryGetSoundCannonCharging(cannon, out var charging))
 		{
 			return charging;
 		}
@@ -348,6 +343,16 @@ internal class SoundCannonIndicator
 		ActiveCannons.Clear();
 	}
 
+	private static bool IsCannonAlive(CannonTracker tracker)
+	{
+		if (tracker == null || (Object)(object)tracker.Cannon == (Object)null)
+		{
+			return false;
+		}
+		GameObject gameObject = ((Component)tracker.Cannon).gameObject;
+		return (Object)(object)gameObject != (Object)null && gameObject.activeInHierarchy;
+	}
+
 	private static void PruneDestroyedCannons()
 	{
 		if (ActiveCannons.Count == 0)
@@ -358,7 +363,7 @@ internal class SoundCannonIndicator
 		foreach (KeyValuePair<int, CannonTracker> activeCannon in ActiveCannons)
 		{
 			CannonTracker value = activeCannon.Value;
-			if (value == null || (Object)(object)value.Cannon == (Object)null)
+			if (!IsCannonAlive(value))
 			{
 				DestroyArrow(value);
 				RemovalBuffer.Add(activeCannon.Key);

@@ -36,14 +36,14 @@ internal class SaveMenuPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Expected O, but got Unknown
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001e: Expected O, but got Unknown
 		if (!initialized)
 		{
-			initialized = true;
 			Logger = logger;
 			Harmony val = new Harmony("org.bepinex.plugins.qol.savemenu");
 			val.PatchAll(typeof(SaveMenuPatcher));
+			initialized = true;
 		}
 	}
 
@@ -661,9 +661,9 @@ internal class SaveMenuPatcher
 	[HarmonyPrefix]
 	private static bool LoadRun_Prefix(PreRunScript __instance)
 	{
-		if (KrokoshaMpCompat.ShouldBlockQoLLoads)
+		if (MultiplayerCompat.ShouldBlockQoLLoads)
 		{
-			KrokoshaMpCompat.NotifyLoadBlocked();
+			MultiplayerCompat.NotifyLoadBlocked();
 			return false;
 		}
 		return true;
@@ -671,7 +671,7 @@ internal class SaveMenuPatcher
 
 	public static bool ShouldBlockQuickLoad(string filename)
 	{
-		if (!KrokoshaMpCompat.ShouldBlockQoLLoads)
+		if (!MultiplayerCompat.ShouldBlockQoLLoads)
 		{
 			return false;
 		}
@@ -683,11 +683,11 @@ internal class SaveMenuPatcher
 		try
 		{
 			SaveMetadata saveMetadata = JsonConvert.DeserializeObject<SaveMetadata>(File.ReadAllText(path));
-			if (KrokoshaMpCompat.IsServer && saveMetadata?.SaveKind == "MultiplayerHostBundle" && KrokoshaMpSaveBundle.HasBundle(SaveManager.SaveFolder, filename))
+			if (MultiplayerCompat.IsServer && saveMetadata?.SaveKind == "MultiplayerHostBundle" && MultiplayerSaveBundle.HasBundle(SaveManager.SaveFolder, filename))
 			{
 				return false;
 			}
-			if (KrokoshaMpCompat.CanImportSingleplayerSlotAsHostStart && (saveMetadata == null || string.IsNullOrEmpty(saveMetadata.SaveKind) || saveMetadata.SaveKind == "Singleplayer"))
+			if (MultiplayerCompat.CanImportSingleplayerSlotAsHostStart && (saveMetadata == null || string.IsNullOrEmpty(saveMetadata.SaveKind) || saveMetadata.SaveKind == "Singleplayer"))
 			{
 				return false;
 			}

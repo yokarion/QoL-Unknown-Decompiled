@@ -42,20 +42,21 @@ internal class SaveSaveMenuPatcher
 
 	private const float PANEL_PAUSE_MENU_GAP = 24f;
 
+	private const int LAYER_BACKGROUND_COUNT = 7;
+
 	private static string SaveFolder => Application.persistentDataPath;
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003d: Expected O, but got Unknown
+		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0037: Expected O, but got Unknown
 		if (!initialized && QoLModuleManager.IsEnabled("qol_save_menu"))
 		{
-			initialized = true;
 			Logger = logger;
 			LoadLayerImages();
 			Harmony val = new Harmony("org.bepinex.plugins.qol.savesavemenu");
 			val.PatchAll(typeof(SaveSaveMenuPatcher));
-			Logger.LogInfo((object)"SaveSaveMenuPatcher initialized");
+			initialized = true;
 			SceneManager.sceneUnloaded += delegate
 			{
 				pauseMenuRef = null;
@@ -70,8 +71,8 @@ internal class SaveSaveMenuPatcher
 
 	private static void LoadLayerImages()
 	{
-		layerBackgrounds = (Sprite[])(object)new Sprite[5];
-		for (int i = 0; i < 5; i++)
+		layerBackgrounds = (Sprite[])(object)new Sprite[7];
+		for (int i = 0; i < 7; i++)
 		{
 			layerBackgrounds[i] = Helper.LoadEmbeddedSprite($"layer{i}");
 		}
@@ -142,7 +143,7 @@ internal class SaveSaveMenuPatcher
 		}
 		if (flag)
 		{
-			if (!wasPausedByMenu)
+			if (!wasPausedByMenu && !MultiplayerCompat.IsActive)
 			{
 				previousTimeScale = Time.timeScale;
 				Time.timeScale = 0f;
@@ -350,12 +351,12 @@ internal class SaveSaveMenuPatcher
 		//IL_0360: Unknown result type (might be due to invalid IL or missing references)
 		//IL_03d4: Unknown result type (might be due to invalid IL or missing references)
 		//IL_03db: Expected O, but got Unknown
-		//IL_0460: Unknown result type (might be due to invalid IL or missing references)
-		//IL_046a: Expected O, but got Unknown
-		//IL_047e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0488: Expected O, but got Unknown
-		//IL_049c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04a6: Expected O, but got Unknown
+		//IL_0465: Unknown result type (might be due to invalid IL or missing references)
+		//IL_046f: Expected O, but got Unknown
+		//IL_0488: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0492: Expected O, but got Unknown
+		//IL_04ab: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04b5: Expected O, but got Unknown
 		string text = $"slot_{index}.sv";
 		string fName = text;
 		int i = index;
@@ -447,21 +448,21 @@ internal class SaveSaveMenuPatcher
 		LayoutElement val11 = val9.AddComponent<LayoutElement>();
 		val11.minWidth = 118f;
 		val11.preferredWidth = 118f;
-		CreateIconButton(val9.transform, "save", (UnityAction)delegate
+		CreateIconButton(val9.transform, "save", "Save", (UnityAction)delegate
 		{
 			DoSave(fName, i);
 		});
-		CreateIconButton(val9.transform, "load", (UnityAction)delegate
+		CreateIconButton(val9.transform, "load", "Load", (UnityAction)delegate
 		{
 			DoLoad(fName, i);
 		});
-		CreateIconButton(val9.transform, "delete", (UnityAction)delegate
+		CreateIconButton(val9.transform, "delete", "Delete", (UnityAction)delegate
 		{
 			DoDelete(fName, i);
 		});
 	}
 
-	private static void CreateIconButton(Transform parent, string spriteName, UnityAction action)
+	private static void CreateIconButton(Transform parent, string spriteName, string tipName, UnityAction action)
 	{
 		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
 		//IL_003f: Expected O, but got Unknown
@@ -500,10 +501,45 @@ internal class SaveSaveMenuPatcher
 		((ColorBlock)(ref colors)).colorMultiplier = 1f;
 		((Selectable)component3).colors = colors;
 		((UnityEvent)component3.onClick).AddListener(action);
+		UITooltip val3 = val.AddComponent<UITooltip>();
+		val3.skipLocale = true;
+		val3.tipName = tipName;
+		val3.tipDesc = string.Empty;
 	}
 
 	private static void DoSave(string filename, int index)
 	{
+		try
+		{
+			DoSaveCore(filename, index);
+		}
+		catch (Exception arg)
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogError((object)$"Unexpected error while saving slot {index}: {arg}");
+			}
+			PlayerCamera main = PlayerCamera.main;
+			if (main != null)
+			{
+				main.DoAlert("Save failed unexpectedly. Your previous slot data was left intact where possible.", false);
+			}
+			RefreshSlots();
+		}
+	}
+
+	private static void DoSaveCore(string filename, int index)
+	{
+		if (!Object.op_Implicit((Object)(object)PlayerCamera.main) || !Object.op_Implicit((Object)(object)PlayerCamera.main.body))
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)$"Cannot save slot {index}: player is not available.");
+			}
+			return;
+		}
 		if (!PlayerCamera.main.body.alive)
 		{
 			PlayerCamera.main.DoAlert("Cannot save while dead!", false);
@@ -515,71 +551,115 @@ internal class SaveSaveMenuPatcher
 			return;
 		}
 		string text = Path.Combine(SaveFolder, "save.sv");
-		string destFileName = Path.Combine(SaveFolder, filename);
-		string path = Path.Combine(SaveFolder, filename + ".meta");
-		SaveMetadata saveMetadata = KrokoshaMpSaveBundle.BuildBaseMetadata();
-		KrokoshaMpSaveBundle.DeleteSlotExtras(SaveFolder, filename);
-		if (KrokoshaMpCompat.IsNetworkRunning && KrokoshaMpCompat.IsServer)
+		string destinationPath = Path.Combine(SaveFolder, filename);
+		string destinationPath2 = Path.Combine(SaveFolder, filename + ".meta");
+		SaveMetadata saveMetadata = MultiplayerSaveBundle.BuildBaseMetadata();
+		MultiplayerSaveBundle.DeleteSlotExtras(SaveFolder, filename);
+		if (MultiplayerCompat.IsNetworkRunning && MultiplayerCompat.IsServer)
 		{
-			if (!KrokoshaMpSaveBundle.SaveHostBundle(SaveFolder, filename, saveMetadata, out var sourceRootSave) || !File.Exists(sourceRootSave))
+			if (!MultiplayerSaveBundle.SaveHostBundle(SaveFolder, filename, saveMetadata, out var sourceRootSave) || !File.Exists(sourceRootSave))
 			{
 				PlayerCamera.main.DoAlert("Multiplayer save failed!", false);
 				RefreshSlots();
-				return;
 			}
-			File.Copy(sourceRootSave, destFileName, overwrite: true);
-			File.WriteAllText(path, JsonConvert.SerializeObject((object)saveMetadata, (Formatting)1));
-			PlayerCamera.main.DoAlert($"Saved MP host bundle to Slot {index}", false);
-			RefreshSlots();
+			else if (!SaveFileStore.TryCopyAtomic(sourceRootSave, destinationPath, Logger, $"save multiplayer slot {index}") || !SaveFileStore.TryWriteAllTextAtomic(destinationPath2, JsonConvert.SerializeObject((object)saveMetadata, (Formatting)1), Logger, $"write metadata for slot {index}"))
+			{
+				PlayerCamera.main.DoAlert("Multiplayer save failed while writing the slot!", false);
+				RefreshSlots();
+			}
+			else
+			{
+				PlayerCamera.main.DoAlert($"Saved MP host bundle to Slot {index}", false);
+				RefreshSlots();
+			}
+			return;
 		}
-		else if (KrokoshaMpCompat.IsNetworkRunning && KrokoshaMpCompat.IsClient)
+		if (MultiplayerCompat.IsNetworkRunning && MultiplayerCompat.IsClient)
 		{
-			if (!KrokoshaMpSaveBundle.SaveClientInventorySnapshot(SaveFolder, filename, saveMetadata, out var _))
+			if (!MultiplayerSaveBundle.SaveClientInventorySnapshot(SaveFolder, filename, saveMetadata, out var _))
 			{
 				PlayerCamera.main.DoAlert("Client snapshot save failed!", false);
 				RefreshSlots();
 				return;
 			}
-			using (KrokoshaMpCompat.BeginVanillaSaveSnapshot())
+			using (MultiplayerCompat.BeginVanillaSaveSnapshot())
 			{
 				SaveSystem.SaveGame();
 			}
-			if (File.Exists(text))
+			if (File.Exists(text) && !SaveFileStore.TryCopyAtomic(text, destinationPath, Logger, $"save client snapshot slot {index}"))
 			{
-				File.Copy(text, destFileName, overwrite: true);
+				PlayerCamera.main.DoAlert("Client snapshot save failed while writing the slot!", false);
+				RefreshSlots();
 			}
-			File.WriteAllText(path, JsonConvert.SerializeObject((object)saveMetadata, (Formatting)1));
-			PlayerCamera.main.DoAlert($"Saved MP client snapshot to Slot {index}", false);
-			RefreshSlots();
-		}
-		else
-		{
-			using (KrokoshaMpCompat.BeginVanillaSaveSnapshot())
+			else if (!SaveFileStore.TryWriteAllTextAtomic(destinationPath2, JsonConvert.SerializeObject((object)saveMetadata, (Formatting)1), Logger, $"write metadata for slot {index}"))
 			{
-				SaveSystem.SaveGame();
-			}
-			if (File.Exists(text))
-			{
-				File.Copy(text, destFileName, overwrite: true);
-				saveMetadata.SaveKind = "Singleplayer";
-				saveMetadata.SavedDuringMultiplayer = false;
-				string contents = JsonConvert.SerializeObject((object)saveMetadata, (Formatting)1);
-				File.WriteAllText(path, contents);
-				PlayerCamera.main.DoAlert($"Saved to Slot {index}", false);
+				PlayerCamera.main.DoAlert("Client snapshot metadata could not be saved!", false);
+				RefreshSlots();
 			}
 			else
 			{
-				PlayerCamera.main.DoAlert("Save failed!", false);
+				PlayerCamera.main.DoAlert($"Saved MP client snapshot to Slot {index}", false);
+				RefreshSlots();
 			}
-			RefreshSlots();
+			return;
 		}
+		using (MultiplayerCompat.BeginVanillaSaveSnapshot())
+		{
+			SaveSystem.SaveGame();
+		}
+		if (File.Exists(text))
+		{
+			if (!SaveFileStore.TryCopyAtomic(text, destinationPath, Logger, $"save slot {index}"))
+			{
+				PlayerCamera.main.DoAlert("Save failed while writing the slot!", false);
+				RefreshSlots();
+				return;
+			}
+			saveMetadata.SaveKind = "Singleplayer";
+			saveMetadata.SavedDuringMultiplayer = false;
+			string contents = JsonConvert.SerializeObject((object)saveMetadata, (Formatting)1);
+			if (!SaveFileStore.TryWriteAllTextAtomic(destinationPath2, contents, Logger, $"write metadata for slot {index}"))
+			{
+				PlayerCamera.main.DoAlert("Save data was written, but its metadata could not be saved.", false);
+				RefreshSlots();
+				return;
+			}
+			PlayerCamera.main.DoAlert($"Saved to Slot {index}", false);
+		}
+		else
+		{
+			PlayerCamera.main.DoAlert("Save failed!", false);
+		}
+		RefreshSlots();
 	}
 
 	public static void DoLoad(string filename, int index)
 	{
+		try
+		{
+			DoLoadCore(filename, index);
+		}
+		catch (Exception arg)
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogError((object)$"Unexpected error while loading slot {index}: {arg}");
+			}
+			PlayerCamera main = PlayerCamera.main;
+			if (main != null)
+			{
+				main.DoAlert("Load failed unexpectedly. The current save was left intact where possible.", false);
+			}
+			SaveSystem.loadedRun = false;
+		}
+	}
+
+	private static void DoLoadCore(string filename, int index)
+	{
 		string text = Path.Combine(SaveFolder, filename);
 		string path = Path.Combine(SaveFolder, filename + ".meta");
-		string destFileName = Path.Combine(SaveFolder, "save.sv");
+		string destinationPath = Path.Combine(SaveFolder, "save.sv");
 		if (!File.Exists(text))
 		{
 			if ((Object)(object)PlayerCamera.main != (Object)null)
@@ -590,7 +670,7 @@ internal class SaveSaveMenuPatcher
 		}
 		if (SaveMenuPatcher.ShouldBlockQuickLoad(filename))
 		{
-			KrokoshaMpCompat.NotifyLoadBlocked();
+			MultiplayerCompat.NotifyLoadBlocked();
 			return;
 		}
 		SaveMetadata saveMetadata = null;
@@ -606,13 +686,13 @@ internal class SaveSaveMenuPatcher
 				Logger.LogError((object)$"Meta Load Error: {arg}");
 			}
 		}
-		bool flag = saveMetadata != null && saveMetadata.SaveKind == "MultiplayerHostBundle" && KrokoshaMpSaveBundle.HasBundle(SaveFolder, filename);
+		bool flag = saveMetadata != null && saveMetadata.SaveKind == "MultiplayerHostBundle" && MultiplayerSaveBundle.HasBundle(SaveFolder, filename);
 		bool flag2 = saveMetadata != null && saveMetadata.SaveKind == "MultiplayerClientInventory";
-		if (KrokoshaMpCompat.IsNetworkRunning && KrokoshaMpCompat.IsClient)
+		if (MultiplayerCompat.IsNetworkRunning && MultiplayerCompat.IsClient)
 		{
 			if (flag2)
 			{
-				if (KrokoshaMpSaveBundle.TryRequestClientInventoryRestore(SaveFolder, filename, out var message) && !string.IsNullOrWhiteSpace(message))
+				if (MultiplayerSaveBundle.TryRequestClientInventoryRestore(SaveFolder, filename, out var message) && !string.IsNullOrWhiteSpace(message))
 				{
 					PlayerCamera main = PlayerCamera.main;
 					if (main != null)
@@ -639,25 +719,25 @@ internal class SaveSaveMenuPatcher
 			}
 			return;
 		}
-		if (KrokoshaMpCompat.IsNetworkRunning && KrokoshaMpCompat.IsServer && flag)
+		if (MultiplayerCompat.IsNetworkRunning && MultiplayerCompat.IsServer && flag)
 		{
 			BeginHostMultiplayerLoad(filename, saveMetadata, restoreHostBundle: true);
 			return;
 		}
 		bool flag3 = saveMetadata == null || string.IsNullOrEmpty(saveMetadata.SaveKind) || saveMetadata.SaveKind == "Singleplayer";
-		if (KrokoshaMpCompat.CanImportSingleplayerSlotAsHostStart && flag3)
+		if (MultiplayerCompat.CanImportSingleplayerSlotAsHostStart && flag3)
 		{
 			BeginHostMultiplayerLoad(filename, saveMetadata, restoreHostBundle: false);
 			return;
 		}
-		if (KrokoshaMpCompat.ShouldBlockQoLLoads && !flag && !flag2)
+		if (MultiplayerCompat.ShouldBlockQoLLoads && !flag && !flag2)
 		{
-			KrokoshaMpCompat.NotifyLoadBlocked();
+			MultiplayerCompat.NotifyLoadBlocked();
 			return;
 		}
 		if (saveMetadata != null)
 		{
-			KrokoshaMpSaveBundle.ApplyMetadataForLoad(saveMetadata);
+			MultiplayerSaveBundle.ApplyMetadataForLoad(saveMetadata);
 		}
 		else
 		{
@@ -669,16 +749,26 @@ internal class SaveSaveMenuPatcher
 			MultiplayerSaveLoadPatcher.MarkMultiplayerSlotLoad();
 		}
 		SaveSystemPatcher.TryRestoreRunSettingsFromSave(text);
-		File.Copy(text, destFileName, overwrite: true);
-		SaveSystem.loadedRun = true;
-		Time.timeScale = 1f;
-		SceneManager.LoadScene("SampleScene");
+		if (!SaveFileStore.TryCopyAtomic(text, destinationPath, Logger, $"stage slot {index} for loading"))
+		{
+			PlayerCamera main4 = PlayerCamera.main;
+			if (main4 != null)
+			{
+				main4.DoAlert("Could not stage this save for loading. The existing save was left untouched.", false);
+			}
+		}
+		else
+		{
+			SaveSystem.loadedRun = true;
+			Time.timeScale = 1f;
+			SceneManager.LoadScene("SampleScene");
+		}
 	}
 
 	private static void BeginHostMultiplayerLoad(string filename, SaveMetadata meta, bool restoreHostBundle)
 	{
-		bool flag = KrokoshaMpCompat.IsNetworkRunning && KrokoshaMpCompat.IsServer;
-		int num = (flag ? KrokoshaMpCompat.PrepareClientsForHostSaveLoad() : 0);
+		bool flag = MultiplayerCompat.IsNetworkRunning && MultiplayerCompat.IsServer;
+		int num = (flag ? MultiplayerCompat.PrepareClientsForHostSaveLoad() : 0);
 		if (num > 0)
 		{
 			PlayerCamera main = PlayerCamera.main;
@@ -689,7 +779,7 @@ internal class SaveSaveMenuPatcher
 		}
 		if (flag)
 		{
-			KrokoshaMpCompat.BeginConnectedHostSaveLoad();
+			MultiplayerCompat.BeginConnectedHostSaveLoad();
 		}
 		SharedCoroutineStarter.StartCoroutine(CompleteHostMultiplayerLoadAfterClientReturn(filename, meta, restoreHostBundle, num > 0, flag));
 	}
@@ -702,9 +792,9 @@ internal class SaveSaveMenuPatcher
 		}
 		if (restoreHostBundle)
 		{
-			if (!KrokoshaMpSaveBundle.RestoreHostBundleToKrokoshaMpSave(SaveFolder, filename))
+			if (!MultiplayerSaveBundle.RestoreHostBundleToMultiplayerSave(SaveFolder, filename))
 			{
-				KrokoshaMpCompat.CancelConnectedHostSaveLoad();
+				MultiplayerCompat.CancelConnectedHostSaveLoad();
 				PlayerCamera main = PlayerCamera.main;
 				if (main != null)
 				{
@@ -712,13 +802,13 @@ internal class SaveSaveMenuPatcher
 				}
 				yield break;
 			}
-			KrokoshaMpSaveBundle.ApplyMetadataForLoad(meta);
+			MultiplayerSaveBundle.ApplyMetadataForLoad(meta);
 		}
 		else
 		{
-			if (!KrokoshaMpSaveBundle.StageSingleplayerSlotAsHostBundle(SaveFolder, filename, meta))
+			if (!MultiplayerSaveBundle.StageSingleplayerSlotAsHostBundle(SaveFolder, filename, meta))
 			{
-				KrokoshaMpCompat.CancelConnectedHostSaveLoad();
+				MultiplayerCompat.CancelConnectedHostSaveLoad();
 				PlayerCamera main2 = PlayerCamera.main;
 				if (main2 != null)
 				{
@@ -728,7 +818,7 @@ internal class SaveSaveMenuPatcher
 			}
 			if (meta != null)
 			{
-				KrokoshaMpSaveBundle.ApplyMetadataForLoad(meta);
+				MultiplayerSaveBundle.ApplyMetadataForLoad(meta);
 			}
 			else
 			{
@@ -739,30 +829,32 @@ internal class SaveSaveMenuPatcher
 		MultiplayerSaveLoadPatcher.MarkMultiplayerSlotLoad();
 		if (keepClientsConnected)
 		{
-			KrokoshaMpCompat.PreparePostWorldgenClientInventoryRestores();
+			MultiplayerCompat.PreparePostWorldgenClientInventoryRestores();
 		}
 		SaveSystem.loadedRun = true;
 		Time.timeScale = 1f;
 		if (keepClientsConnected)
 		{
-			KrokoshaMpCompat.AnnounceHostSaveLoadRestart();
+			MultiplayerCompat.AnnounceHostSaveLoadRestart();
 		}
 		SceneManager.LoadScene("SampleScene");
 	}
 
 	private static void DoDelete(string filename, int index)
 	{
-		string path = Path.Combine(SaveFolder, filename);
-		string path2 = Path.Combine(SaveFolder, filename + ".meta");
-		if (File.Exists(path))
+		SaveManager.DeleteSave(filename);
+		try
 		{
-			File.Delete(path);
+			MultiplayerSaveBundle.DeleteSlotExtras(SaveFolder, filename);
 		}
-		if (File.Exists(path2))
+		catch (Exception ex)
 		{
-			File.Delete(path2);
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)$"Deleted slot {index}, but could not remove all multiplayer extras: {ex.Message}");
+			}
 		}
-		KrokoshaMpSaveBundle.DeleteSlotExtras(SaveFolder, filename);
 		RefreshSlots();
 	}
 

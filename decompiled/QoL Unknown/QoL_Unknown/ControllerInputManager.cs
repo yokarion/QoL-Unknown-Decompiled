@@ -116,10 +116,34 @@ public class ControllerInputManager : MonoBehaviour
 
 	internal ControllerProfile ActiveProfile => activeProfile;
 
+	internal static ControllerInputManager EnsureInstance()
+	{
+		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0042: Expected O, but got Unknown
+		if ((Object)(object)Instance != (Object)null)
+		{
+			return Instance;
+		}
+		ControllerInputManager controllerInputManager = Object.FindObjectOfType<ControllerInputManager>();
+		if ((Object)(object)controllerInputManager != (Object)null)
+		{
+			Instance = controllerInputManager;
+			return controllerInputManager;
+		}
+		GameObject val = new GameObject("ControllerManager");
+		Object.DontDestroyOnLoad((Object)(object)val);
+		return val.AddComponent<ControllerInputManager>();
+	}
+
 	private void Awake()
 	{
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
+		if ((Object)(object)Instance != (Object)null && (Object)(object)Instance != (Object)(object)this)
+		{
+			Object.Destroy((Object)(object)((Component)this).gameObject);
+			return;
+		}
 		Instance = this;
 		Object.DontDestroyOnLoad((Object)(object)((Component)this).gameObject);
 		VirtualMousePos = new Vector3((float)Screen.width / 2f, (float)Screen.height / 2f, 0f);

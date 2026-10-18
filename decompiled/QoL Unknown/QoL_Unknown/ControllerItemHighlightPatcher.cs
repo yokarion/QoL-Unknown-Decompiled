@@ -10,17 +10,11 @@ internal class ControllerItemHighlightPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
-		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002b: Expected O, but got Unknown
 		Logger = logger;
-		GameObject val = new GameObject("ItemHighlightManager");
-		Object.DontDestroyOnLoad((Object)(object)val);
-		val.AddComponent<ItemHighlightManager>();
-		Harmony val2 = new Harmony("org.bepinex.plugins.qol.itemhighlight");
-		val2.PatchAll(typeof(ControllerItemHighlightPatcher));
-		Logger.LogInfo((object)"... with its patchers initialized");
+		ItemHighlightManager.EnsureInstance();
+		if (!RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.itemhighlight", typeof(ControllerItemHighlightPatcher), logger))
+		{
+		}
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "Update")]

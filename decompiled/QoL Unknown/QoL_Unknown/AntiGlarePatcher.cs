@@ -106,7 +106,6 @@ internal class AntiGlarePatcher
 			RefreshSettingsFromPrefs();
 			SweepAllLights();
 		};
-		Logger.LogInfo((object)"AntiGlarePatcher initialized");
 	}
 
 	private static void LoadSavedSettings()

@@ -25,7 +25,6 @@ internal class StructureSpawnPatcher
 		StructureSpawnManager.LoadMultipliers();
 		Harmony val = new Harmony("org.bepinex.plugins.qol.structurespawn");
 		val.PatchAll(typeof(StructureSpawnPatcher));
-		Logger.LogInfo((object)"StructureSpawnPatcher initialized");
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "GenerateObjectAtPos")]
@@ -167,7 +166,7 @@ internal class StructureSpawnPatcher
 
 	private static bool ShouldBypassStructureSpawnPatches()
 	{
-		return KrokoshaMpCompat.IsActive;
+		return MultiplayerCompat.IsActive;
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "GenerateLifePods")]

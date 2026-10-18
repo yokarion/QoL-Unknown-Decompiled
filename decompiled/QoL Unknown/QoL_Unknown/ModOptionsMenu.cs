@@ -140,6 +140,25 @@ public static class ModOptionsMenu
 		return CustomCategories.ToList();
 	}
 
+	internal static List<ModCustomSettingDefinition> GetVisibleCustomDefinitions(SettingCategory? category = null)
+	{
+		return CustomDefinitions.Where((ModCustomSettingDefinition definition) => definition != null && (!category.HasValue || definition.Category == category.Value) && (definition.IsVisible == null || definition.IsVisible())).ToList();
+	}
+
+	internal static bool TryGetCustomCategoryDisplayName(SettingCategory category, out string displayName)
+	{
+		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
+		ModOptionCategoryEntry modOptionCategoryEntry = CustomCategories.FirstOrDefault((ModOptionCategoryEntry candidate) => candidate != null && candidate.CategoryIndex == (int)category);
+		if (modOptionCategoryEntry != null)
+		{
+			displayName = modOptionCategoryEntry.DisplayName;
+			return true;
+		}
+		displayName = null;
+		return false;
+	}
+
 	internal static bool TryGetLiteralLocale(string key, out string value)
 	{
 		return LiteralLocale.TryGetValue(key, out value);

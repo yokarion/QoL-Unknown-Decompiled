@@ -19,13 +19,13 @@ public static class LocaleDownloader
 		public string FileName;
 	}
 
-	private const string API_URL = "https://api.github.com/repos/Orsoniks/scavgame-locale/contents/";
+	private const string API_URL = "https://api.github.com/repos/Orsoniks/scavgame-locale/contents/demo";
 
 	public static List<RemoteLocaleInfo> AvailableLocales = new List<RemoteLocaleInfo>();
 
 	public static IEnumerator FetchLocaleList(Action<bool> onComplete)
 	{
-		UnityWebRequest www = UnityWebRequest.Get("https://api.github.com/repos/Orsoniks/scavgame-locale/contents/");
+		UnityWebRequest www = UnityWebRequest.Get("https://api.github.com/repos/Orsoniks/scavgame-locale/contents/demo");
 		try
 		{
 			www.SetRequestHeader("User-Agent", "CasualtiesUnknown-Mod");

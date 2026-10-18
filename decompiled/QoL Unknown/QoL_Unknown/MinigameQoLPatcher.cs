@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Text;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -17,16 +18,14 @@ internal class MinigameQoLPatcher
 
 	private const int KeypadMaxDigitsInclusive = 9;
 
+	private static FieldInfo openableCodeField;
+
 	public static void Initialize(ManualLogSource logger)
 	{
 		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000c: Expected O, but got Unknown
 		Harmony val = new Harmony("org.bepinex.plugins.qol.minigame");
 		val.PatchAll(typeof(MinigameQoLPatcher));
-		if (logger != null)
-		{
-			logger.LogInfo((object)"MinigameQoLPatcher initialized");
-		}
 	}
 
 	private static bool MinigameQoLEnabled()
@@ -46,7 +45,7 @@ internal class MinigameQoLPatcher
 
 	[HarmonyPatch(typeof(LockpingMinigame), "Update")]
 	[HarmonyPriority(800)]
-	[HarmonyBefore(new string[] { "KrokoshaCasualtiesMP" })]
+	[HarmonyBefore(new string[] { "CasualtiesMP" })]
 	[HarmonyPrefix]
 	private static void LockpingMinigame_Update_Prefix(LockpingMinigame __instance)
 	{
@@ -80,5 +79,147 @@ internal class MinigameQoLPatcher
 		}
 		__result = stringBuilder.ToString();
 		return false;
+	}
+
+	[HarmonyPatch(typeof(Openable), "OnUse")]
+	[HarmonyPrefix]
+	private static bool Openable_OnUse_Prefix(Openable __instance)
+	{
+		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010e: Expected O, but got Unknown
+		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ab: Expected O, but got Unknown
+		if (__instance.instantOpen)
+		{
+			((Component)__instance).GetComponent<BuildingEntity>().health = 0f;
+			return false;
+		}
+		if (__instance.isKeypad)
+		{
+			if (openableCodeField == null)
+			{
+				openableCodeField = AccessTools.Field(typeof(Openable), "code");
+			}
+			string text = (string)openableCodeField.GetValue(__instance);
+			if (string.IsNullOrEmpty(text))
+			{
+				text = KeypadMinigame.GenerateCode();
+				openableCodeField.SetValue(__instance, text);
+			}
+			MinigameBase.main.StartMinigame((Minigame)new KeypadMinigame(((Component)__instance).GetComponent<BuildingEntity>(), text), (Item)null);
+			return false;
+		}
+		Item val = FindByIdEverywhere(PlayerCamera.main.body, "lockpickingkit");
+		if (PlayerCamera.main.body.skills.INT < 10)
+		{
+			val = null;
+		}
+		MinigameBase.main.StartMinigame((Minigame)new LockpingMinigame(((Component)__instance).GetComponent<BuildingEntity>(), __instance.lockpickAnglePrecision * WorldGeneration.GetRunSettingFloat("lockpickprecision")), val);
+		return false;
+	}
+
+	[HarmonyPatch(typeof(PlayerCamera), "WoundSpecialAction")]
+	[HarmonyPrefix]
+	private static bool PlayerCamera_WoundSpecialAction_Prefix(PlayerCamera __instance)
+	{
+		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a0: Expected O, but got Unknown
+		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0144: Expected O, but got Unknown
+		//IL_015a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015f: Unknown result type (might be due to invalid IL or missing references)
+		if (!__instance.body.allowUseItem)
+		{
+			__instance.UseFailUnhappiness();
+			return false;
+		}
+		if (!__instance.body.conscious)
+		{
+			return false;
+		}
+		Limb selectedLimb = __instance.selectedLimb;
+		TourniquetScript val = default(TourniquetScript);
+		if (((Component)selectedLimb).TryGetComponent<TourniquetScript>(ref val))
+		{
+			val.TakeOff();
+		}
+		else if (selectedLimb.hasShrapnel)
+		{
+			Item val2 = FindByIdEverywhere(__instance.body, "tweezers");
+			bool flag = (Object)(object)val2 != (Object)null;
+			MinigameBase.main.StartMinigame((Minigame)new ShrapnelMinigame(selectedLimb, flag), val2);
+			if (flag)
+			{
+				val2.condition -= 0.01f;
+				Sound.Play("tweezeruse", Vector2.op_Implicit(((Component)__instance.body).transform.position), false, true, (Transform)null, 1f, 1f, false, false);
+			}
+		}
+		SplintLimb val3 = default(SplintLimb);
+		if (((Component)selectedLimb).TryGetComponent<SplintLimb>(ref val3))
+		{
+			val3.TakeOff();
+		}
+		else if (selectedLimb.dislocated)
+		{
+			Item val4 = FindByIdEverywhere(__instance.body, "wrench");
+			bool flag2 = (Object)(object)val4 != (Object)null;
+			MinigameBase.main.StartMinigame((Minigame)new DislocationMinigame(selectedLimb, flag2), val4);
+			if (flag2)
+			{
+				Sound.Play("wrenchhit", Vector2.op_Implicit(((Component)val4).transform.position), false, true, (Transform)null, 1f, 1f, false, false);
+			}
+		}
+		return false;
+	}
+
+	private static Item FindByIdEverywhere(Body body, string id)
+	{
+		for (int i = 0; i < body.slots.Length; i++)
+		{
+			Item val = FindInItemTree(body.GetItem(i), id);
+			if ((Object)(object)val != (Object)null)
+			{
+				return val;
+			}
+		}
+		foreach (Item allWearable in body.GetAllWearables())
+		{
+			Item val2 = FindInItemTree(allWearable, id);
+			if ((Object)(object)val2 != (Object)null)
+			{
+				return val2;
+			}
+		}
+		return null;
+	}
+
+	private static Item FindInItemTree(Item item, string id)
+	{
+		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005c: Expected O, but got Unknown
+		if ((Object)(object)item == (Object)null)
+		{
+			return null;
+		}
+		if (item.id == id)
+		{
+			return item;
+		}
+		if ((Object)(object)((Component)item).GetComponent<Container>() == (Object)null)
+		{
+			return null;
+		}
+		foreach (Transform item2 in ((Component)item).transform)
+		{
+			Transform val = item2;
+			Item val2 = FindInItemTree(((Component)val).GetComponent<Item>(), id);
+			if ((Object)(object)val2 != (Object)null)
+			{
+				return val2;
+			}
+		}
+		return null;
 	}
 }

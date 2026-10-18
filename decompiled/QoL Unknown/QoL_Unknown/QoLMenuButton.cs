@@ -71,7 +71,7 @@ public class QoLMenuButton : MonoBehaviour
 		{
 			((Graphic)label).color = Color.Lerp(((Graphic)label).color, new Color(1f, 1f, 1f, num2), Time.unscaledDeltaTime * 3f);
 		}
-		if (Input.GetMouseButtonDown(0) && num <= 0f)
+		if (Input.GetMouseButtonDown(0) && num <= 0f && !MultiplayerCompat.IsMultiplayerMenuOpen)
 		{
 			UnityAction qoLToggleAction = QoLSettingsMenu.QoLToggleAction;
 			if (qoLToggleAction != null)

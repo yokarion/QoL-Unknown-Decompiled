@@ -16,13 +16,16 @@ internal class RecipeFixPatcher
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.recipefix");
 		val.PatchAll(typeof(RecipeFixPatcher));
-		Logger.LogInfo((object)"RecipeFixPatcher initialized");
 	}
 
 	[HarmonyPatch(typeof(RecipeItem), "GetMatchingItem")]
 	[HarmonyPrefix]
 	private static bool GetMatchingItem_Prefix(RecipeItem __instance, List<Item> items, List<Item> exclusions, ref Item __result)
 	{
+		if (!__instance.isLiquid || __instance.specificId != "biochem" || (MultiplayerCompat.IsActive && MultiplayerCompat.IsClient))
+		{
+			return true;
+		}
 		bool flag = ShouldPrioritizeBestToolQuality(__instance);
 		Item val = null;
 		float num = float.MinValue;
@@ -31,7 +34,7 @@ internal class RecipeFixPatcher
 		Container val3 = default(Container);
 		foreach (Item item in items)
 		{
-			if (item.favourited || exclusions.Contains(item))
+			if (item.favourited || (item.id == __instance.ignoredId && !__instance.isLiquid) || exclusions.Contains(item))
 			{
 				continue;
 			}
@@ -96,6 +99,10 @@ internal class RecipeFixPatcher
 
 	private static bool ShouldPrioritizeBestToolQuality(RecipeItem ingredient)
 	{
+		if (PlayerPrefs.GetInt("Setting_BestToolByEfficiency", 1) != 1)
+		{
+			return false;
+		}
 		string text = ingredient?.quality?.id;
 		return text == "hammering" || text == "cutting";
 	}

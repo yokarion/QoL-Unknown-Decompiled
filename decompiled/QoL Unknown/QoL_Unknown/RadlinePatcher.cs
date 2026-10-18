@@ -26,7 +26,6 @@ internal static class RadlinePatcher
 			initialized = true;
 			Harmony val = new Harmony("org.bepinex.plugins.qol.radline");
 			val.PatchAll(typeof(RadlinePatcher));
-			Logger.LogInfo((object)"RadlinePatcher initialized");
 		}
 	}
 

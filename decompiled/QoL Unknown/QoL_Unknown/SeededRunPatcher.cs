@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using BepInEx.Bootstrap;
@@ -10,6 +11,139 @@ namespace QoL_Unknown;
 
 internal class SeededRunPatcher
 {
+	private struct RngScopeState
+	{
+		public bool Active;
+
+		public State PreviousState;
+
+		public Random PreviousWorldGenRng;
+
+		public string PreviousGenerationPhase;
+	}
+
+	private sealed class SeededCoroutine : IEnumerator, IDisposable
+	{
+		private readonly IEnumerator inner;
+
+		private readonly Action onCompleted;
+
+		private State phaseState;
+
+		private Random phaseRng;
+
+		private readonly string phase;
+
+		private bool completed;
+
+		public object Current => inner.Current;
+
+		public SeededCoroutine(IEnumerator inner, int seed, string phase, Action onCompleted)
+		{
+			//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+			//IL_002d: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0032: Unknown result type (might be due to invalid IL or missing references)
+			//IL_003c: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0041: Unknown result type (might be due to invalid IL or missing references)
+			this.inner = inner ?? throw new ArgumentNullException("inner");
+			this.phase = phase;
+			this.onCompleted = onCompleted;
+			State state = Random.state;
+			try
+			{
+				Random.InitState(seed);
+				phaseState = Random.state;
+				phaseRng = new Random(seed);
+			}
+			finally
+			{
+				Random.state = state;
+			}
+		}
+
+		public bool MoveNext()
+		{
+			//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0079: Unknown result type (might be due to invalid IL or missing references)
+			//IL_007e: Unknown result type (might be due to invalid IL or missing references)
+			//IL_008e: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0015: Unknown result type (might be due to invalid IL or missing references)
+			State state = Random.state;
+			Random worldGenRng = _worldGenRng;
+			string currentGenerationPhase = _currentGenerationPhase;
+			try
+			{
+				Random.state = phaseState;
+				_worldGenRng = phaseRng;
+				_currentGenerationPhase = phase;
+				bool flag = inner.MoveNext();
+				if (!flag && !completed)
+				{
+					completed = true;
+					onCompleted?.Invoke();
+				}
+				return flag;
+			}
+			finally
+			{
+				phaseState = Random.state;
+				phaseRng = _worldGenRng;
+				Random.state = state;
+				_worldGenRng = worldGenRng;
+				_currentGenerationPhase = currentGenerationPhase;
+			}
+		}
+
+		public void Reset()
+		{
+			throw new NotSupportedException();
+		}
+
+		public void Dispose()
+		{
+			(inner as IDisposable)?.Dispose();
+		}
+	}
+
+	private sealed class CompletionCoroutine : IEnumerator, IDisposable
+	{
+		private readonly IEnumerator inner;
+
+		private readonly Action onCompleted;
+
+		private bool completed;
+
+		public object Current => inner.Current;
+
+		public CompletionCoroutine(IEnumerator inner, Action onCompleted)
+		{
+			this.inner = inner ?? throw new ArgumentNullException("inner");
+			this.onCompleted = onCompleted;
+		}
+
+		public bool MoveNext()
+		{
+			bool flag = inner.MoveNext();
+			if (!flag && !completed)
+			{
+				completed = true;
+				onCompleted?.Invoke();
+			}
+			return flag;
+		}
+
+		public void Reset()
+		{
+			throw new NotSupportedException();
+		}
+
+		public void Dispose()
+		{
+			(inner as IDisposable)?.Dispose();
+		}
+	}
+
 	private static ManualLogSource Logger;
 
 	private const float ElderSpawnSafeRadius = 45f;
@@ -46,7 +180,6 @@ internal class SeededRunPatcher
 		{
 			PatchCustomStructures(val);
 		}
-		Logger.LogInfo((object)"SeededRunPatcher initialized");
 	}
 
 	private static int GetLayerSeed()
@@ -66,9 +199,105 @@ internal class SeededRunPatcher
 		_currentGenerationPhase = phase;
 	}
 
+	private static RngScopeState BeginRngScope(int seed, string phase, bool resetIsolatedRng = true)
+	{
+		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		RngScopeState result = new RngScopeState
+		{
+			Active = true,
+			PreviousState = Random.state,
+			PreviousWorldGenRng = _worldGenRng,
+			PreviousGenerationPhase = _currentGenerationPhase
+		};
+		Random.InitState(seed);
+		if (resetIsolatedRng)
+		{
+			InitializeWorldGenRng(seed, phase);
+		}
+		return result;
+	}
+
+	private static RngScopeState BeginGenerationRng(int seed, string phase, bool resetIsolatedRng = true)
+	{
+		if (!ShouldUseScopedRng())
+		{
+			Random.InitState(seed);
+			if (resetIsolatedRng)
+			{
+				InitializeWorldGenRng(seed, phase);
+			}
+			return default(RngScopeState);
+		}
+		return BeginRngScope(seed, phase, resetIsolatedRng);
+	}
+
+	private static Exception EndRngScope(Exception exception, RngScopeState state)
+	{
+		//IL_000e: Unknown result type (might be due to invalid IL or missing references)
+		if (state.Active)
+		{
+			try
+			{
+				Random.state = state.PreviousState;
+				_worldGenRng = state.PreviousWorldGenRng;
+				_currentGenerationPhase = state.PreviousGenerationPhase;
+			}
+			catch (Exception arg)
+			{
+				ManualLogSource logger = Logger;
+				if (logger != null)
+				{
+					logger.LogError((object)$"[SeededRun] Failed to restore Unity RNG state: {arg}");
+				}
+			}
+		}
+		return exception;
+	}
+
+	private static void WrapSeededCoroutine(ref IEnumerator result, int seed, string phase, Action onCompleted = null)
+	{
+		if (result == null)
+		{
+			return;
+		}
+		if (!ShouldUseScopedRng())
+		{
+			Random.InitState(seed);
+			InitializeWorldGenRng(seed, phase);
+			if (onCompleted != null)
+			{
+				result = new CompletionCoroutine(result, onCompleted);
+			}
+		}
+		else
+		{
+			result = new SeededCoroutine(result, seed, phase, onCompleted);
+		}
+	}
+
 	private static bool ShouldUseQoLSeededWorldgen()
 	{
-		return SeedManager.IsSeeded && !KrokoshaMpCompat.IsActive;
+		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0036: Invalid comparison between Unknown and I4
+		if (!SeedManager.IsSeeded)
+		{
+			return false;
+		}
+		if (MultiplayerCompat.IsActive)
+		{
+			return false;
+		}
+		if ((Object)(object)WorldGeneration.world != (Object)null && (int)WorldGeneration.world.biomeOverride == 2)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	private static bool ShouldUseScopedRng()
+	{
+		return SeedManager.SeedFormatVersion >= 2;
 	}
 
 	private static int ComposeDistributeEntitySeed(GameObject basObj, float minPerChunk, float maxPerChunk, int callIndex)
@@ -123,7 +352,16 @@ internal class SeededRunPatcher
 	[HarmonyPrefix]
 	private static void WorldGen_Start_Prefix()
 	{
-		if (KrokoshaMpCompat.IsActive)
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Invalid comparison between Unknown and I4
+		if (MultiplayerCompat.IsActive)
+		{
+			_worldGenRng = null;
+			_noiseGenStep = 0;
+			_distributeEntitiesCallIndex = 0;
+			return;
+		}
+		if ((Object)(object)WorldGeneration.world != (Object)null && (int)WorldGeneration.world.biomeOverride == 2)
 		{
 			_worldGenRng = null;
 			_noiseGenStep = 0;
@@ -134,7 +372,7 @@ internal class SeededRunPatcher
 		{
 			Logger.LogInfo((object)$"[SeededRun] Migrated save had seed 0, assigned random seed {SeedManager.CurrentSeed}");
 		}
-		if (ShouldUseQoLSeededWorldgen())
+		if (ShouldUseQoLSeededWorldgen() && !ShouldUseScopedRng())
 		{
 			Random.InitState(GetLayerSeed());
 			InitializeWorldGenRng(GetLayerSeed(), "Start");
@@ -142,16 +380,15 @@ internal class SeededRunPatcher
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "GenerateWorld")]
-	[HarmonyPrefix]
-	private static void GenerateWorld_Prefix()
+	[HarmonyPostfix]
+	private static void GenerateWorld_Postfix(ref IEnumerator __result)
 	{
 		if (ShouldUseQoLSeededWorldgen())
 		{
 			_noiseGenStep = 0;
 			_distributeEntitiesCallIndex = 0;
-			int num = GetLayerSeed() + 1000;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "GenerateWorld");
+			int seed = GetLayerSeed() + 1000;
+			WrapSeededCoroutine(ref __result, seed, "GenerateWorld");
 		}
 	}
 
@@ -167,105 +404,87 @@ internal class SeededRunPatcher
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "WorldPreprocess")]
-	[HarmonyPrefix]
-	private static void WorldPreprocess_Prefix()
+	[HarmonyPostfix]
+	private static void WorldPreprocess_Postfix(ref IEnumerator __result)
 	{
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 2000;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "WorldPreprocess");
+			WrapSeededCoroutine(ref __result, GetLayerSeed() + 2000, "WorldPreprocess");
 		}
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "WorldCreateBackground")]
-	[HarmonyPrefix]
-	private static void WorldCreateBackground_Prefix()
+	[HarmonyPostfix]
+	private static void WorldCreateBackground_Postfix(ref IEnumerator __result)
 	{
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 3000;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "WorldCreateBackground");
+			WrapSeededCoroutine(ref __result, GetLayerSeed() + 3000, "WorldCreateBackground");
 		}
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "WorldGenerateTerrain")]
-	[HarmonyPrefix]
-	private static void WorldGenerateTerrain_Prefix()
+	[HarmonyPostfix]
+	private static void WorldGenerateTerrain_Postfix(ref IEnumerator __result)
 	{
 		if (ShouldUseQoLSeededWorldgen())
 		{
 			_noiseGenStep = 0;
-			int num = GetLayerSeed() + 4000;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "WorldGenerateTerrain");
+			WrapSeededCoroutine(ref __result, GetLayerSeed() + 4000, "WorldGenerateTerrain");
 		}
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "WorldGenerateWorldBorders")]
-	[HarmonyPrefix]
-	private static void WorldGenerateWorldBorders_Prefix()
+	[HarmonyPostfix]
+	private static void WorldGenerateWorldBorders_Postfix(ref IEnumerator __result)
 	{
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 4500;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "WorldGenerateWorldBorders");
+			WrapSeededCoroutine(ref __result, GetLayerSeed() + 4500, "WorldGenerateWorldBorders");
 		}
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "WorldGenerateStructures")]
-	[HarmonyPrefix]
-	private static void WorldGenerateStructures_Prefix()
+	[HarmonyPostfix]
+	private static void WorldGenerateStructures_Postfix(ref IEnumerator __result)
 	{
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 5000;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "WorldGenerateStructures");
+			WrapSeededCoroutine(ref __result, GetLayerSeed() + 5000, "WorldGenerateStructures");
 		}
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "WorldPlacePlayer")]
-	[HarmonyPrefix]
-	private static void WorldPlacePlayer_Prefix()
+	[HarmonyPostfix]
+	private static void WorldPlacePlayer_Postfix(ref IEnumerator __result)
 	{
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 6000;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "WorldPlacePlayer");
+			WrapSeededCoroutine(ref __result, GetLayerSeed() + 6000, "WorldPlacePlayer");
 		}
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "WorldPlaceEntities")]
-	[HarmonyPrefix]
-	private static void WorldPlaceEntities_Prefix()
+	[HarmonyPostfix]
+	private static void WorldPlaceEntities_Postfix(ref IEnumerator __result)
 	{
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 7000;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "WorldPlaceEntities");
-		}
-	}
-
-	[HarmonyPatch(typeof(WorldGeneration), "FinishWorldGeneration")]
-	[HarmonyPrefix]
-	private static void FinishWorldGeneration_Prefix()
-	{
-		if (ShouldUseQoLSeededWorldgen())
-		{
-			int num = GetLayerSeed() + 8000;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "FinishWorldGeneration");
+			WrapSeededCoroutine(ref __result, GetLayerSeed() + 7000, "WorldPlaceEntities");
 		}
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "FinishWorldGeneration")]
 	[HarmonyPostfix]
-	private static void FinishWorldGeneration_Postfix()
+	private static void FinishWorldGeneration_RngPostfix(ref IEnumerator __result)
+	{
+		if (ShouldUseQoLSeededWorldgen())
+		{
+			WrapSeededCoroutine(ref __result, GetLayerSeed() + 8000, "FinishWorldGeneration", FinishWorldGeneration_Completed);
+		}
+	}
+
+	private static void FinishWorldGeneration_Completed()
 	{
 		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
@@ -296,205 +515,269 @@ internal class SeededRunPatcher
 
 	[HarmonyPatch(typeof(WorldGeneration), "GenerateLifePods")]
 	[HarmonyPrefix]
-	private static void GenerateLifePods_Prefix(float amt)
+	private static void GenerateLifePods_Prefix(float amt, out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 5100 + (int)(amt * 1000f);
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "GenerateLifePods");
+			int seed = GetLayerSeed() + 5100 + (int)(amt * 1000f);
+			__state = BeginGenerationRng(seed, "GenerateLifePods");
 		}
+	}
+
+	[HarmonyPatch(typeof(WorldGeneration), "GenerateLifePods")]
+	[HarmonyFinalizer]
+	private static Exception GenerateLifePods_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "GenerateDropCapsules")]
 	[HarmonyPrefix]
-	private static void GenerateDropCapsules_Prefix(float amt)
+	private static void GenerateDropCapsules_Prefix(float amt, out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 5200 + (int)(amt * 1000f);
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "GenerateDropCapsules");
+			int seed = GetLayerSeed() + 5200 + (int)(amt * 1000f);
+			__state = BeginGenerationRng(seed, "GenerateDropCapsules");
 		}
+	}
+
+	[HarmonyPatch(typeof(WorldGeneration), "GenerateDropCapsules")]
+	[HarmonyFinalizer]
+	private static Exception GenerateDropCapsules_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "GenerateCollapsedPods")]
 	[HarmonyPrefix]
-	private static void GenerateCollapsedPods_Prefix(float amt)
+	private static void GenerateCollapsedPods_Prefix(float amt, out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 5300 + (int)(amt * 1000f);
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "GenerateCollapsedPods");
+			int seed = GetLayerSeed() + 5300 + (int)(amt * 1000f);
+			__state = BeginGenerationRng(seed, "GenerateCollapsedPods");
 		}
+	}
+
+	[HarmonyPatch(typeof(WorldGeneration), "GenerateCollapsedPods")]
+	[HarmonyFinalizer]
+	private static Exception GenerateCollapsedPods_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "GenerateOres")]
 	[HarmonyPrefix]
-	private static void GenerateOres_Prefix()
+	private static void GenerateOres_Prefix(out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 5400;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "GenerateOres");
+			__state = BeginGenerationRng(GetLayerSeed() + 5400, "GenerateOres");
 		}
+	}
+
+	[HarmonyPatch(typeof(WorldGeneration), "GenerateOres")]
+	[HarmonyFinalizer]
+	private static Exception GenerateOres_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "GenerateTree")]
 	[HarmonyPrefix]
-	private static void GenerateTree_Prefix(Vector2Int pos)
+	private static void GenerateTree_Prefix(Vector2Int pos, out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 5500 + ((Vector2Int)(ref pos)).x * 31 + ((Vector2Int)(ref pos)).y * 17;
-			Random.InitState(num);
+			int seed = GetLayerSeed() + 5500 + ((Vector2Int)(ref pos)).x * 31 + ((Vector2Int)(ref pos)).y * 17;
+			__state = BeginGenerationRng(seed, "GenerateTree", resetIsolatedRng: false);
 		}
+	}
+
+	[HarmonyPatch(typeof(WorldGeneration), "GenerateTree")]
+	[HarmonyFinalizer]
+	private static Exception GenerateTree_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "GenerateBigMushroom")]
 	[HarmonyPrefix]
-	private static void GenerateBigMushroom_Prefix(Vector2Int pos)
+	private static void GenerateBigMushroom_Prefix(Vector2Int pos, out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 5600 + ((Vector2Int)(ref pos)).x * 31 + ((Vector2Int)(ref pos)).y * 17;
-			Random.InitState(num);
+			int seed = GetLayerSeed() + 5600 + ((Vector2Int)(ref pos)).x * 31 + ((Vector2Int)(ref pos)).y * 17;
+			__state = BeginGenerationRng(seed, "GenerateBigMushroom", resetIsolatedRng: false);
 		}
+	}
+
+	[HarmonyPatch(typeof(WorldGeneration), "GenerateBigMushroom")]
+	[HarmonyFinalizer]
+	private static Exception GenerateBigMushroom_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "ApplyLayerModifiers")]
 	[HarmonyPrefix]
-	private static void ApplyLayerModifiers_Prefix()
+	private static void ApplyLayerModifiers_Prefix(out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 10000;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "ApplyLayerModifiers");
+			__state = BeginGenerationRng(GetLayerSeed() + 10000, "ApplyLayerModifiers");
 		}
+	}
+
+	[HarmonyPatch(typeof(WorldGeneration), "ApplyLayerModifiers")]
+	[HarmonyFinalizer]
+	private static Exception ApplyLayerModifiers_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "DistributeEntities")]
 	[HarmonyPrefix]
-	private static void DistributeEntities_Prefix(GameObject basObj, float minPerChunk, float maxPerChunk)
+	private static void DistributeEntities_Prefix(GameObject basObj, float minPerChunk, float maxPerChunk, out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen() && !((Object)(object)basObj == (Object)null))
 		{
-			int num = ComposeDistributeEntitySeed(basObj, minPerChunk, maxPerChunk, _distributeEntitiesCallIndex++);
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "DistributeEntities_" + ((Object)basObj).name);
+			int seed = ComposeDistributeEntitySeed(basObj, minPerChunk, maxPerChunk, _distributeEntitiesCallIndex++);
+			__state = BeginGenerationRng(seed, "DistributeEntities_" + ((Object)basObj).name);
 		}
+	}
+
+	[HarmonyPatch(typeof(WorldGeneration), "DistributeEntities")]
+	[HarmonyFinalizer]
+	private static Exception DistributeEntities_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "PlaceLiquids")]
 	[HarmonyPrefix]
-	private static void PlaceLiquids_Prefix(float perChunk, byte type, int maxFill)
+	private static void PlaceLiquids_Prefix(float perChunk, byte type, int maxFill, out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 9000 + type * 100 + maxFill;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, $"PlaceLiquids_Type{type}");
+			int seed = GetLayerSeed() + 9000 + type * 100 + maxFill;
+			__state = BeginGenerationRng(seed, $"PlaceLiquids_Type{type}");
 		}
+	}
+
+	[HarmonyPatch(typeof(WorldGeneration), "PlaceLiquids")]
+	[HarmonyFinalizer]
+	private static Exception PlaceLiquids_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(TraderScript), "GenerateInventory")]
 	[HarmonyPrefix]
-	private static void Trader_GenerateInv_Prefix(TraderScript __instance, ref State __state)
+	private static void Trader_GenerateInv_Prefix(TraderScript __instance, out RngScopeState __state)
 	{
-		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004a: Unknown result type (might be due to invalid IL or missing references)
-		if (ShouldUseQoLSeededWorldgen())
+		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		__state = default(RngScopeState);
+		if (ShouldUseQoLSeededWorldgen() && !((Object)(object)__instance == (Object)null))
 		{
-			__state = Random.state;
-			int num = GetLayerSeed() + __instance.character * 1000 + (int)(((Component)__instance).transform.position.x * 10f) + (int)(((Component)__instance).transform.position.y * 10f);
-			Random.InitState(num);
+			int seed = GetLayerSeed() + __instance.character * 1000 + (int)(((Component)__instance).transform.position.x * 10f) + (int)(((Component)__instance).transform.position.y * 10f);
+			__state = BeginGenerationRng(seed, "TraderInventory", resetIsolatedRng: false);
 		}
 	}
 
 	[HarmonyPatch(typeof(TraderScript), "GenerateInventory")]
-	[HarmonyPostfix]
-	private static void Trader_GenerateInv_Postfix(State __state)
+	[HarmonyFinalizer]
+	private static Exception Trader_GenerateInv_Finalizer(Exception __exception, RngScopeState __state)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		if (ShouldUseQoLSeededWorldgen())
-		{
-			Random.state = __state;
-		}
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(Openable), "OnUse")]
 	[HarmonyPrefix]
-	private static void Openable_OnUse_Prefix(Openable __instance, ref State __state)
+	private static void Openable_OnUse_Prefix(Openable __instance, out RngScopeState __state)
 	{
-		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
-		if (ShouldUseQoLSeededWorldgen())
+		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
+		__state = default(RngScopeState);
+		if (ShouldUseQoLSeededWorldgen() && !((Object)(object)__instance == (Object)null))
 		{
-			__state = Random.state;
 			int num = (int)(((Component)__instance).transform.position.x * 100f) ^ (int)(((Component)__instance).transform.position.y * 100f);
-			int num2 = GetLayerSeed() ^ num;
-			Random.InitState(num2);
+			int seed = GetLayerSeed() ^ num;
+			__state = BeginGenerationRng(seed, "Openable", resetIsolatedRng: false);
 		}
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "PlaceCrystals")]
 	[HarmonyPrefix]
-	private static void PlaceCrystals_Prefix()
+	private static void PlaceCrystals_Prefix(out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 9100;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "PlaceCrystals");
+			__state = BeginGenerationRng(GetLayerSeed() + 9100, "PlaceCrystals");
 		}
+	}
+
+	[HarmonyPatch(typeof(WorldGeneration), "PlaceCrystals")]
+	[HarmonyFinalizer]
+	private static Exception PlaceCrystals_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "DistributeMiniBarrels")]
 	[HarmonyPrefix]
-	private static void DistributeMiniBarrels_Prefix()
+	private static void DistributeMiniBarrels_Prefix(out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 9200;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "DistributeMiniBarrels");
+			__state = BeginGenerationRng(GetLayerSeed() + 9200, "DistributeMiniBarrels");
 		}
 	}
 
-	[HarmonyPatch(typeof(Openable), "OnUse")]
-	[HarmonyPostfix]
-	private static void Openable_OnUse_Postfix(State __state)
+	[HarmonyPatch(typeof(WorldGeneration), "DistributeMiniBarrels")]
+	[HarmonyFinalizer]
+	private static Exception DistributeMiniBarrels_Finalizer(Exception __exception, RngScopeState __state)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		if (ShouldUseQoLSeededWorldgen())
-		{
-			Random.state = __state;
-		}
+		return EndRngScope(__exception, __state);
+	}
+
+	[HarmonyPatch(typeof(Openable), "OnUse")]
+	[HarmonyFinalizer]
+	private static Exception Openable_OnUse_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "ContinueRun")]
 	[HarmonyPrefix]
-	private static void ContinueRun_Prefix()
+	private static void ContinueRun_Prefix(out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
 			_distributeEntitiesCallIndex = 0;
-			Random.InitState(GetLayerSeed());
-			InitializeWorldGenRng(GetLayerSeed(), "ContinueRun");
+			__state = BeginGenerationRng(GetLayerSeed(), "ContinueRun");
 		}
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "ContinueRun")]
 	[HarmonyFinalizer]
-	private static Exception ContinueRun_Finalizer(Exception __exception)
+	private static Exception ContinueRun_Finalizer(Exception __exception, RngScopeState __state)
 	{
+		__exception = EndRngScope(__exception, __state);
 		if (__exception == null)
 		{
 			return null;
@@ -534,21 +817,21 @@ internal class SeededRunPatcher
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "InstantiateWorld")]
-	[HarmonyPrefix]
-	private static void InstantiateWorld_Prefix()
+	[HarmonyPostfix]
+	private static void InstantiateWorld_Postfix(ref IEnumerator __result)
 	{
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 500;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "InstantiateWorld");
+			WrapSeededCoroutine(ref __result, GetLayerSeed() + 500, "InstantiateWorld");
 		}
 	}
 
 	private static void PatchCustomStructures(Harmony harmony)
 	{
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005d: Expected O, but got Unknown
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Expected O, but got Unknown
+		//IL_007b: Expected O, but got Unknown
 		try
 		{
 			Type type = AccessTools.TypeByName("More_Structures.WorldGenerationPatcher");
@@ -558,7 +841,8 @@ internal class SeededRunPatcher
 				if (methodInfo != null)
 				{
 					MethodInfo method = typeof(SeededRunPatcher).GetMethod("CustomStructure_Prefix", BindingFlags.Static | BindingFlags.NonPublic);
-					harmony.Patch((MethodBase)methodInfo, new HarmonyMethod(method), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
+					MethodInfo method2 = typeof(SeededRunPatcher).GetMethod("CustomStructure_Finalizer", BindingFlags.Static | BindingFlags.NonPublic);
+					harmony.Patch((MethodBase)methodInfo, new HarmonyMethod(method), (HarmonyMethod)null, (HarmonyMethod)null, new HarmonyMethod(method2), (HarmonyMethod)null);
 				}
 			}
 		}
@@ -567,14 +851,19 @@ internal class SeededRunPatcher
 		}
 	}
 
-	private static void CustomStructure_Prefix()
+	private static void CustomStructure_Prefix(out RngScopeState __state)
 	{
+		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen())
 		{
-			int num = GetLayerSeed() + 99999;
-			Random.InitState(num);
-			InitializeWorldGenRng(num, "CustomStructures");
+			int seed = GetLayerSeed() + 99999;
+			__state = BeginGenerationRng(seed, "CustomStructures");
 		}
+	}
+
+	private static Exception CustomStructure_Finalizer(Exception __exception, RngScopeState __state)
+	{
+		return EndRngScope(__exception, __state);
 	}
 
 	private static void KeepEldersAwayFromSpawn(Vector2 spawnPos, float minRadius)
@@ -677,13 +966,13 @@ internal class SeededRunPatcher
 		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
 		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)PlayerCamera.main == (Object)null || (Object)(object)PlayerCamera.main.body == (Object)null)
 		{
 			return;
@@ -693,7 +982,7 @@ internal class SeededRunPatcher
 		Transform[] array = Object.FindObjectsOfType<Transform>();
 		foreach (Transform val2 in array)
 		{
-			if (!((Object)(object)val2 == (Object)null) && !((Object)(object)((Component)val2).gameObject == (Object)null) && IsTrapObject(((Component)val2).gameObject))
+			if (!((Object)(object)val2 == (Object)null) && !((Object)(object)((Component)val2).gameObject == (Object)null) && IsTrapObject(((Component)val2).gameObject) && !ShouldPreserveTrapCandidate(((Component)val2).gameObject))
 			{
 				Vector2 val3 = Vector2.op_Implicit(val2.position) - val;
 				bool flag = ((Vector2)(ref val3)).sqrMagnitude <= num;
@@ -704,6 +993,45 @@ internal class SeededRunPatcher
 				}
 			}
 		}
+	}
+
+	private static bool ShouldPreserveTrapCandidate(GameObject obj)
+	{
+		Item val = (((Object)(object)obj != (Object)null) ? obj.GetComponent<Item>() : null);
+		if ((Object)(object)val == (Object)null)
+		{
+			return false;
+		}
+		Body val2 = (((Object)(object)PlayerCamera.main != (Object)null) ? PlayerCamera.main.body : null);
+		if ((Object)(object)val2 == (Object)null)
+		{
+			return false;
+		}
+		if (IsHeldOrWorn(val2, val))
+		{
+			return true;
+		}
+		Container val3 = val.ParentContainer();
+		if ((Object)(object)val3 == (Object)null)
+		{
+			return false;
+		}
+		Item component = ((Component)val3).GetComponent<Item>();
+		return IsHeldOrWorn(val2, component);
+	}
+
+	private static bool IsHeldOrWorn(Body body, Item item)
+	{
+		if ((Object)(object)body == (Object)null || (Object)(object)item == (Object)null)
+		{
+			return false;
+		}
+		if (body.HoldingItem(item))
+		{
+			return true;
+		}
+		ItemInfo value;
+		return Item.GlobalItems.TryGetValue(item.id, out value) && value.wearable && (Object)(object)body.LimbByName(value.desiredWearLimb) != (Object)null && body.HasWearable(item);
 	}
 
 	private static void ClearNearbyLiquidsAtSpawn()

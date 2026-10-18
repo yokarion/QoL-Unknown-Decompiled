@@ -178,7 +178,6 @@ internal class PreRunScriptPatcher
 		Harmony val = new Harmony("org.bepinex.plugins.qol.prerun");
 		val.PatchAll(typeof(PreRunScriptPatcher));
 		alwaysSkipLore = PlayerPrefs.GetInt("AlwaysSkipLore", 0) == 1;
-		Logger.LogInfo((object)"PreRunScriptPatcher initialized");
 	}
 
 	[HarmonyPatch(typeof(Locale), "GetString")]
@@ -241,7 +240,7 @@ internal class PreRunScriptPatcher
 	[HarmonyPrefix]
 	private static void StartRun_Prefix(PreRunScript __instance)
 	{
-		if (!SeedManager.IsSeeded)
+		if (!MultiplayerCompat.IsActive && !SeedManager.IsSeeded)
 		{
 			SeedManager.SetSeed(Random.Range(int.MinValue, int.MaxValue).ToString());
 			SeedManager.InputString = "";

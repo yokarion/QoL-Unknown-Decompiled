@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -5,7 +6,7 @@ namespace QoL_Unknown;
 
 public static class EntitySpawnManager
 {
-	public static Dictionary<string, float> Multipliers = new Dictionary<string, float>();
+	public static readonly Dictionary<string, float> Multipliers = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
 	public static readonly List<string> KnownEntities = new List<string>
 	{
@@ -20,6 +21,10 @@ public static class EntitySpawnManager
 
 	public static float GetMultiplier(string entityName)
 	{
+		if (string.IsNullOrWhiteSpace(entityName))
+		{
+			return 1f;
+		}
 		if (Multipliers.TryGetValue(entityName, out var value))
 		{
 			return value;
@@ -29,8 +34,12 @@ public static class EntitySpawnManager
 
 	public static void SetMultiplier(string entityName, float val)
 	{
-		Multipliers[entityName] = val;
-		PlayerPrefs.SetFloat("SpawnMult_" + entityName, val);
+		if (!string.IsNullOrWhiteSpace(entityName))
+		{
+			float num = NormalizeMultiplier(val);
+			Multipliers[entityName] = num;
+			PlayerPrefs.SetFloat("SpawnMult_" + entityName, num);
+		}
 	}
 
 	public static void ResetMultipliers()
@@ -44,12 +53,18 @@ public static class EntitySpawnManager
 
 	public static void LoadMultipliers()
 	{
+		Multipliers.Clear();
 		foreach (string knownEntity in KnownEntities)
 		{
 			if (PlayerPrefs.HasKey("SpawnMult_" + knownEntity))
 			{
-				Multipliers[knownEntity] = PlayerPrefs.GetFloat("SpawnMult_" + knownEntity);
+				Multipliers[knownEntity] = NormalizeMultiplier(PlayerPrefs.GetFloat("SpawnMult_" + knownEntity));
 			}
 		}
+	}
+
+	private static float NormalizeMultiplier(float value)
+	{
+		return (float.IsNaN(value) || float.IsInfinity(value)) ? 1f : Mathf.Clamp(value, 0f, 10f);
 	}
 }

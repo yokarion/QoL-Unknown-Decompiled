@@ -75,13 +75,11 @@ internal class MiscPatches
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.misc");
-		val.PatchAll(typeof(MiscPatches));
-		val.PatchAll(typeof(RecipeFilterPatch));
-		Logger.LogInfo((object)"MiscPatchers initialized");
+		bool flag = RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.misc", typeof(MiscPatches), logger);
+		if (!(flag | RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.misc.recipefilter", typeof(RecipeFilterPatch), logger)))
+		{
+		}
 	}
 
 	[HarmonyPatch(typeof(UIUtil), "GetEventSystemRaycastResults")]
@@ -130,7 +128,7 @@ internal class MiscPatches
 	private static void Update_Postfix(WorldGeneration __instance)
 	{
 		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		if (__instance.worldExists && !((Object)(object)PlayerCamera.main == (Object)null) && !((Object)(object)PlayerCamera.main.body == (Object)null) && !KrokoshaMpCompat.IsActive && __instance.savePanel.activeSelf)
+		if (__instance.worldExists && !((Object)(object)PlayerCamera.main == (Object)null) && !((Object)(object)PlayerCamera.main.body == (Object)null) && !MultiplayerCompat.IsActive && __instance.savePanel.activeSelf)
 		{
 			PlayerCamera.main.body.forceWalk = false;
 			float num = (float)(0L - (long)__instance.halfHeight) + 3.1f;
@@ -140,6 +138,25 @@ internal class MiscPatches
 				__instance.savePanel.SetActive(false);
 			}
 		}
+	}
+
+	[HarmonyPatch(typeof(PlayerCamera), "SetTimeScale", new Type[]
+	{
+		typeof(SpeedType),
+		typeof(bool),
+		typeof(bool)
+	})]
+	[HarmonyPrefix]
+	private static bool PlayerCamera_SetTimeScale_Prefix(SpeedType speed)
+	{
+		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000a: Invalid comparison between Unknown and I4
+		if (MultiplayerCompat.IsActive && (int)speed == 6)
+		{
+			Time.timeScale = 1f;
+			return false;
+		}
+		return true;
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "Update")]
@@ -972,7 +989,7 @@ internal class MiscPatches
 		try
 		{
 			skippingFlashlightStrobe = true;
-			KrokoshaMpCompat.TryUseItemViaKrokosha(__instance, item);
+			__instance.UseItem(item);
 		}
 		finally
 		{

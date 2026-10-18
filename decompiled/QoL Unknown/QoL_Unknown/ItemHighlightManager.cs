@@ -25,8 +25,32 @@ public class ItemHighlightManager : MonoBehaviour
 
 	public Item HighlightedItem { get; private set; }
 
+	internal static ItemHighlightManager EnsureInstance()
+	{
+		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0042: Expected O, but got Unknown
+		if ((Object)(object)Instance != (Object)null)
+		{
+			return Instance;
+		}
+		ItemHighlightManager itemHighlightManager = Object.FindObjectOfType<ItemHighlightManager>();
+		if ((Object)(object)itemHighlightManager != (Object)null)
+		{
+			Instance = itemHighlightManager;
+			return itemHighlightManager;
+		}
+		GameObject val = new GameObject("ItemHighlightManager");
+		Object.DontDestroyOnLoad((Object)(object)val);
+		return val.AddComponent<ItemHighlightManager>();
+	}
+
 	private void Awake()
 	{
+		if ((Object)(object)Instance != (Object)null && (Object)(object)Instance != (Object)(object)this)
+		{
+			Object.Destroy((Object)(object)((Component)this).gameObject);
+			return;
+		}
 		Instance = this;
 		Object.DontDestroyOnLoad((Object)(object)((Component)this).gameObject);
 		EnsureOutlineMaterialLoaded();
@@ -185,5 +209,9 @@ public class ItemHighlightManager : MonoBehaviour
 	private void OnDestroy()
 	{
 		ClearHighlight();
+		if ((Object)(object)Instance == (Object)(object)this)
+		{
+			Instance = null;
+		}
 	}
 }

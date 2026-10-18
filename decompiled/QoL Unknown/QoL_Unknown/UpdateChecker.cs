@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using BepInEx.Bootstrap;
 using BepInEx.Logging;
+using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -28,13 +30,13 @@ public class UpdateChecker : MonoBehaviour
 		}
 	}
 
-	private const string API_URL = "https://api.github.com/repos/jimmyking9999999/QoL-Unknown/releases/latest";
+	private const string PluginGuid = "org.bepinex.plugins.qol_unknown";
 
 	private static ManualLogSource Logger;
 
 	private static bool hasChecked = false;
 
-	private static string newVersionTag = "";
+	private static string newVersion = "";
 
 	private static bool updateAvailable = false;
 
@@ -95,7 +97,7 @@ public class UpdateChecker : MonoBehaviour
 
 	private IEnumerator CheckForUpdates()
 	{
-		UnityWebRequest www = UnityWebRequest.Get("https://api.github.com/repos/jimmyking9999999/QoL-Unknown/releases/latest");
+		UnityWebRequest www = UnityWebRequest.Get("https://jimmyking9999999.github.io/Metadata-generator/nexusmods-versions.json");
 		try
 		{
 			www.SetRequestHeader("User-Agent", "QoLUnknownMod");
@@ -107,22 +109,18 @@ public class UpdateChecker : MonoBehaviour
 			}
 			try
 			{
-				string json = www.downloadHandler.text;
-				string tagSearch = "\"tag_name\":\"";
-				int index = json.IndexOf(tagSearch);
-				if (index == -1)
+				Dictionary<string, string> versions = JsonConvert.DeserializeObject<Dictionary<string, string>>(www.downloadHandler.text);
+				if (versions == null || !versions.TryGetValue("org.bepinex.plugins.qol_unknown", out var latestVersion))
 				{
+					Logger.LogWarning((object)"No Nexus version published for org.bepinex.plugins.qol_unknown yet.");
 					yield break;
 				}
-				int start = index + tagSearch.Length;
-				int end = json.IndexOf("\"", start);
-				string tagName = json.Substring(start, end - start);
-				int versionComparison = CompareVersions(currentVersion, tagName);
+				int versionComparison = CompareVersions(currentVersion, latestVersion);
 				if (versionComparison < 0)
 				{
 					updateAvailable = true;
-					newVersionTag = tagName;
-					Logger.LogWarning((object)("QoL is out of date! " + currentVersion + " -> " + newVersionTag));
+					newVersion = latestVersion;
+					Logger.LogWarning((object)("QoL is out of date! " + currentVersion + " -> " + newVersion));
 					Scene activeScene = SceneManager.GetActiveScene();
 					string sceneName = ((Scene)(ref activeScene)).name;
 					if (sceneName == "PreGen")
@@ -132,15 +130,16 @@ public class UpdateChecker : MonoBehaviour
 				}
 				else if (versionComparison > 0)
 				{
-					Logger.LogInfo((object)("QoL is (more then) up to date " + currentVersion + " -> " + tagName + " (what?)"));
+					Logger.LogInfo((object)("QoL is (more then) up to date " + currentVersion + " -> " + latestVersion + " (what?)"));
 				}
 				else
 				{
-					Logger.LogInfo((object)("QoL is up to date! " + currentVersion + " -> " + tagName));
+					Logger.LogInfo((object)("QoL is up to date! " + currentVersion + " -> " + latestVersion));
 				}
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
+				Logger.LogWarning((object)("Failed to parse Nexus version metadata: " + ex.Message));
 			}
 		}
 		finally
@@ -213,7 +212,7 @@ public class UpdateChecker : MonoBehaviour
 		((TMP_Text)tmp).fontSize = 20f;
 		((TMP_Text)tmp).alignment = (TextAlignmentOptions)1025;
 		((Graphic)tmp).color = new Color(1f, 0.3f, 0.3f);
-		((TMP_Text)tmp).text = "QoL is out of date! (" + currentVersion + " -> " + newVersionTag + ")\n(Click here to open the github release)";
+		((TMP_Text)tmp).text = "QoL is out of date! (" + currentVersion + " -> " + newVersion + ")\n(Click here to open the github release)";
 		Button btn = textObj.AddComponent<Button>();
 		((Selectable)btn).transition = (Transition)1;
 		((Selectable)btn).targetGraphic = (Graphic)(object)tmp;

@@ -44,6 +44,8 @@ internal class EnhancedMenuController : MonoBehaviour
 
 	public static EnhancedMenuController Instance;
 
+	private static ManualLogSource Logger;
+
 	private const string UiScalePrefKey = "UIScale";
 
 	private const float UiScaleDefault = 1f;
@@ -90,22 +92,19 @@ internal class EnhancedMenuController : MonoBehaviour
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001e: Expected O, but got Unknown
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004d: Expected O, but got Unknown
+		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0024: Expected O, but got Unknown
+		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0053: Expected O, but got Unknown
 		if (!((Object)(object)Instance != (Object)null))
 		{
+			Logger = logger;
 			GameObject val = new GameObject("EnhancedSettingsController");
 			Object.DontDestroyOnLoad((Object)(object)val);
 			Instance = val.AddComponent<EnhancedMenuController>();
 			Application.focusChanged += OnApplicationFocusChanged;
 			Harmony val2 = new Harmony("org.bepinex.plugins.qol.enhancedsettings");
 			val2.PatchAll(typeof(EnhancedMenuController));
-			if (logger != null)
-			{
-				logger.LogInfo((object)"EnhancedMenuController initialized");
-			}
 		}
 	}
 
@@ -374,6 +373,30 @@ internal class EnhancedMenuController : MonoBehaviour
 
 	public void OpenMenu()
 	{
+		ManualLogSource logger = Logger;
+		if (logger != null)
+		{
+			logger.LogInfo((object)"OpenMenu called");
+		}
+		GameObject obj = GameObject.Find("Main Camera/Canvas");
+		Transform val = ((obj != null) ? obj.transform : null);
+		if ((Object)(object)val != (Object)null)
+		{
+			ManualLogSource logger2 = Logger;
+			if (logger2 != null)
+			{
+				logger2.LogInfo((object)"Canvas found, opening SettingsMenu");
+			}
+			SettingsMenu.OpenMenu(val);
+		}
+		else
+		{
+			ManualLogSource logger3 = Logger;
+			if (logger3 != null)
+			{
+				logger3.LogWarning((object)"Canvas not found");
+			}
+		}
 	}
 
 	private static void RefreshCanvasScalerCache(bool forceRefresh = false)

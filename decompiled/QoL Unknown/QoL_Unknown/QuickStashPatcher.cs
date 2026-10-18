@@ -21,13 +21,13 @@ internal class QuickStashPatcher
 
 	private const string BeltItemId = "belt";
 
-	private const string KrokoshaHarmonyId = "KrokoshaCasualtiesMP";
+	private const string MultiplayerHarmonyId = "CasualtiesMP";
 
 	private static ManualLogSource Logger;
 
 	private static int suppressRadialThroughFrame = -1;
 
-	private static int suppressKrokoshaPointPingThroughFrame = -1;
+	private static int suppressMultiplayerPointPingThroughFrame = -1;
 
 	private static int handledQuickStashInputFrame = -1;
 
@@ -38,7 +38,6 @@ internal class QuickStashPatcher
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.quickstash");
 		val.PatchAll(typeof(QuickStashPatcher));
-		Logger.LogInfo((object)"QuickStashPatcher initialized");
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "Update")]
@@ -54,7 +53,7 @@ internal class QuickStashPatcher
 
 	[HarmonyPatch(typeof(PlayerCamera), "Update")]
 	[HarmonyPostfix]
-	[HarmonyAfter(new string[] { "KrokoshaCasualtiesMP" })]
+	[HarmonyAfter(new string[] { "CasualtiesMP" })]
 	[HarmonyPriority(0)]
 	private static void Update_Postfix_AfterMp(PlayerCamera __instance)
 	{
@@ -66,7 +65,7 @@ internal class QuickStashPatcher
 
 	[HarmonyPatch(typeof(PlayerCamera), "HandleWhileDragging")]
 	[HarmonyPostfix]
-	[HarmonyAfter(new string[] { "KrokoshaCasualtiesMP" })]
+	[HarmonyAfter(new string[] { "CasualtiesMP" })]
 	[HarmonyPriority(0)]
 	private static void HandleWhileDragging_Postfix(PlayerCamera __instance)
 	{
@@ -78,7 +77,7 @@ internal class QuickStashPatcher
 
 	[HarmonyPatch(typeof(PlayerCamera), "LateUpdate")]
 	[HarmonyPostfix]
-	[HarmonyAfter(new string[] { "KrokoshaCasualtiesMP" })]
+	[HarmonyAfter(new string[] { "CasualtiesMP" })]
 	[HarmonyPriority(0)]
 	private static void LateUpdate_Postfix(PlayerCamera __instance)
 	{
@@ -88,10 +87,10 @@ internal class QuickStashPatcher
 		}
 	}
 
-	internal static bool TryHandleQuickStashBeforeKrokoshaPing()
+	internal static bool TryHandleQuickStashBeforeMultiplayerPing()
 	{
-		KrokoshaMpCompat.EnsureInitializedForRuntime();
-		if (!KrokoshaMpCompat.IsActive || (Object)(object)PlayerCamera.main == (Object)null || !ModKeybinds.GetActionDown("quickstash"))
+		MultiplayerCompat.EnsureInitializedForRuntime();
+		if (!MultiplayerCompat.IsActive || (Object)(object)PlayerCamera.main == (Object)null || !ModKeybinds.GetActionDown("quickstash"))
 		{
 			return false;
 		}
@@ -114,14 +113,14 @@ internal class QuickStashPatcher
 		{
 			return false;
 		}
-		if (!KrokoshaMpCompat.CanMoveItemNow(itemUnderMouse) && !IsWorldItemForPickup(itemUnderMouse))
+		if (!MultiplayerCompat.CanMoveItemNow(itemUnderMouse))
 		{
 			cam.PlayUISound((UISoundType)6, 1f);
 			return false;
 		}
 		bool flag = Input.GetKey((KeyCode)304) || Input.GetKey((KeyCode)303);
 		bool flag2;
-		using (KrokoshaMpCompat.BeginInventoryMutation(cam.body))
+		using (MultiplayerCompat.BeginInventoryMutation(cam.body))
 		{
 			flag2 = ((flag && !itemUnderMouse.Stats.wearable) ? TryQuickStashToSlot(cam, itemUnderMouse) : TryQuickStash(cam, itemUnderMouse));
 		}
@@ -130,8 +129,11 @@ internal class QuickStashPatcher
 			handledQuickStashInputFrame = Time.frameCount;
 			if (suppressPingOnSuccess)
 			{
-				SuppressMpRadialPing(cam);
-				suppressKrokoshaPointPingThroughFrame = Mathf.Max(suppressKrokoshaPointPingThroughFrame, Time.frameCount + 1);
+				if (!cam.radialOpen && !cam.containerMenu.activeSelf)
+				{
+					SuppressMpRadialPing(cam);
+				}
+				suppressMultiplayerPointPingThroughFrame = Mathf.Max(suppressMultiplayerPointPingThroughFrame, Time.frameCount + 1);
 			}
 		}
 		return flag2;
@@ -169,7 +171,7 @@ internal class QuickStashPatcher
 				}
 			}
 			body.PickUpItem(item, num, true);
-			KrokoshaMpCompat.MarkItemMoved(item, containerChanged: true);
+			MultiplayerCompat.MarkItemMoved(item, containerChanged: true);
 			if (cam.containerMenu.activeSelf && (Object)(object)cam.currentContainer != (Object)null)
 			{
 				cam.RepopulateContainer();
@@ -191,12 +193,12 @@ internal class QuickStashPatcher
 		//IL_0020: Expected O, but got Unknown
 		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0131: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0132: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0137: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0140: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014b: Unknown result type (might be due to invalid IL or missing references)
 		targetState = MiddleClickTargetState.Clear;
 		PointerEventData val = new PointerEventData(EventSystem.current)
 		{
@@ -235,8 +237,8 @@ internal class QuickStashPatcher
 				if ((Object)(object)item != (Object)null)
 				{
 					targetState = MiddleClickTargetState.Item;
+					return item;
 				}
-				return item;
 			}
 		}
 		Vector3 val4 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -245,28 +247,28 @@ internal class QuickStashPatcher
 		Collider2D val6 = Physics2D.OverlapPoint(val5, LayerMask.GetMask(new string[1] { "Item" }));
 		if ((Object)(object)val6 != (Object)null)
 		{
-			Item component = ((Component)val6).GetComponent<Item>();
-			if ((Object)(object)component != (Object)null)
+			Item val7 = ((Component)val6).GetComponent<Item>() ?? ((Component)val6).GetComponentInParent<Item>();
+			if ((Object)(object)val7 != (Object)null)
 			{
 				targetState = MiddleClickTargetState.Item;
-				bool flag2 = cam.body.DoPickupCheck(component, false);
-				if (IsLineOfSightBlocked(cam.body, component))
+				bool flag2 = cam.body.DoPickupCheck(val7, false);
+				if (IsLineOfSightBlocked(cam.body, val7))
 				{
 					targetState = MiddleClickTargetState.LineOfSightBlocked;
 					return null;
 				}
 				if (flag2)
 				{
-					return component;
+					return val7;
 				}
 			}
 		}
 		return null;
 	}
 
-	internal static bool ShouldSuppressKrokoshaPointPingNow()
+	internal static bool ShouldSuppressMultiplayerPointPingNow()
 	{
-		return KrokoshaMpCompat.IsActive && Time.frameCount <= suppressKrokoshaPointPingThroughFrame;
+		return MultiplayerCompat.IsActive && Time.frameCount <= suppressMultiplayerPointPingThroughFrame;
 	}
 
 	internal static bool TryGetPickupableWorldItemUnderMouse(PlayerCamera cam, out Item item)
@@ -372,7 +374,7 @@ internal class QuickStashPatcher
 		if (num.HasValue)
 		{
 			body.PickUpItem(item, num.Value, true);
-			KrokoshaMpCompat.MarkItemMoved(item, containerChanged: true);
+			MultiplayerCompat.MarkItemMoved(item, containerChanged: true);
 			cam.PlayUISound((UISoundType)0, 1f);
 			return true;
 		}
@@ -392,7 +394,7 @@ internal class QuickStashPatcher
 		{
 			return false;
 		}
-		KrokoshaMpCompat.MarkItemMoved(item, containerChanged: true);
+		MultiplayerCompat.MarkItemMoved(item, containerChanged: true);
 		cam.UpdateWearables();
 		if (cam.containerMenu.activeSelf && (Object)(object)cam.currentContainer != (Object)null)
 		{
@@ -451,7 +453,7 @@ internal class QuickStashPatcher
 			}
 		}
 		val.LoadItem(item);
-		KrokoshaMpCompat.MarkItemMoved(item, containerChanged: true);
+		MultiplayerCompat.MarkItemMoved(item, containerChanged: true);
 		cam.PlayBackpackSound();
 		if (cam.containerMenu.activeSelf && (Object)(object)cam.currentContainer != (Object)null)
 		{
@@ -474,7 +476,7 @@ internal class QuickStashPatcher
 		if (num.HasValue)
 		{
 			body.PickUpItem(item, num.Value, true);
-			KrokoshaMpCompat.MarkItemMoved(item, containerChanged: true);
+			MultiplayerCompat.MarkItemMoved(item, containerChanged: true);
 			if (cam.containerMenu.activeSelf && (Object)(object)cam.currentContainer != (Object)null)
 			{
 				cam.RepopulateContainer();
@@ -509,25 +511,12 @@ internal class QuickStashPatcher
 			return false;
 		}
 		Item component = ((Component)container).GetComponent<Item>();
-		return (Object)(object)component == (Object)null || KrokoshaMpCompat.CanMoveItemNow(component);
-	}
-
-	private static bool IsWorldItemForPickup(Item item)
-	{
-		if ((Object)(object)item == (Object)null)
-		{
-			return false;
-		}
-		if ((Object)(object)((Component)item).transform.parent == (Object)null)
-		{
-			return true;
-		}
-		return (Object)(object)((Component)((Component)item).transform.parent).GetComponent<Container>() == (Object)null && !((Component)((Component)item).transform.parent).CompareTag("Slot");
+		return (Object)(object)component == (Object)null || MultiplayerCompat.CanMoveItemNow(component);
 	}
 
 	private static void SuppressMpRadialPing(PlayerCamera cam)
 	{
-		if (!((Object)(object)cam == (Object)null) && KrokoshaMpCompat.IsActive)
+		if (!((Object)(object)cam == (Object)null) && MultiplayerCompat.IsActive)
 		{
 			suppressRadialThroughFrame = Mathf.Max(suppressRadialThroughFrame, Time.frameCount + 1);
 			ForceCloseRadialPing(cam);
@@ -536,7 +525,7 @@ internal class QuickStashPatcher
 
 	private static bool IsRadialSuppressionActive()
 	{
-		return Time.frameCount <= suppressRadialThroughFrame && KrokoshaMpCompat.IsActive;
+		return Time.frameCount <= suppressRadialThroughFrame && MultiplayerCompat.IsActive;
 	}
 
 	private static void ForceCloseRadialPing(PlayerCamera cam)

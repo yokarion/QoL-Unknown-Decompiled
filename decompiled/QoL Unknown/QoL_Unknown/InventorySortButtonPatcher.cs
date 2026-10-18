@@ -13,46 +13,65 @@ internal class InventorySortButtonPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.sortbutton");
-		val.PatchAll(typeof(InventorySortButtonPatcher));
+		RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.sortbutton", typeof(InventorySortButtonPatcher), logger);
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "Start")]
 	[HarmonyPostfix]
 	private static void PlayerCamera_Start_Postfix(PlayerCamera __instance)
 	{
-		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ee: Expected O, but got Unknown
-		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0188: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0192: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0197: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ba: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c4: Expected O, but got Unknown
+		//IL_012b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0141: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0152: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0161: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0177: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0199: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a0: Expected O, but got Unknown
+		//IL_0206: Unknown result type (might be due to invalid IL or missing references)
+		//IL_020b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0223: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0244: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0251: Unknown result type (might be due to invalid IL or missing references)
+		//IL_025b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0260: Unknown result type (might be due to invalid IL or missing references)
+		//IL_026d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0283: Unknown result type (might be due to invalid IL or missing references)
+		//IL_028d: Expected O, but got Unknown
+		if ((Object)(object)__instance == (Object)null || (Object)(object)__instance.radialMenu == (Object)null)
+		{
+			return;
+		}
 		Transform radialMenu = (Transform)(object)__instance.radialMenu;
 		Transform val = radialMenu.Find("WeightImage");
+		if ((Object)(object)val == (Object)null || (Object)(object)radialMenu.Find("sort") != (Object)null)
+		{
+			return;
+		}
 		GameObject val2 = Object.Instantiate<GameObject>(((Component)val).gameObject, radialMenu);
+		if ((Object)(object)val2 == (Object)null)
+		{
+			return;
+		}
 		((Object)val2).name = "sort";
 		RectTransform component = val2.GetComponent<RectTransform>();
 		UITooltip component2 = val2.GetComponent<UITooltip>();
-		component2.tipName = "Sort";
-		component2.tipDesc = "Sorts your inventory to minimize weight use";
-		component2.skipLocale = true;
 		RectTransform component3 = ((Component)val).GetComponent<RectTransform>();
+		if ((Object)(object)component == (Object)null || (Object)(object)component2 == (Object)null || (Object)(object)component3 == (Object)null)
+		{
+			Object.Destroy((Object)(object)val2);
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)"Inventory sort button could not be created because the radial-menu template changed.");
+			}
+			return;
+		}
+		component2.tipName = "Sort";
+		component2.tipDesc = "Packs loose items into the lightest containers. Hold Shift to also sort hands and mouth.";
+		component2.skipLocale = true;
 		float num = component3.sizeDelta.x - 35f;
 		component.anchoredPosition = component3.anchoredPosition + new Vector2(num, 0f);
 		component.sizeDelta = new Vector2(component3.sizeDelta.y, component3.sizeDelta.y);
@@ -64,7 +83,8 @@ internal class InventorySortButtonPatcher
 				Object.Destroy((Object)(object)((Component)val3).gameObject);
 			}
 		}
-		Button val4 = val2.AddComponent<Button>();
+		Button val4 = val2.GetComponent<Button>() ?? val2.AddComponent<Button>();
+		((UnityEventBase)val4.onClick).RemoveAllListeners();
 		ColorBlock colors = ((Selectable)val4).colors;
 		((ColorBlock)(ref colors)).highlightedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
 		((ColorBlock)(ref colors)).pressedColor = new Color(0.5f, 0.5f, 0.5f, 1f);
@@ -74,7 +94,8 @@ internal class InventorySortButtonPatcher
 		((Selectable)val4).navigation = navigation;
 		((UnityEvent)val4.onClick).AddListener((UnityAction)delegate
 		{
-			InventorySortPatcher.RunSort(safeMode: true);
+			bool includeHandsAndMouth = Input.GetKey((KeyCode)304) || Input.GetKey((KeyCode)303);
+			InventorySortPatcher.RunSort(includeHandsAndMouth);
 			__instance.PlayUISound((UISoundType)0, 1f);
 		});
 	}

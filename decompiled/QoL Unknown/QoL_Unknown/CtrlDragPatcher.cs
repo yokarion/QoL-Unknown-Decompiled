@@ -41,7 +41,6 @@ internal class CtrlDragPatcher
 			Logger = logger;
 			Harmony val = new Harmony("org.bepinex.plugins.qol.liquidquicktransfer");
 			val.PatchAll(typeof(CtrlDragPatcher));
-			Logger.LogInfo((object)"CtrlDragPatcher initialized");
 		}
 	}
 
@@ -49,9 +48,9 @@ internal class CtrlDragPatcher
 	[HarmonyPrefix]
 	private static bool ShiftDrag_Prefix(PlayerCamera __instance, RaycastResult hit, List<RaycastResult> uiCasts, ref bool __result)
 	{
-		//IL_0189: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0190: Expected O, but got Unknown
-		if (!Input.GetKey((KeyCode)304) && !Input.GetKey((KeyCode)303))
+		//IL_01b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01b7: Expected O, but got Unknown
+		if (!ModKeybinds.VanillaBindHeld("expanddesc"))
 		{
 			return true;
 		}
@@ -73,8 +72,14 @@ internal class CtrlDragPatcher
 		if ((Object)(object)component2 != (Object)null && (Object)(object)component3 != (Object)null && component2.CurrentTotal > 0f && component3.SpaceLeft > 0f)
 		{
 			float num = Mathf.Min(component2.CurrentTotal, component3.SpaceLeft);
+			if (!MultiplayerCompat.TryEnsureItemSync(item) || !MultiplayerCompat.TryEnsureItemSync(dragItem))
+			{
+				__instance.PlayUISound((UISoundType)6, 1f);
+				__result = false;
+				return false;
+			}
 			__instance.body.CombineLiquids(component3, component2, num);
-			if (!KrokoshaMpCompat.TryAnnounceLiquidTransfer(__instance.body, item, dragItem, num))
+			if (!MultiplayerCompat.TryAnnounceLiquidTransfer(__instance.body, item, dragItem, num))
 			{
 				__instance.PlayUISound((UISoundType)6, 1f);
 			}
@@ -211,11 +216,17 @@ internal class CtrlDragPatcher
 		{
 			return true;
 		}
-		using (KrokoshaMpCompat.BeginInventoryMutation(__instance.body))
+		if (!MultiplayerCompat.TryEnsureItemSync(dragItem))
 		{
-			KrokoshaMpCompat.TryEnsureItemSync(dragItem);
+			__instance.PlayUISound((UISoundType)6, 1f);
+			__result = false;
+			return false;
+		}
+		using (MultiplayerCompat.BeginInventoryMutation(__instance.body))
+		{
 			component.Drain(list);
-			KrokoshaMpCompat.MarkItemMoved(dragItem, containerChanged: false);
+			MultiplayerCompat.TryAnnounceLiquidDrain(dragItem, component.CurrentTotal);
+			MultiplayerCompat.MarkItemMoved(dragItem, containerChanged: false);
 		}
 		RefreshUI(__instance);
 		__result = true;

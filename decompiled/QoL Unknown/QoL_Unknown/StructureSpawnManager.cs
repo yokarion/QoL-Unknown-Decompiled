@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -5,7 +6,7 @@ namespace QoL_Unknown;
 
 public static class StructureSpawnManager
 {
-	public static Dictionary<string, float> Multipliers = new Dictionary<string, float>();
+	public static readonly Dictionary<string, float> Multipliers = new Dictionary<string, float>(StringComparer.OrdinalIgnoreCase);
 
 	public static readonly List<string> KnownStructures = new List<string>
 	{
@@ -15,16 +16,20 @@ public static class StructureSpawnManager
 
 	public static float GetMultiplier(string spawnedObjectName)
 	{
-		string text = spawnedObjectName.Replace("(Clone)", "").Trim();
-		foreach (string key in Multipliers.Keys)
+		if (string.IsNullOrWhiteSpace(spawnedObjectName))
 		{
-			if (key == text)
+			return 1f;
+		}
+		string text = spawnedObjectName.Replace("(Clone)", "").Trim();
+		if (Multipliers.TryGetValue(text, out var value))
+		{
+			return value;
+		}
+		foreach (KeyValuePair<string, float> multiplier in Multipliers)
+		{
+			if (multiplier.Key.EndsWith("/" + text, StringComparison.OrdinalIgnoreCase))
 			{
-				return Multipliers[key];
-			}
-			if (key.EndsWith("/" + text))
-			{
-				return Multipliers[key];
+				return multiplier.Value;
 			}
 		}
 		return 1f;
@@ -32,8 +37,12 @@ public static class StructureSpawnManager
 
 	public static void SetMultiplier(string name, float val)
 	{
-		Multipliers[name] = Mathf.Clamp01(val);
-		PlayerPrefs.SetFloat("StructMult_" + name, val);
+		if (!string.IsNullOrWhiteSpace(name))
+		{
+			float num = NormalizeMultiplier(val);
+			Multipliers[name] = num;
+			PlayerPrefs.SetFloat("StructMult_" + name, num);
+		}
 	}
 
 	public static void ResetMultipliers()
@@ -47,12 +56,18 @@ public static class StructureSpawnManager
 
 	public static void LoadMultipliers()
 	{
+		Multipliers.Clear();
 		foreach (string knownStructure in KnownStructures)
 		{
 			if (PlayerPrefs.HasKey("StructMult_" + knownStructure))
 			{
-				Multipliers[knownStructure] = PlayerPrefs.GetFloat("StructMult_" + knownStructure);
+				Multipliers[knownStructure] = NormalizeMultiplier(PlayerPrefs.GetFloat("StructMult_" + knownStructure));
 			}
 		}
+	}
+
+	private static float NormalizeMultiplier(float value)
+	{
+		return (float.IsNaN(value) || float.IsInfinity(value)) ? 1f : Mathf.Clamp01(value);
 	}
 }

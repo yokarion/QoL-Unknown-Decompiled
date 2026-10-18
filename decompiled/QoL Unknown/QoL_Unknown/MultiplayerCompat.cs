@@ -13,8 +13,19 @@ using UnityEngine.SceneManagement;
 
 namespace QoL_Unknown;
 
-internal static class KrokoshaMpCompat
+internal static class MultiplayerCompat
 {
+	internal sealed class ClientCraftRequest
+	{
+		internal Body Body;
+
+		internal Recipe Recipe;
+
+		internal bool Denied;
+
+		internal float ResultCountBefore;
+	}
+
 	private sealed class InventoryMutationScope : IDisposable
 	{
 		private readonly bool hadFlag;
@@ -49,35 +60,35 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
+	private sealed class InventoryRestoreChunkAssembly
+	{
+		public readonly string RequestId;
+
+		public readonly byte[][] Chunks;
+
+		public readonly int TotalLength;
+
+		public int ReceivedChunkCount;
+
+		public int ReceivedLength;
+
+		public float LastReceivedTime;
+
+		public InventoryRestoreChunkAssembly(string requestId, int chunkCount, int totalLength, float receivedTime)
+		{
+			RequestId = requestId;
+			Chunks = new byte[chunkCount][];
+			TotalLength = totalLength;
+			LastReceivedTime = receivedTime;
+		}
+	}
+
 	private sealed class NullScope : IDisposable
 	{
 		public static readonly NullScope Instance = new NullScope();
 
 		public void Dispose()
 		{
-		}
-	}
-
-	private sealed class KrokoshaCraftSuppressionScope : IDisposable
-	{
-		private readonly bool previous;
-
-		private bool disposed;
-
-		public KrokoshaCraftSuppressionScope()
-		{
-			previous = suppressKrokoshaTryCraftPrefix;
-			suppressKrokoshaTryCraftPrefix = true;
-			suppressKrokoshaTryCraftPrefixThroughFrame = Mathf.Max(suppressKrokoshaTryCraftPrefixThroughFrame, Time.frameCount);
-		}
-
-		public void Dispose()
-		{
-			if (!disposed)
-			{
-				suppressKrokoshaTryCraftPrefix = previous;
-				disposed = true;
-			}
 		}
 	}
 
@@ -125,33 +136,37 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	internal const string PluginGuid = "KrokoshaCasualtiesMP";
+	internal const string PluginGuid = "CasualtiesMP";
 
-	private const ushort QoLSeedSyncMessageId = 30990;
+	private const string SeedSyncMessageName = "QoLUnknown.v1.SeedSync";
 
-	private const ushort QoLSeedRequestMessageId = 30991;
+	private const string SeedRequestMessageName = "QoLUnknown.v1.SeedRequest";
 
-	private const ushort QoLBulkCraftMessageId = 30992;
+	private const string ClientInventoryRestoreRequestMessageName = "QoLUnknown.v1.InventoryRestoreRequest";
 
-	private const ushort QoLClientInventoryRestoreRequestMessageId = 30993;
+	private const string ClientInventoryRestoreResultMessageName = "QoLUnknown.v1.InventoryRestoreResult";
 
-	private const ushort QoLClientInventoryRestoreResultMessageId = 30994;
+	private const string ClientSpawnRequestMessageName = "QoLUnknown.v1.SpawnRequest";
 
-	private const ushort QoLClientSpawnRequestMessageId = 30995;
+	private const string ClientSpawnResultMessageName = "QoLUnknown.v1.SpawnResult";
 
-	private const ushort QoLClientSpawnResultMessageId = 30996;
+	private const string ClientHealRequestMessageName = "QoLUnknown.v1.HealRequest";
 
-	private const ushort QoLClientHealRequestMessageId = 30997;
+	private const string ClientHealResultMessageName = "QoLUnknown.v1.HealResult";
 
-	private const ushort QoLClientHealResultMessageId = 30998;
+	private const string ClientPrepareReconnectForHostLoadMessageName = "QoLUnknown.v1.PrepareReconnectForHostLoad";
 
-	private const ushort QoLClientPrepareReconnectForHostLoadMessageId = 30999;
+	private const int MaxMessagePayloadLength = 1048576;
+
+	private const int InventoryRestoreChunkSize = 32768;
+
+	private const float InventoryRestoreChunkTimeoutSeconds = 30f;
 
 	private static ManualLogSource Logger;
 
 	private static Harmony harmony;
 
-	private static Type krokoshaScavType;
+	private static Type multiplayerType;
 
 	private static Type mpPluginType;
 
@@ -171,11 +186,9 @@ internal static class KrokoshaMpCompat
 
 	private static Type bodyCombineItemsPatchType;
 
-	private static Type netPlayerType;
+	private static Type scavPlayerType;
 
 	private static Type netBodyType;
-
-	private static Type mpRulesType;
 
 	private static Type clientMainType;
 
@@ -209,7 +222,9 @@ internal static class KrokoshaMpCompat
 
 	private static Type netExtensionsType;
 
-	private static Type networkDelegateType;
+	private static Type customServerReceiverDelegateType;
+
+	private static Type customClientReceiverDelegateType;
 
 	private static FieldInfo inventoryActionFlagField;
 
@@ -221,29 +236,43 @@ internal static class KrokoshaMpCompat
 
 	private static FieldInfo vanillaSoundCannonChargingField;
 
-	private static FieldInfo containerStatusChangedField;
-
-	private static FieldInfo mpLastRecipeItemsField;
+	private static FieldInfo itemContainerChangedField;
 
 	private static MethodInfo mpRecipeTryMakeMethod;
 
 	private static MethodInfo mpRecipeGetItemsForRecipeMethod;
 
+	private static FieldInfo mpClientPingField;
+
+	private static MethodInfo mpParseTaggedStringMethod;
+
+	private static ClientCraftRequest pendingClientCraft;
+
 	private static MethodInfo mpTryCraftPrefixMethod;
+
+	private static int handledClientCraftFrame = -1;
+
+	private static bool bypassCraftGuard;
+
+	private static bool craftTryMakeGuardPatched;
+
+	private static int lastExplicitCraftFrame = -1;
+
+	private static int lastExplicitCraftRecipeIndex = -1;
 
 	private static MethodInfo mpLiquidCombineAnnounceMethod;
 
 	private static MethodInfo netPlayerLookupMethod;
 
-	private static MethodInfo netPlayerLookupNetBodyMethod;
-
 	private static MethodInfo netServerKickMethod;
-
-	private static MethodInfo serverSendRelayMessageToClientsMethod;
 
 	private static MethodInfo forceDisconnectMethod;
 
+	private static MethodInfo goBackToMainMenuMethod;
+
 	private static MethodInfo uiMainMenuSetOpenMethod;
+
+	private static MethodInfo uiMainMenuIsOpenMethod;
 
 	private static MethodInfo transportLiteConnectMethod;
 
@@ -253,17 +282,17 @@ internal static class KrokoshaMpCompat
 
 	private static MethodInfo serverAnnounceGameStartMethod;
 
-	private static MethodInfo krokoshaOnSceneLoadedMethod;
+	private static MethodInfo multiplayerOnSceneLoadedMethod;
 
 	private static MethodInfo serverFinishedWorldgenReceiverMethod;
 
-	private static FieldInfo netPlayerLocalPlayerField;
+	private static FieldInfo localPlayerField;
 
-	private static FieldInfo netPlayerBodyToPlayerDictField;
+	private static FieldInfo playerBodyToPlayerDictField;
 
-	private static FieldInfo netPlayerClientIdToPlayerDictField;
+	private static FieldInfo playerClientIdToPlayerDictField;
 
-	private static FieldInfo mpRulesField;
+	private static FieldInfo multiplayerRulesField;
 
 	private static FieldInfo firstWorldgenParamsField;
 
@@ -277,9 +306,39 @@ internal static class KrokoshaMpCompat
 
 	private static MethodInfo lastBeforeGenerationStateApplyMethod;
 
-	private static MethodInfo netPlayerTeleportMethod;
+	private static MethodInfo playerTeleportMethod;
 
 	private static PropertyInfo serverAllClientIdsExceptHostProperty;
+
+	private static MethodInfo createNamedWriterMethod;
+
+	private static MethodInfo registerCustomServerReceiverMethod;
+
+	private static MethodInfo registerCustomClientReceiverMethod;
+
+	private static MethodInfo clientSendMethod;
+
+	private static MethodInfo serverSendToPlayerMethod;
+
+	private static MethodInfo serverSendToClientsMethod;
+
+	private static MethodInfo writerPutBytesMethod;
+
+	private static MethodInfo writerPutUIntMethod;
+
+	private static MethodInfo readerGetRemainingBytesMethod;
+
+	private static PropertyInfo readerAvailableBytesProperty;
+
+	private static MethodInfo readerGetUIntMethod;
+
+	private static MethodInfo itemRecordInventoryStateMethod;
+
+	private static FieldInfo itemLastInventoryStateField;
+
+	private static EventInfo multiplayerInitFinishedEvent;
+
+	private static Delegate multiplayerInitFinishedHandler;
 
 	private static bool resolutionAttempted;
 
@@ -303,8 +362,6 @@ internal static class KrokoshaMpCompat
 
 	private static bool seedRequestRegistered;
 
-	private static bool bulkCraftRegistered;
-
 	private static bool clientInventoryRestoreRequestRegistered;
 
 	private static bool clientInventoryRestoreResultRegistered;
@@ -325,15 +382,7 @@ internal static class KrokoshaMpCompat
 
 	private static bool pingSuppressionHooksPatched;
 
-	private static bool craftSuppressionHooksPatched;
-
-	private static bool craftTryMakeGuardPatched;
-
 	private static bool hostSaveLoadHooksPatched;
-
-	private static bool suppressKrokoshaTryCraftPrefix;
-
-	private static int suppressKrokoshaTryCraftPrefixThroughFrame = -1;
 
 	private static bool suppressNextPointFingerClientSend;
 
@@ -365,6 +414,8 @@ internal static class KrokoshaMpCompat
 
 	private static Dictionary<string, string> pendingClientInventoryRestorePayloadsByPersistentId;
 
+	private static readonly Dictionary<uint, InventoryRestoreChunkAssembly> incomingInventoryRestoreChunks = new Dictionary<uint, InventoryRestoreChunkAssembly>();
+
 	public static bool IsPluginPresent
 	{
 		get
@@ -376,7 +427,31 @@ internal static class KrokoshaMpCompat
 
 	public static bool IsActive => IsNetworkRunning;
 
-	public static bool ShouldUseKrokoshaWorldgenAuthority => IsNetworkRunning && IsServer;
+	public static bool IsMultiplayerMenuOpen
+	{
+		get
+		{
+			if (!IsPluginPresent || uiMainMenuIsOpenMethod == null)
+			{
+				return false;
+			}
+			object obj = uiMainMenuIsOpenMethod.Invoke(null, null);
+			bool flag = default(bool);
+			int num;
+			if (obj is bool)
+			{
+				flag = (bool)obj;
+				num = 1;
+			}
+			else
+			{
+				num = 0;
+			}
+			return (byte)((uint)num & (flag ? 1u : 0u)) != 0;
+		}
+	}
+
+	public static bool ShouldUseMultiplayerWorldgenAuthority => IsNetworkRunning && IsServer;
 
 	public static bool HasPendingHostWorldgenState => !string.IsNullOrEmpty(pendingHostWorldgenStatePayload);
 
@@ -435,6 +510,16 @@ internal static class KrokoshaMpCompat
 
 	public static bool CanImportSingleplayerSlotAsHostStart => IsNetworkRunning && IsServer && !IsWorldGenerated;
 
+	internal static float ClientCraftWaitSeconds
+	{
+		get
+		{
+			EnsureResolved();
+			int num = ((mpClientPingField?.GetValue(null) is int val) ? Math.Max(0, val) : 0);
+			return 15f + (float)num * 0.008f;
+		}
+	}
+
 	internal static void EnsureInitializedForRuntime()
 	{
 		EnsureResolved();
@@ -446,11 +531,15 @@ internal static class KrokoshaMpCompat
 		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0016: Expected O, but got Unknown
 		Logger = logger;
-		harmony = new Harmony("org.bepinex.plugins.qol.krokosha_mp_compat");
+		harmony = new Harmony("org.bepinex.plugins.qol.together_compat");
 		EnsureResolved();
 		if (pluginPresent)
 		{
-			EnsureRuntimeHooksInstalled();
+			AttachToMultiplayerInitialization();
+			if (ReadStaticBool(mpPluginType, "SUCCESFULLY_INITIALIZED"))
+			{
+				EnsureRuntimeHooksInstalled();
+			}
 		}
 	}
 
@@ -459,7 +548,7 @@ internal static class KrokoshaMpCompat
 		if (IsNetworkRunning && IsServer && SeedManager.IsSeeded)
 		{
 			string payload = BuildSeedPayload(SeedManager.CurrentSeed, SeedManager.InputString);
-			SendOrderedStringToClients(30990, payload);
+			SendNamedStringToClients("QoLUnknown.v1.SeedSync", payload);
 		}
 	}
 
@@ -468,7 +557,7 @@ internal static class KrokoshaMpCompat
 		if (IsNetworkRunning && IsClient && !(Time.realtimeSinceStartup - lastSeedRequestTime < 2f))
 		{
 			lastSeedRequestTime = Time.realtimeSinceStartup;
-			SendSimpleMessageToServer(30991);
+			SendNamedStringToServer("QoLUnknown.v1.SeedRequest", string.Empty);
 		}
 	}
 
@@ -482,7 +571,14 @@ internal static class KrokoshaMpCompat
 		bool hadFlag = false;
 		try
 		{
-			InvokeStatic(itemSyncType, "Client_GetReadyToSyncInventoryState", body);
+			if (IsClient && itemRecordInventoryStateMethod != null && itemLastInventoryStateField != null)
+			{
+				object obj = itemRecordInventoryStateMethod.Invoke(null, new object[1] { body });
+				if (obj != null)
+				{
+					itemLastInventoryStateField.SetValue(null, obj);
+				}
+			}
 			if (inventoryActionFlagField != null)
 			{
 				previous = inventoryActionFlagField.GetValue(null);
@@ -551,6 +647,10 @@ internal static class KrokoshaMpCompat
 		{
 			return true;
 		}
+		if (!IsServer)
+		{
+			return false;
+		}
 		InvokeTryGetSyncInfoOrRegister(item);
 		return TryGetSyncInfo(item, out syncInfo);
 	}
@@ -569,13 +669,9 @@ internal static class KrokoshaMpCompat
 		if (syncInfo != null)
 		{
 			InvokeInstance(syncInfo, "SetIgnoreTimeForRoundTrip");
-			if (IsServer)
-			{
-				InvokeStatic(netObjectRegistryType, "ForceAddFastSync", syncInfo);
-			}
 			if (containerChanged)
 			{
-				AddContainerStatusChanged(syncInfo);
+				AddItemContainerChanged(syncInfo);
 			}
 		}
 	}
@@ -692,64 +788,32 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	public static bool SendSimpleMessageToServer(ushort msgId, bool reliable = true)
-	{
-		return InvokeSendSimple(new Type[2]
-		{
-			typeof(ushort),
-			typeof(bool)
-		}, msgId, reliable);
-	}
-
-	public static bool SendSimpleUintToServer(ushort msgId, uint data, bool reliable = true)
-	{
-		return InvokeSendSimple(new Type[3]
-		{
-			typeof(ushort),
-			typeof(uint),
-			typeof(bool)
-		}, msgId, data, reliable);
-	}
-
-	public static bool SendSimpleUintUintToServer(ushort msgId, uint data, uint data2, bool reliable = true)
-	{
-		return InvokeSendSimple(new Type[4]
-		{
-			typeof(ushort),
-			typeof(uint),
-			typeof(uint),
-			typeof(bool)
-		}, msgId, data, data2, reliable);
-	}
-
-	public static bool SendSimpleUintByteToServer(ushort msgId, uint data, byte data2, bool reliable = true)
-	{
-		return InvokeSendSimple(new Type[4]
-		{
-			typeof(ushort),
-			typeof(uint),
-			typeof(byte),
-			typeof(bool)
-		}, msgId, data, data2, reliable);
-	}
-
-	public static bool SendBulkCraftRequest(Recipe recipe, int amount)
-	{
-		if (!IsNetworkRunning || !IsClient || recipe == null)
-		{
-			return false;
-		}
-		amount = Mathf.Clamp(amount, 1, 255);
-		return SendSimpleUintByteToServer(30992, (uint)recipe.index, (byte)amount);
-	}
-
 	public static bool SendClientInventoryRestoreRequest(string payload)
 	{
 		if (!IsNetworkRunning || !IsClient || string.IsNullOrWhiteSpace(payload))
 		{
 			return false;
 		}
-		return SendOrderedStringToServer(30993, payload);
+		EnsureRuntimeHooksInstalled();
+		byte[] bytes = Encoding.UTF8.GetBytes(payload);
+		if (bytes.Length == 0 || bytes.Length > 1048576)
+		{
+			return false;
+		}
+		string text = Guid.NewGuid().ToString("N");
+		int num = (bytes.Length + 32768 - 1) / 32768;
+		for (int i = 0; i < num; i++)
+		{
+			int num2 = i * 32768;
+			int length = Math.Min(32768, bytes.Length - num2);
+			string text2 = Convert.ToBase64String(bytes, num2, length);
+			string payload2 = string.Join("|", "1", text, i.ToString(CultureInfo.InvariantCulture), num.ToString(CultureInfo.InvariantCulture), bytes.Length.ToString(CultureInfo.InvariantCulture), text2);
+			if (!SendNamedStringToServer("QoLUnknown.v1.InventoryRestoreRequest", payload2))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public static bool SendClientSpawnRequest(string commandString)
@@ -759,7 +823,7 @@ internal static class KrokoshaMpCompat
 			return false;
 		}
 		EnsureRuntimeHooksInstalled();
-		return SendOrderedStringToServer(30995, commandString);
+		return SendNamedStringToServer("QoLUnknown.v1.SpawnRequest", commandString);
 	}
 
 	public static bool SendClientHealRequest()
@@ -769,7 +833,7 @@ internal static class KrokoshaMpCompat
 			return false;
 		}
 		EnsureRuntimeHooksInstalled();
-		return SendOrderedStringToServer(30997, "1");
+		return SendNamedStringToServer("QoLUnknown.v1.HealRequest", "1");
 	}
 
 	public static bool AreClientCheatCommandsAllowed()
@@ -783,7 +847,7 @@ internal static class KrokoshaMpCompat
 		object obj = null;
 		try
 		{
-			obj = netPlayerLocalPlayerField?.GetValue(null);
+			obj = localPlayerField?.GetValue(null);
 		}
 		catch
 		{
@@ -810,13 +874,13 @@ internal static class KrokoshaMpCompat
 			return text;
 		}
 		EnsureResolved();
-		if (krokoshaScavType == null)
+		if (uiMainMenuType == null)
 		{
 			return null;
 		}
 		try
 		{
-			string text2 = krokoshaScavType.GetField("INPUT_USERNAME", BindingFlags.Static | BindingFlags.Public)?.GetValue(null) as string;
+			string text2 = uiMainMenuType.GetField("USERINPUT_NAME", BindingFlags.Static | BindingFlags.Public)?.GetValue(null) as string;
 			if (string.IsNullOrEmpty(text2))
 			{
 				return null;
@@ -851,7 +915,7 @@ internal static class KrokoshaMpCompat
 			ManualLogSource logger = Logger;
 			if (logger != null)
 			{
-				logger.LogWarning((object)("Failed to capture Krokosha worldgen state: " + ex.Message));
+				logger.LogWarning((object)("Failed to capture Together worldgen state: " + ex.Message));
 			}
 			payload = null;
 			return false;
@@ -908,13 +972,13 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		EnsureResolved();
-		if (netPlayerBodyToPlayerDictField == null || netPlayerTeleportMethod == null)
+		if (playerBodyToPlayerDictField == null || playerTeleportMethod == null)
 		{
 			return;
 		}
 		try
 		{
-			if (!(netPlayerBodyToPlayerDictField.GetValue(null) is IDictionary dictionary))
+			if (!(playerBodyToPlayerDictField.GetValue(null) is IDictionary dictionary))
 			{
 				return;
 			}
@@ -924,7 +988,7 @@ internal static class KrokoshaMpCompat
 				object value = item.Value;
 				if (value != null && !IsLocalNetPlayer(value))
 				{
-					netPlayerTeleportMethod.Invoke(value, new object[1] { val });
+					playerTeleportMethod.Invoke(value, new object[1] { val });
 				}
 			}
 		}
@@ -938,96 +1002,114 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	public static bool TryExecuteBulkCraftViaKrokosha(PlayerCamera camera, Recipe finalRecipe, CraftingPlan plan)
-	{
-		Body val = camera?.body;
-		if (!IsActive || (Object)(object)val == (Object)null || finalRecipe == null || plan == null || !plan.CanCraft)
-		{
-			return false;
-		}
-		EnsureResolved();
-		if (mpRecipeTryMakeMethod == null || mpRecipeGetItemsForRecipeMethod == null)
-		{
-			return false;
-		}
-		if (!TryExecuteCombineOperations(val, plan))
-		{
-			return false;
-		}
-		foreach (CraftingPlanOperation intermediateOperation in plan.IntermediateOperations)
-		{
-			for (int i = 0; i < intermediateOperation.Count; i++)
-			{
-				if (!TryExecuteMpRecipeAndAnnounce(camera, val, intermediateOperation.Recipe))
-				{
-					return false;
-				}
-			}
-		}
-		for (int j = 0; j < plan.RequestedAmount; j++)
-		{
-			if (!TryExecuteMpRecipeAndAnnounce(camera, val, finalRecipe))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public static bool CanAnnounceKrokoshaCraft(Body crafter, Recipe recipe)
+	public static bool CraftStepAsHost(Body crafter, Recipe recipe)
 	{
 		if (!IsActive || (Object)(object)crafter == (Object)null || recipe == null)
 		{
 			return false;
 		}
 		EnsureResolved();
-		if (mpRecipeGetItemsForRecipeMethod == null)
+		return mpRecipeTryMakeMethod != null && mpRecipeGetItemsForRecipeMethod != null && TryExecuteMpRecipeAndAnnounce(PlayerCamera.main, crafter, recipe);
+	}
+
+	internal static void MarkClientCraftHandled()
+	{
+		handledClientCraftFrame = Time.frameCount;
+	}
+
+	internal static bool HasPendingClientCraft(Body body)
+	{
+		if (pendingClientCraft != null && ((Object)(object)pendingClientCraft.Body != (Object)(object)body || !IsActive || !IsClient || pendingClientCraft.Denied))
+		{
+			pendingClientCraft = null;
+		}
+		return pendingClientCraft != null;
+	}
+
+	internal static void ClearClientCraft(ClientCraftRequest request)
+	{
+		if (request != null && pendingClientCraft == request)
+		{
+			pendingClientCraft = null;
+		}
+	}
+
+	internal static void ObserveClientCraftAlert(string text)
+	{
+		if (pendingClientCraft != null && IsActive && IsClient && !(mpParseTaggedStringMethod == null))
+		{
+			string b = mpParseTaggedStringMethod.Invoke(null, new object[1] { "<key:serverdeny_craft>" }) as string;
+			if (string.Equals(text, b, StringComparison.Ordinal))
+			{
+				pendingClientCraft.Denied = true;
+			}
+		}
+	}
+
+	internal static bool TryRequestClientCraft(PlayerCamera camera, Recipe recipe, out ClientCraftRequest request)
+	{
+		request = null;
+		EnsureResolved();
+		if ((Object)(object)camera?.body == (Object)null || recipe == null || !IsActive || !IsClient)
 		{
 			return false;
 		}
+		if (HasPendingClientCraft(camera.body))
+		{
+			return false;
+		}
+		if (mpTryCraftPrefixMethod == null || mpRecipeGetItemsForRecipeMethod == null)
+		{
+			throw new InvalidOperationException("Together's client craft API is unavailable.");
+		}
+		float resultCountBefore = CraftRunner.CountRecipeResult(camera.body, recipe);
+		if (!CanCraftNatively(camera.body, recipe))
+		{
+			return false;
+		}
+		ClientCraftRequest clientCraftRequest = new ClientCraftRequest
+		{
+			Body = camera.body,
+			Recipe = recipe,
+			ResultCountBefore = resultCountBefore
+		};
+		int selectedRecipe = camera.selectedRecipe;
 		try
 		{
-			IEnumerable items = mpRecipeGetItemsForRecipeMethod.Invoke(null, new object[2] { crafter, recipe }) as IEnumerable;
-			return CraftItemsHaveSyncIds(items);
+			camera.selectedRecipe = recipe.index;
+			pendingClientCraft = clientCraftRequest;
+			request = clientCraftRequest;
+			bypassCraftGuard = true;
+			bool flag;
+			try
+			{
+				flag = !(mpTryCraftPrefixMethod.Invoke(null, new object[1] { camera }) is bool flag2) || !flag2;
+			}
+			finally
+			{
+				bypassCraftGuard = false;
+			}
+			if (!flag)
+			{
+				pendingClientCraft = null;
+				request = null;
+				return false;
+			}
+			return true;
 		}
 		catch
 		{
-			return false;
+			pendingClientCraft = null;
+			throw;
+		}
+		finally
+		{
+			camera.selectedRecipe = selectedRecipe;
 		}
 	}
 
-	public static bool AreItemsSynced(params Item[] items)
+	internal static bool CanCraftNatively(Body crafter, Recipe recipe)
 	{
-		if (!IsActive)
-		{
-			return true;
-		}
-		if (items == null || items.Length == 0)
-		{
-			return false;
-		}
-		EnsureResolved();
-		foreach (Item val in items)
-		{
-			if ((Object)(object)val == (Object)null || !TryGetSyncInfo(val, out var syncInfo) || !TryGetSyncId(syncInfo, out var _))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public static bool CanDirectCraftViaKrokosha(Body crafter, Recipe recipe)
-	{
-		if (!IsActive || (Object)(object)crafter == (Object)null || recipe == null)
-		{
-			return false;
-		}
-		EnsureResolved();
-		if (mpRecipeGetItemsForRecipeMethod == null)
-		{
-			return false;
-		}
 		try
 		{
 			return mpRecipeGetItemsForRecipeMethod.Invoke(null, new object[2] { crafter, recipe }) is IEnumerable source && source.Cast<object>().Any();
@@ -1038,33 +1120,10 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	public static bool TryExecuteSingleCraftViaKrokosha(PlayerCamera camera, Recipe recipe)
+	public static bool CraftStepAsClient(PlayerCamera camera, Recipe recipe)
 	{
-		Body val = camera?.body;
-		if (!IsActive || (Object)(object)val == (Object)null || recipe == null)
-		{
-			return false;
-		}
-		EnsureResolved();
-		if (mpRecipeTryMakeMethod == null || mpRecipeGetItemsForRecipeMethod == null)
-		{
-			return false;
-		}
-		if (IsClient)
-		{
-			return TryExecuteClientCraftViaKrokoshaPrefix(camera, recipe);
-		}
-		return TryExecuteMpRecipeAndAnnounce(camera, val, recipe);
-	}
-
-	public static IDisposable SuppressKrokoshaTryCraftPrefix()
-	{
-		if (!IsActive)
-		{
-			return NullScope.Instance;
-		}
-		EnsureRuntimeHooksInstalled();
-		return new KrokoshaCraftSuppressionScope();
+		ClientCraftRequest request;
+		return TryRequestClientCraft(camera, recipe, out request);
 	}
 
 	public static bool TryAnnounceLiquidTransfer(Body body, Item targetItem, Item sourceItem, float ml)
@@ -1074,41 +1133,13 @@ internal static class KrokoshaMpCompat
 			return true;
 		}
 		EnsureResolved();
-		if (mpLiquidCombineAnnounceMethod == null)
+		if (mpLiquidCombineAnnounceMethod == null || !TryEnsureItemSync(targetItem) || !TryEnsureItemSync(sourceItem))
 		{
 			return false;
 		}
 		try
 		{
-			object obj = mpLiquidCombineAnnounceMethod.Invoke(null, new object[5] { true, ml, body, targetItem, sourceItem });
-			bool flag = default(bool);
-			int num;
-			if (obj is bool)
-			{
-				flag = (bool)obj;
-				num = 1;
-			}
-			else
-			{
-				num = 0;
-			}
-			return (byte)((uint)num & (flag ? 1u : 0u)) != 0;
-		}
-		catch
-		{
-			return false;
-		}
-	}
-
-	public static bool TryUseItemViaKrokosha(Body body, Item item)
-	{
-		if ((Object)(object)body == (Object)null || (Object)(object)item == (Object)null || !item.Stats.usable)
-		{
-			return false;
-		}
-		try
-		{
-			body.UseItem(item);
+			mpLiquidCombineAnnounceMethod.Invoke(null, new object[5] { true, ml, body, targetItem, sourceItem });
 			return true;
 		}
 		catch
@@ -1117,74 +1148,41 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	public static bool TryExecuteBulkCraftOnServer(Body crafter, Recipe finalRecipe, int amount)
+	public static bool TryAnnounceLiquidDrain(Item containerItem, float newTotal)
 	{
-		if ((Object)(object)crafter == (Object)null || finalRecipe == null)
+		if (!IsActive || (Object)(object)containerItem == (Object)null)
 		{
-			return false;
+			return true;
+		}
+		if (!IsClient || IsServer)
+		{
+			return true;
 		}
 		EnsureResolved();
-		if (mpRecipeTryMakeMethod == null || mpRecipeGetItemsForRecipeMethod == null)
+		if (multiplayerType == null || !TryGetSyncInfo(containerItem, out var syncInfo) || syncInfo == null || !TryGetSyncId(syncInfo, out var syncId))
 		{
 			return false;
 		}
-		CraftingPlan craftingPlan = CraftingPlanService.BuildExecutionPlan(finalRecipe, amount, crafter);
-		if (!craftingPlan.CanCraft)
+		MethodInfo methodInfo = FindStaticMethod(multiplayerType, "Client_SendSimpleMessageToServer", new Type[4]
 		{
-			return false;
-		}
-		if (!TryExecuteCombineOperations(crafter, craftingPlan))
-		{
-			return false;
-		}
-		foreach (CraftingPlanOperation intermediateOperation in craftingPlan.IntermediateOperations)
-		{
-			for (int i = 0; i < intermediateOperation.Count; i++)
-			{
-				if (!TryExecuteMpRecipe(crafter, intermediateOperation.Recipe))
-				{
-					return false;
-				}
-			}
-		}
-		for (int j = 0; j < craftingPlan.RequestedAmount; j++)
-		{
-			if (!TryExecuteMpRecipe(crafter, finalRecipe))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
-	private static bool TryExecuteCombineOperations(Body crafter, CraftingPlan plan)
-	{
-		if ((Object)(object)crafter == (Object)null || plan == null)
-		{
-			return false;
-		}
-		foreach (CraftingCombineOperation combineOperation in plan.CombineOperations)
-		{
-			if ((Object)(object)combineOperation?.Target == (Object)null || (Object)(object)combineOperation.Source == (Object)null || !crafter.CanCombine(combineOperation.Target, combineOperation.Source))
-			{
-				return false;
-			}
-			crafter.CombineItems(combineOperation.Target, combineOperation.Source);
-		}
-		return true;
-	}
-
-	private static bool InvokeSendSimple(Type[] signature, params object[] args)
-	{
-		EnsureResolved();
-		MethodInfo methodInfo = FindStaticMethod(krokoshaScavType, "Client_SendSimpleMessageToServer", signature);
+			typeof(byte),
+			typeof(ushort),
+			typeof(float),
+			typeof(bool)
+		});
 		if (methodInfo == null)
 		{
 			return false;
 		}
 		try
 		{
-			methodInfo.Invoke(null, args);
+			methodInfo.Invoke(null, new object[4]
+			{
+				(byte)75,
+				(ushort)syncId,
+				newTotal,
+				true
+			});
 			return true;
 		}
 		catch
@@ -1195,93 +1193,139 @@ internal static class KrokoshaMpCompat
 
 	private static void EnsureResolved()
 	{
-		if (resolutionAttempted && !pluginPresent)
-		{
-			return;
-		}
 		Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-		if ((resolutionAttempted && !pluginPresent && assemblies.Length == resolvedAssemblyCount) || (resolutionAttempted && assemblies.Length == resolvedAssemblyCount))
+		if (!resolutionAttempted || assemblies.Length != resolvedAssemblyCount)
+		{
+			resolutionAttempted = true;
+			resolvedAssemblyCount = assemblies.Length;
+			multiplayerType = FindType(assemblies, "Together.Multiplayer");
+			mpPluginType = FindType(assemblies, "Together.Plugin");
+			itemSyncType = FindType(assemblies, "Together.ItemSync");
+			netObjectRegistryType = FindType(assemblies, "Together.NetObjectRegistry");
+			inventoryActionPatchType = FindType(assemblies, "Together.PlayerCamera_TryPerformInventoryAction_MultiplayerPatch");
+			saveSystemPatchType = FindType(assemblies, "Together.SavesystemPatch");
+			saveGamePatchType = FindType(assemblies, "Together.SaveSystem_SaveGame_MultiplayerPatch");
+			soundCannonTrackerType = FindType(assemblies, "Together.TrackerSoundCannon");
+			playerCameraTryCraftPatchType = FindType(assemblies, "Together.PlayerCamera_TryCraft_MultiplayerPatch");
+			bodyCombineItemsPatchType = FindType(assemblies, "Together.Body_CombineItems_MultiplayerPatch");
+			scavPlayerType = FindType(assemblies, "Together.ScavPlayer");
+			netBodyType = FindType(assemblies, "Together.NetBody");
+			clientMainType = FindType(assemblies, "Together.ClientMain");
+			serverMainType = FindType(assemblies, "Together.ServerMain");
+			netType = FindType(assemblies, "Together.Net");
+			netNetTypeType = FindType(assemblies, "Together.Net+NetType");
+			uiMainMenuType = FindType(assemblies, "Together.UIMainMenu");
+			transportLiteNetLibType = FindType(assemblies, "Together.TransportLiteNetLib");
+			transportSteamworksType = FindType(assemblies, "Together.TransportSteamworks");
+			kSteamType = FindType(assemblies, "Together.KSteam");
+			worldgenPatchType = FindType(assemblies, "Together.WorldGeneration_GenerateWorld_MultiplayerPatch");
+			worldgenPatchesType = FindType(assemblies, "Together.WorldgenPatches");
+			lastBeforeGenerationStateType = FindType(assemblies, "Together.LastBeforeGenerationState");
+			netExtensionsType = FindType(assemblies, "Together.MyLiteNetLibExtensions");
+			netClientIdType = FindType(assemblies, "Together.knetid");
+			netDataReaderType = FindType(assemblies, "LiteNetLib.Utils.NetDataReader");
+			netDataWriterType = FindType(assemblies, "LiteNetLib.Utils.NetDataWriter");
+			deliveryMethodType = FindType(assemblies, "LiteNetLib.DeliveryMethod");
+			InferNetworkApiTypes();
+			createNamedWriterMethod = multiplayerType?.GetMethod("CreateNamedWriter", BindingFlags.Static | BindingFlags.Public, null, new Type[1] { typeof(string) }, null);
+			registerCustomServerReceiverMethod = multiplayerType?.GetMethod("RegisterCustomServerReceiver", BindingFlags.Static | BindingFlags.Public);
+			registerCustomClientReceiverMethod = multiplayerType?.GetMethod("RegisterCustomClientReceiver", BindingFlags.Static | BindingFlags.Public);
+			customServerReceiverDelegateType = registerCustomServerReceiverMethod?.GetParameters().ElementAtOrDefault(1)?.ParameterType;
+			customClientReceiverDelegateType = registerCustomClientReceiverMethod?.GetParameters().ElementAtOrDefault(1)?.ParameterType;
+			clientSendMethod = FindStaticMethod(netType, "Client_Send", new Type[2] { deliveryMethodType, netDataWriterType });
+			serverSendToPlayerMethod = FindStaticMethod(netType, "Server_SendTo", new Type[3] { deliveryMethodType, netDataWriterType, scavPlayerType });
+			serverSendToClientsMethod = netType?.GetMethods(BindingFlags.Static | BindingFlags.Public).FirstOrDefault(delegate(MethodInfo method)
+			{
+				ParameterInfo[] parameters = method.GetParameters();
+				Type type = ((parameters.Length == 3) ? UnwrapByRef(parameters[2].ParameterType) : null);
+				return method.Name == "Server_SendToClients" && parameters.Length == 3 && UnwrapByRef(parameters[0].ParameterType) == deliveryMethodType && UnwrapByRef(parameters[1].ParameterType) == netDataWriterType && type != null && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>) && type.GetGenericArguments()[0] == netClientIdType;
+			});
+			writerPutBytesMethod = netDataWriterType?.GetMethod("Put", new Type[1] { typeof(byte[]) });
+			writerPutUIntMethod = netDataWriterType?.GetMethod("Put", new Type[1] { typeof(uint) });
+			readerGetRemainingBytesMethod = netDataReaderType?.GetMethod("GetRemainingBytes", Type.EmptyTypes);
+			readerAvailableBytesProperty = netDataReaderType?.GetProperty("AvailableBytes", BindingFlags.Instance | BindingFlags.Public);
+			readerGetUIntMethod = netDataReaderType?.GetMethod("GetUInt", Type.EmptyTypes);
+			inventoryActionFlagField = inventoryActionPatchType?.GetField("is_inside_TryPerformInventoryAction", BindingFlags.Static | BindingFlags.Public);
+			saveDataPathReplacementField = saveSystemPatchType?.GetField("savedatapathreplacement", BindingFlags.Static | BindingFlags.Public);
+			saveGameForceField = saveGamePatchType?.GetField("force", BindingFlags.Static | BindingFlags.NonPublic);
+			soundCannonTrackerChargingField = soundCannonTrackerType?.GetField("charging", BindingFlags.Instance | BindingFlags.Public);
+			vanillaSoundCannonChargingField = typeof(SoundCannon).GetField("charging", BindingFlags.Instance | BindingFlags.NonPublic);
+			itemContainerChangedField = itemSyncType?.GetField("ItemContainerChanged", BindingFlags.Static | BindingFlags.Public);
+			itemRecordInventoryStateMethod = itemSyncType?.GetMethod("RecordInvState", BindingFlags.Static | BindingFlags.Public);
+			itemLastInventoryStateField = itemSyncType?.GetField("Client_last_inventory_state", BindingFlags.Static | BindingFlags.NonPublic);
+			mpRecipeTryMakeMethod = playerCameraTryCraftPatchType?.GetMethod("Recipe_TryMake", BindingFlags.Static | BindingFlags.Public);
+			mpRecipeGetItemsForRecipeMethod = playerCameraTryCraftPatchType?.GetMethod("Recipe_GetItemsForRecipe", BindingFlags.Static | BindingFlags.Public);
+			mpTryCraftPrefixMethod = playerCameraTryCraftPatchType?.GetMethod("Prefix", BindingFlags.Static | BindingFlags.NonPublic);
+			mpClientPingField = clientMainType?.GetField("LOCAL_PING", BindingFlags.Static | BindingFlags.Public);
+			mpParseTaggedStringMethod = FindType(assemblies, "Together.Lang")?.GetMethod("ParseTaggedString", new Type[1] { typeof(string) });
+			mpLiquidCombineAnnounceMethod = bodyCombineItemsPatchType?.GetMethod("DoTheCombineAnnouncement", BindingFlags.Static | BindingFlags.Public);
+			netPlayerLookupMethod = scavPlayerType?.GetMethod("TryGetPlayerAndBodyFromClientId", BindingFlags.Static | BindingFlags.Public);
+			netServerKickMethod = netType?.GetMethod("Server_Kick", BindingFlags.Static | BindingFlags.Public);
+			forceDisconnectMethod = multiplayerType?.GetMethod("_JustDisconnect", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+			goBackToMainMenuMethod = multiplayerType?.GetMethod("GoBackToMainMenuIfImClientAndInGame", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+			uiMainMenuSetOpenMethod = uiMainMenuType?.GetMethod("SetOpen", BindingFlags.Static | BindingFlags.Public);
+			uiMainMenuIsOpenMethod = uiMainMenuType?.GetMethod("IsOpen", BindingFlags.Static | BindingFlags.Public);
+			transportLiteConnectMethod = transportLiteNetLibType?.GetMethod("OnWantToConnect", BindingFlags.Static | BindingFlags.Public);
+			transportSteamJoinLobbyMethod = transportSteamworksType?.GetMethod("OnWantToJoinLobby", BindingFlags.Static | BindingFlags.Public);
+			multiplayerStatusLogMethod = multiplayerType?.GetMethod("DoMultiplayerStatusMessageLog", BindingFlags.Static | BindingFlags.Public);
+			serverAnnounceGameStartMethod = serverMainType?.GetMethod("Server_Announce_GAME_START", BindingFlags.Static | BindingFlags.Public);
+			multiplayerOnSceneLoadedMethod = multiplayerType?.GetMethod("OnSceneLoaded", BindingFlags.Static | BindingFlags.Public);
+			serverFinishedWorldgenReceiverMethod = worldgenPatchesType?.GetMethod("ServerReceiver_FinishedWorldgen", BindingFlags.Static | BindingFlags.NonPublic);
+			localPlayerField = scavPlayerType?.GetField("LocalPlayer", BindingFlags.Static | BindingFlags.Public);
+			playerBodyToPlayerDictField = scavPlayerType?.GetField("BodyToPlayerDict", BindingFlags.Static | BindingFlags.Public);
+			playerClientIdToPlayerDictField = scavPlayerType?.GetField("ClientIdToPlayerDict", BindingFlags.Static | BindingFlags.Public);
+			playerTeleportMethod = scavPlayerType?.GetMethod("Server_TeleportCharacter", BindingFlags.Instance | BindingFlags.Public);
+			showMultiplayerMenuField = multiplayerType?.GetField("showMultiplayerMenu", BindingFlags.Static | BindingFlags.Public);
+			uiCurrentTabField = uiMainMenuType?.GetField("current_tab", BindingFlags.Static | BindingFlags.Public);
+			uiDirectConnectTabField = uiMainMenuType?.GetField("menutab_directconnect", BindingFlags.Static | BindingFlags.Public);
+			serverLastPlayerStatesField = serverMainType?.GetField("Server_LastPlayerStates", BindingFlags.Static | BindingFlags.Public);
+			serverAllClientIdsExceptHostProperty = serverMainType?.GetProperty("AllClientIdsExceptHost", BindingFlags.Static | BindingFlags.Public);
+			multiplayerRulesField = multiplayerType?.GetField("rules", BindingFlags.Static | BindingFlags.Public);
+			firstWorldgenParamsField = worldgenPatchType?.GetField("firstworldgenparams", BindingFlags.Static | BindingFlags.Public);
+			lastBeforeGenerationStateApplyMethod = lastBeforeGenerationStateType?.GetMethod("Apply", BindingFlags.Instance | BindingFlags.Public);
+			multiplayerInitFinishedEvent = mpPluginType?.GetEvent("OnInitFinish", BindingFlags.Static | BindingFlags.Public);
+			pluginPresent = multiplayerType != null && mpPluginType != null;
+			networkStateFrame = -1;
+			if (pluginPresent)
+			{
+				LogCompatibilityStatus();
+			}
+		}
+	}
+
+	private static void AttachToMultiplayerInitialization()
+	{
+		if (!pluginPresent || multiplayerInitFinishedEvent == null || (object)multiplayerInitFinishedHandler != null)
 		{
 			return;
 		}
-		resolutionAttempted = true;
-		resolvedAssemblyCount = assemblies.Length;
-		krokoshaScavType = FindType(assemblies, "KrokoshaCasualtiesMP.KrokoshaScavMultiplayer");
-		mpPluginType = FindType(assemblies, "KrokoshaCasualtiesMP.Plugin");
-		itemSyncType = FindType(assemblies, "KrokoshaCasualtiesMP.ItemSync");
-		netObjectRegistryType = FindType(assemblies, "KrokoshaCasualtiesMP.NetObjectRegistry");
-		inventoryActionPatchType = FindType(assemblies, "KrokoshaCasualtiesMP.PlayerCamera_TryPerformInventoryAction_MultiplayerPatch");
-		saveSystemPatchType = FindType(assemblies, "KrokoshaCasualtiesMP.SavesystemPatch");
-		saveGamePatchType = FindType(assemblies, "KrokoshaCasualtiesMP.SaveSystem_SaveGame_MultiplayerPatch");
-		soundCannonTrackerType = FindType(assemblies, "KrokoshaCasualtiesMP.KrokoshaSoundCannonNetworkTrackerComponent");
-		playerCameraTryCraftPatchType = FindType(assemblies, "KrokoshaCasualtiesMP.PlayerCamera_TryCraft_MultiplayerPatch");
-		bodyCombineItemsPatchType = FindType(assemblies, "KrokoshaCasualtiesMP.Body_CombineItems_MultiplayerPatch");
-		netPlayerType = FindType(assemblies, "KrokoshaCasualtiesMP.NetPlayer");
-		netBodyType = FindType(assemblies, "KrokoshaCasualtiesMP.NetBody");
-		mpRulesType = FindType(assemblies, "KrokoshaCasualtiesMP.KrokoshaMultiplayerGameRules");
-		clientMainType = FindType(assemblies, "KrokoshaCasualtiesMP.ClientMain");
-		serverMainType = FindType(assemblies, "KrokoshaCasualtiesMP.ServerMain");
-		netType = FindType(assemblies, "KrokoshaCasualtiesMP.Net");
-		netNetTypeType = FindType(assemblies, "KrokoshaCasualtiesMP.Net+NetType");
-		uiMainMenuType = FindType(assemblies, "KrokoshaCasualtiesMP.UIMainMenu");
-		transportLiteNetLibType = FindType(assemblies, "KrokoshaCasualtiesMP.TransportLiteNetLib");
-		transportSteamworksType = FindType(assemblies, "KrokoshaCasualtiesMP.TransportSteamworks");
-		kSteamType = FindType(assemblies, "KrokoshaCasualtiesMP.KSteam");
-		worldgenPatchType = FindType(assemblies, "KrokoshaCasualtiesMP.WorldGeneration_GenerateWorld_MultiplayerPatch");
-		worldgenPatchesType = FindType(assemblies, "KrokoshaCasualtiesMP.WorldgenPatches");
-		lastBeforeGenerationStateType = FindType(assemblies, "KrokoshaCasualtiesMP.LastBeforeGenerationState");
-		netExtensionsType = FindType(assemblies, "KrokoshaCasualtiesMP.MyLiteNetLibExtensions");
-		netClientIdType = FindType(assemblies, "KrokoshaCasualtiesMP.knetid");
-		networkDelegateType = krokoshaScavType?.GetNestedType("KrokoshaHandleNamedMessageDelegate", BindingFlags.Public | BindingFlags.NonPublic);
-		netDataReaderType = FindType(assemblies, "LiteNetLib.Utils.NetDataReader");
-		netDataWriterType = FindType(assemblies, "LiteNetLib.Utils.NetDataWriter");
-		deliveryMethodType = FindType(assemblies, "LiteNetLib.DeliveryMethod");
-		InferNetworkApiTypes();
-		inventoryActionFlagField = inventoryActionPatchType?.GetField("is_inside_TryPerformInventoryAction", BindingFlags.Static | BindingFlags.Public);
-		saveDataPathReplacementField = saveSystemPatchType?.GetField("savedatapathreplacement", BindingFlags.Static | BindingFlags.Public);
-		saveGameForceField = saveGamePatchType?.GetField("force", BindingFlags.Static | BindingFlags.NonPublic);
-		soundCannonTrackerChargingField = soundCannonTrackerType?.GetField("charging", BindingFlags.Instance | BindingFlags.Public);
-		vanillaSoundCannonChargingField = typeof(SoundCannon).GetField("charging", BindingFlags.Instance | BindingFlags.NonPublic);
-		containerStatusChangedField = itemSyncType?.GetField("ContainerStatusChanged", BindingFlags.Static | BindingFlags.Public);
-		mpLastRecipeItemsField = playerCameraTryCraftPatchType?.GetField("last_recipe_items", BindingFlags.Static | BindingFlags.Public);
-		mpRecipeTryMakeMethod = playerCameraTryCraftPatchType?.GetMethod("Recipe_TryMake", BindingFlags.Static | BindingFlags.Public);
-		mpRecipeGetItemsForRecipeMethod = playerCameraTryCraftPatchType?.GetMethod("Recipe_GetItemsForRecipe", BindingFlags.Static | BindingFlags.Public);
-		mpTryCraftPrefixMethod = playerCameraTryCraftPatchType?.GetMethod("Prefix", BindingFlags.Static | BindingFlags.NonPublic);
-		mpLiquidCombineAnnounceMethod = bodyCombineItemsPatchType?.GetMethod("DoTheCombineAnnouncement", BindingFlags.Static | BindingFlags.Public);
-		netPlayerLookupMethod = netPlayerType?.GetMethod("TryGetNetPlayerAndBodyFromClientId", BindingFlags.Static | BindingFlags.Public);
-		netPlayerLookupNetBodyMethod = netPlayerType?.GetMethod("TryGetNetPlayerAndNetBodyFromClientId", BindingFlags.Static | BindingFlags.Public);
-		netServerKickMethod = netType?.GetMethod("Server_Kick", BindingFlags.Static | BindingFlags.Public);
-		serverSendRelayMessageToClientsMethod = krokoshaScavType?.GetMethods(BindingFlags.Static | BindingFlags.Public).FirstOrDefault(delegate(MethodInfo method)
+		try
 		{
-			if (method.Name != "Server_SendRelayMessageToClients")
+			MethodInfo method = typeof(MultiplayerCompat).GetMethod("OnMultiplayerInitializationFinished", BindingFlags.Static | BindingFlags.NonPublic);
+			multiplayerInitFinishedHandler = Delegate.CreateDelegate(multiplayerInitFinishedEvent.EventHandlerType, method);
+			multiplayerInitFinishedEvent.AddEventHandler(null, multiplayerInitFinishedHandler);
+		}
+		catch (Exception ex)
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
 			{
-				return false;
+				logger.LogWarning((object)("[Together] Could not subscribe to Plugin.OnInitFinish: " + ex.Message));
 			}
-			ParameterInfo[] parameters = method.GetParameters();
-			return parameters.Length == 4 && UnwrapByRef(parameters[0].ParameterType) == typeof(ushort) && parameters[1].ParameterType == typeof(ushort) && parameters[2].ParameterType == typeof(bool) && parameters[3].ParameterType == typeof(bool);
-		});
-		forceDisconnectMethod = krokoshaScavType?.GetMethod("_JustDisconnect", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-		uiMainMenuSetOpenMethod = uiMainMenuType?.GetMethod("SetOpen", BindingFlags.Static | BindingFlags.Public);
-		transportLiteConnectMethod = transportLiteNetLibType?.GetMethod("OnWantToConnect", BindingFlags.Static | BindingFlags.Public);
-		transportSteamJoinLobbyMethod = transportSteamworksType?.GetMethod("OnWantToJoinLobby", BindingFlags.Static | BindingFlags.Public);
-		multiplayerStatusLogMethod = krokoshaScavType?.GetMethod("DoMultiplayerStatusMessageLog", BindingFlags.Static | BindingFlags.Public);
-		serverAnnounceGameStartMethod = serverMainType?.GetMethod("Server_Announce_GAME_START", BindingFlags.Static | BindingFlags.Public);
-		krokoshaOnSceneLoadedMethod = krokoshaScavType?.GetMethod("OnSceneLoaded", BindingFlags.Static | BindingFlags.Public);
-		serverFinishedWorldgenReceiverMethod = worldgenPatchesType?.GetMethod("ServerReceiver_FinishedWorldgen", BindingFlags.Static | BindingFlags.NonPublic);
-		netPlayerLocalPlayerField = netPlayerType?.GetField("LOCAL_PLAYER", BindingFlags.Static | BindingFlags.Public);
-		netPlayerBodyToPlayerDictField = netPlayerType?.GetField("BodyToPlayerDict", BindingFlags.Static | BindingFlags.Public);
-		netPlayerClientIdToPlayerDictField = netPlayerType?.GetField("ClientIdToPlayerDict", BindingFlags.Static | BindingFlags.Public);
-		netPlayerTeleportMethod = netPlayerType?.GetMethod("Server_TeleportCharacter", BindingFlags.Instance | BindingFlags.Public);
-		showMultiplayerMenuField = krokoshaScavType?.GetField("showMultiplayerMenu", BindingFlags.Static | BindingFlags.Public);
-		uiCurrentTabField = uiMainMenuType?.GetField("current_tab", BindingFlags.Static | BindingFlags.Public);
-		uiDirectConnectTabField = uiMainMenuType?.GetField("menutab_directconnect", BindingFlags.Static | BindingFlags.Public);
-		serverLastPlayerStatesField = serverMainType?.GetField("server_lastplayerstates", BindingFlags.Static | BindingFlags.Public);
-		serverAllClientIdsExceptHostProperty = serverMainType?.GetProperty("AllClientIdsExceptHost", BindingFlags.Static | BindingFlags.Public);
-		mpRulesField = krokoshaScavType?.GetField("rules", BindingFlags.Static | BindingFlags.Public);
-		firstWorldgenParamsField = worldgenPatchType?.GetField("firstworldgenparams", BindingFlags.Static | BindingFlags.Public);
-		lastBeforeGenerationStateApplyMethod = lastBeforeGenerationStateType?.GetMethod("Apply", BindingFlags.Instance | BindingFlags.Public);
-		pluginPresent = krokoshaScavType != null || mpPluginType != null;
-		networkStateFrame = -1;
+		}
+	}
+
+	private static void OnMultiplayerInitializationFinished()
+	{
+		EnsureResolved();
+		EnsureRuntimeHooksInstalled();
+	}
+
+	private static void LogCompatibilityStatus()
+	{
+		bool flag = createNamedWriterMethod != null && registerCustomServerReceiverMethod != null && registerCustomClientReceiverMethod != null && clientSendMethod != null && serverSendToPlayerMethod != null && serverSendToClientsMethod != null && writerPutBytesMethod != null && readerGetRemainingBytesMethod != null && readerAvailableBytesProperty != null;
+		bool flag2 = itemSyncType != null && netObjectRegistryType != null && itemContainerChangedField != null;
+		bool flag3 = saveSystemPatchType != null && saveGamePatchType != null && lastBeforeGenerationStateType != null;
 	}
 
 	public static int PrepareClientsForHostSaveLoad()
@@ -1294,9 +1338,20 @@ internal static class KrokoshaMpCompat
 		List<object> nonHostClientIds = GetNonHostClientIds();
 		if (nonHostClientIds.Count == 0)
 		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogInfo((object)"[MultiplayerCompat] Host save load: no connected clients to return to the main menu.");
+			}
 			return 0;
 		}
-		if (!SendClientsBackToMainMenuForHostLoad())
+		bool flag = SendClientsBackToMainMenuForHostLoad();
+		ManualLogSource logger2 = Logger;
+		if (logger2 != null)
+		{
+			logger2.LogInfo((object)string.Format("[MultiplayerCompat] Host save load: returning {0} client(s) to the main menu (prepare-reconnect send {1}).", nonHostClientIds.Count, flag ? "ok" : "failed"));
+		}
+		if (!flag)
 		{
 			DisconnectNonHostClientsForHostSaveLoad("Host is loading a save. Please rejoin after the load finishes.", nonHostClientIds);
 			return nonHostClientIds.Count;
@@ -1324,8 +1379,8 @@ internal static class KrokoshaMpCompat
 		try
 		{
 			Dictionary<string, string> dictionary = new Dictionary<string, string>(StringComparer.Ordinal);
-			IDictionary dictionary2 = netPlayerClientIdToPlayerDictField?.GetValue(null) as IDictionary;
-			object obj = netPlayerLocalPlayerField?.GetValue(null);
+			IDictionary dictionary2 = playerClientIdToPlayerDictField?.GetValue(null) as IDictionary;
+			object obj = localPlayerField?.GetValue(null);
 			if (dictionary2 == null)
 			{
 				pendingClientInventoryRestorePayloadsByPersistentId = null;
@@ -1337,7 +1392,7 @@ internal static class KrokoshaMpCompat
 				if (value != null && value != obj)
 				{
 					string text = value.GetType().GetMethod("GetPersistentId", BindingFlags.Instance | BindingFlags.Public)?.Invoke(value, null) as string;
-					if (!string.IsNullOrWhiteSpace(text) && KrokoshaMpSaveBundle.TryReadLiveMpPlayerInventorySnapshot(text, out var payload))
+					if (!string.IsNullOrWhiteSpace(text) && MultiplayerSaveBundle.TryReadLiveMpPlayerInventorySnapshot(text, out var payload))
 					{
 						dictionary[text] = payload;
 					}
@@ -1345,7 +1400,7 @@ internal static class KrokoshaMpCompat
 			}
 			pendingClientInventoryRestorePayloadsByPersistentId = ((dictionary.Count > 0) ? dictionary : null);
 		}
-		catch (Exception)
+		catch
 		{
 			pendingClientInventoryRestorePayloadsByPersistentId = null;
 		}
@@ -1362,7 +1417,7 @@ internal static class KrokoshaMpCompat
 		{
 			serverAnnounceGameStartMethod?.Invoke(null, null);
 		}
-		catch (Exception)
+		catch
 		{
 		}
 	}
@@ -1408,7 +1463,7 @@ internal static class KrokoshaMpCompat
 			}
 			return list.Count;
 		}
-		catch (Exception)
+		catch
 		{
 			return 0;
 		}
@@ -1442,105 +1497,23 @@ internal static class KrokoshaMpCompat
 		return list;
 	}
 
-	private static bool SendRelayMessageToClients(ushort messageId)
-	{
-		EnsureResolved();
-		if (serverSendRelayMessageToClientsMethod == null)
-		{
-			return false;
-		}
-		try
-		{
-			serverSendRelayMessageToClientsMethod.Invoke(null, new object[4]
-			{
-				messageId,
-				(ushort)0,
-				true,
-				false
-			});
-			return true;
-		}
-		catch (Exception)
-		{
-			return false;
-		}
-	}
-
 	private static bool SendClientsBackToMainMenuForHostLoad()
 	{
-		EnsureResolved();
-		if (serverSendRelayMessageToClientsMethod == null)
-		{
-			return false;
-		}
-		try
-		{
-			serverSendRelayMessageToClientsMethod.Invoke(null, new object[4]
-			{
-				(ushort)10011,
-				(ushort)0,
-				true,
-				false
-			});
-			return true;
-		}
-		catch (Exception)
-		{
-			return false;
-		}
-	}
-
-	private static bool SendOrderedEmptyMessageToClients(ushort msgId)
-	{
-		EnsureResolved();
-		if (serverMainType == null || netType == null || netDataWriterType == null || deliveryMethodType == null)
-		{
-			return false;
-		}
-		try
-		{
-			object targets = serverAllClientIdsExceptHostProperty?.GetValue(null, null);
-			if (targets == null)
-			{
-				return false;
-			}
-			MethodInfo methodInfo = FindStaticMethod(netType, "CreateWriter", new Type[1] { typeof(ushort) });
-			MethodInfo methodInfo2 = netType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(delegate(MethodInfo method)
-			{
-				if (method.Name != "Server_SendToClients")
-				{
-					return false;
-				}
-				ParameterInfo[] parameters = method.GetParameters();
-				return parameters.Length == 3 && parameters[0].ParameterType.IsAssignableFrom(deliveryMethodType) && parameters[1].ParameterType.IsAssignableFrom(netDataWriterType) && parameters[2].ParameterType.IsInstanceOfType(targets);
-			});
-			if (methodInfo == null || methodInfo2 == null)
-			{
-				return false;
-			}
-			object obj = methodInfo.Invoke(null, new object[1] { msgId });
-			object obj2 = Enum.Parse(deliveryMethodType, "ReliableOrdered");
-			methodInfo2.Invoke(null, new object[3] { obj2, obj, targets });
-			return true;
-		}
-		catch (Exception)
-		{
-			return false;
-		}
+		return SendNamedStringToClients("QoLUnknown.v1.PrepareReconnectForHostLoad", string.Empty);
 	}
 
 	private static void ResetRemotePlayerBodiesForConnectedHostSaveLoad()
 	{
 		EnsureResolved();
-		if (netPlayerBodyToPlayerDictField == null || netPlayerClientIdToPlayerDictField == null || netPlayerLocalPlayerField == null)
+		if (playerBodyToPlayerDictField == null || playerClientIdToPlayerDictField == null || localPlayerField == null)
 		{
 			return;
 		}
 		try
 		{
-			IDictionary dictionary = netPlayerBodyToPlayerDictField.GetValue(null) as IDictionary;
-			IDictionary dictionary2 = netPlayerClientIdToPlayerDictField.GetValue(null) as IDictionary;
-			object value = netPlayerLocalPlayerField.GetValue(null);
+			IDictionary dictionary = playerBodyToPlayerDictField.GetValue(null) as IDictionary;
+			IDictionary dictionary2 = playerClientIdToPlayerDictField.GetValue(null) as IDictionary;
+			object value = localPlayerField.GetValue(null);
 			if (dictionary == null || dictionary2 == null)
 			{
 				return;
@@ -1575,13 +1548,13 @@ internal static class KrokoshaMpCompat
 					{
 						Object.Destroy((Object)(object)((Component)((Component)val2).transform.root).gameObject);
 					}
-					catch (Exception)
+					catch
 					{
 					}
 				}
 			}
 		}
-		catch (Exception)
+		catch
 		{
 		}
 	}
@@ -1599,9 +1572,10 @@ internal static class KrokoshaMpCompat
 		else if ((cachedNetworkRunning || !(Time.unscaledTime < nextInactiveNetworkRefreshTime)) && networkStateFrame != Time.frameCount)
 		{
 			networkStateFrame = Time.frameCount;
-			cachedNetworkRunning = ReadStaticBool(krokoshaScavType, "network_system_is_running");
+			cachedNetworkRunning = ReadStaticBool(netType, "IsRunning");
 			if (!cachedNetworkRunning)
 			{
+				pendingClientCraft = null;
 				cachedIsClient = false;
 				cachedIsServer = false;
 				cachedWorldGenerated = false;
@@ -1609,9 +1583,9 @@ internal static class KrokoshaMpCompat
 			}
 			else
 			{
-				cachedIsClient = cachedNetworkRunning && ReadStaticBool(krokoshaScavType, "is_client");
-				cachedIsServer = cachedNetworkRunning && ReadStaticBool(krokoshaScavType, "is_server");
-				cachedWorldGenerated = cachedNetworkRunning && InvokeStaticBool(krokoshaScavType, "IsNetworkActiveAndIsWorldGenerated");
+				cachedIsClient = cachedNetworkRunning && ReadStaticBool(netType, "IsClient");
+				cachedIsServer = cachedNetworkRunning && ReadStaticBool(netType, "IsServer");
+				cachedWorldGenerated = cachedNetworkRunning && InvokeStaticBool(multiplayerType, "IsNetworkActiveAndIsWorldGenerated");
 				nextInactiveNetworkRefreshTime = 0f;
 				EnsureRuntimeHooksInstalled();
 			}
@@ -1620,20 +1594,36 @@ internal static class KrokoshaMpCompat
 
 	private static void EnsureRuntimeHooksInstalled()
 	{
-		if (pluginPresent && !runtimeHooksInstalled)
+		if (!pluginPresent || runtimeHooksInstalled)
 		{
-			RegisterSeedSyncReceiver();
-			RegisterSeedRequestReceiver();
-			RegisterBulkCraftReceiver();
-			RegisterClientInventoryRestoreRequestReceiver();
-			RegisterClientInventoryRestoreResultReceiver();
-			RegisterClientPrepareReconnectForHostLoadReceiver();
-			PatchSeedAnnouncementHooks();
-			PatchHostSaveLoadHooks();
-			PatchPingSuppressionHooks();
-			PatchCraftSuppressionHooks();
-			PatchCraftTryMakeGuard();
-			runtimeHooksInstalled = true;
+			return;
+		}
+		if (!ReadStaticBool(mpPluginType, "SUCCESFULLY_INITIALIZED"))
+		{
+			AttachToMultiplayerInitialization();
+			return;
+		}
+		RegisterSeedSyncReceiver();
+		RegisterSeedRequestReceiver();
+		RegisterClientInventoryRestoreRequestReceiver();
+		RegisterClientInventoryRestoreResultReceiver();
+		RegisterClientSpawnRequestReceiver();
+		RegisterClientSpawnResultReceiver();
+		RegisterClientHealRequestReceiver();
+		RegisterClientHealResultReceiver();
+		RegisterClientPrepareReconnectForHostLoadReceiver();
+		PatchSeedAnnouncementHooks();
+		PatchHostSaveLoadHooks();
+		PatchPingSuppressionHooks();
+		PatchCraftTryMakeGuard();
+		runtimeHooksInstalled = seedSyncRegistered && seedRequestRegistered && clientInventoryRestoreRequestRegistered && clientInventoryRestoreResultRegistered && clientSpawnRequestRegistered && clientSpawnResultRegistered && clientHealRequestRegistered && clientHealResultRegistered && clientPrepareReconnectForHostLoadRegistered && seedAnnouncementHooksPatched && hostSaveLoadHooksPatched && pingSuppressionHooksPatched;
+		if (!runtimeHooksInstalled)
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)"[Together] One or more QoL named-message routes could not be registered; affected multiplayer features will fail closed.");
+			}
 		}
 	}
 
@@ -1654,9 +1644,9 @@ internal static class KrokoshaMpCompat
 
 	private static void InferNetworkApiTypes()
 	{
-		if (netDataReaderType == null && networkDelegateType != null)
+		if (netDataReaderType == null && customServerReceiverDelegateType != null)
 		{
-			ParameterInfo[] array = networkDelegateType.GetMethod("Invoke")?.GetParameters();
+			ParameterInfo[] array = customServerReceiverDelegateType.GetMethod("Invoke")?.GetParameters();
 			if (array != null && array.Length == 2)
 			{
 				netDataReaderType = UnwrapByRef(array[1].ParameterType);
@@ -1664,7 +1654,7 @@ internal static class KrokoshaMpCompat
 		}
 		if (netDataWriterType == null && netType != null)
 		{
-			netDataWriterType = FindStaticMethod(netType, "CreateWriter", new Type[1] { typeof(ushort) })?.ReturnType;
+			netDataWriterType = multiplayerType?.GetMethod("CreateNamedWriter", BindingFlags.Static | BindingFlags.Public, null, new Type[1] { typeof(string) }, null)?.ReturnType;
 		}
 		if ((deliveryMethodType == null || netDataWriterType == null) && netType != null)
 		{
@@ -1682,39 +1672,16 @@ internal static class KrokoshaMpCompat
 		return (type != null && type.IsByRef) ? type.GetElementType() : type;
 	}
 
-	private static MethodInfo FindClientRegisterReceiverMethod(bool includeReliableFlag)
+	private static MethodInfo FindClientRegisterReceiverMethod()
 	{
 		EnsureResolved();
-		if (networkDelegateType == null)
-		{
-			return null;
-		}
-		Type[] signature = ((!includeReliableFlag) ? new Type[2]
-		{
-			typeof(ushort),
-			networkDelegateType
-		} : new Type[3]
-		{
-			typeof(ushort),
-			networkDelegateType,
-			typeof(bool)
-		});
-		return FindStaticMethod(netType, "RegisterClientReceiver", signature) ?? FindStaticMethod(netType, "RegisterClientReciever", signature) ?? FindStaticMethod(clientMainType, "RegisterClientReceiver", signature) ?? FindStaticMethod(clientMainType, "RegisterClientReciever", signature);
+		return registerCustomClientReceiverMethod;
 	}
 
 	private static MethodInfo FindServerRegisterReceiverMethod()
 	{
 		EnsureResolved();
-		if (networkDelegateType == null)
-		{
-			return null;
-		}
-		Type[] signature = new Type[2]
-		{
-			typeof(ushort),
-			networkDelegateType
-		};
-		return FindStaticMethod(netType, "RegisterServerReceiver", signature) ?? FindStaticMethod(netType, "RegisterServerReciever", signature) ?? FindStaticMethod(serverMainType, "RegisterServerReceiver", signature) ?? FindStaticMethod(serverMainType, "RegisterServerReciever", signature);
+		return registerCustomServerReceiverMethod;
 	}
 
 	private static void RegisterSeedSyncReceiver()
@@ -1724,11 +1691,11 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		EnsureResolved();
-		if (clientMainType == null || networkDelegateType == null || netDataReaderType == null)
+		if (customClientReceiverDelegateType == null || netDataReaderType == null)
 		{
 			return;
 		}
-		MethodInfo methodInfo = FindClientRegisterReceiverMethod(includeReliableFlag: true);
+		MethodInfo methodInfo = FindClientRegisterReceiverMethod();
 		if (methodInfo == null)
 		{
 			return;
@@ -1736,12 +1703,7 @@ internal static class KrokoshaMpCompat
 		try
 		{
 			object obj = CreateSeedSyncReceiverDelegate();
-			methodInfo.Invoke(null, new object[3]
-			{
-				(ushort)30990,
-				obj,
-				true
-			});
+			methodInfo.Invoke(null, new object[2] { "QoLUnknown.v1.SeedSync", obj });
 			seedSyncRegistered = true;
 		}
 		catch
@@ -1756,7 +1718,7 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		EnsureResolved();
-		if (serverMainType == null || networkDelegateType == null || netDataReaderType == null)
+		if (customServerReceiverDelegateType == null || netDataReaderType == null)
 		{
 			return;
 		}
@@ -1768,43 +1730,8 @@ internal static class KrokoshaMpCompat
 		try
 		{
 			object obj = CreateSeedRequestReceiverDelegate();
-			methodInfo.Invoke(null, new object[2]
-			{
-				(ushort)30991,
-				obj
-			});
+			methodInfo.Invoke(null, new object[2] { "QoLUnknown.v1.SeedRequest", obj });
 			seedRequestRegistered = true;
-		}
-		catch
-		{
-		}
-	}
-
-	private static void RegisterBulkCraftReceiver()
-	{
-		if (bulkCraftRegistered)
-		{
-			return;
-		}
-		EnsureResolved();
-		if (serverMainType == null || networkDelegateType == null || netDataReaderType == null)
-		{
-			return;
-		}
-		MethodInfo methodInfo = FindServerRegisterReceiverMethod();
-		if (methodInfo == null)
-		{
-			return;
-		}
-		try
-		{
-			object obj = CreateBulkCraftReceiverDelegate();
-			methodInfo.Invoke(null, new object[2]
-			{
-				(ushort)30992,
-				obj
-			});
-			bulkCraftRegistered = true;
 		}
 		catch
 		{
@@ -1818,7 +1745,7 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		EnsureResolved();
-		if (serverMainType == null || networkDelegateType == null || netDataReaderType == null)
+		if (customServerReceiverDelegateType == null || netDataReaderType == null)
 		{
 			return;
 		}
@@ -1830,11 +1757,7 @@ internal static class KrokoshaMpCompat
 		try
 		{
 			object obj = CreateClientInventoryRestoreRequestReceiverDelegate();
-			methodInfo.Invoke(null, new object[2]
-			{
-				(ushort)30993,
-				obj
-			});
+			methodInfo.Invoke(null, new object[2] { "QoLUnknown.v1.InventoryRestoreRequest", obj });
 			clientInventoryRestoreRequestRegistered = true;
 		}
 		catch
@@ -1849,11 +1772,11 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		EnsureResolved();
-		if (clientMainType == null || networkDelegateType == null || netDataReaderType == null)
+		if (customClientReceiverDelegateType == null || netDataReaderType == null)
 		{
 			return;
 		}
-		MethodInfo methodInfo = FindClientRegisterReceiverMethod(includeReliableFlag: true);
+		MethodInfo methodInfo = FindClientRegisterReceiverMethod();
 		if (methodInfo == null)
 		{
 			return;
@@ -1861,12 +1784,7 @@ internal static class KrokoshaMpCompat
 		try
 		{
 			object obj = CreateClientInventoryRestoreResultReceiverDelegate();
-			methodInfo.Invoke(null, new object[3]
-			{
-				(ushort)30994,
-				obj,
-				false
-			});
+			methodInfo.Invoke(null, new object[2] { "QoLUnknown.v1.InventoryRestoreResult", obj });
 			clientInventoryRestoreResultRegistered = true;
 		}
 		catch
@@ -1881,7 +1799,7 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		EnsureResolved();
-		if (serverMainType == null || networkDelegateType == null || netDataReaderType == null)
+		if (customServerReceiverDelegateType == null || netDataReaderType == null)
 		{
 			return;
 		}
@@ -1895,15 +1813,11 @@ internal static class KrokoshaMpCompat
 			object obj = CreateClientSpawnRequestReceiverDelegate();
 			if (obj != null)
 			{
-				methodInfo.Invoke(null, new object[2]
-				{
-					(ushort)30995,
-					obj
-				});
+				methodInfo.Invoke(null, new object[2] { "QoLUnknown.v1.SpawnRequest", obj });
 				clientSpawnRequestRegistered = true;
 			}
 		}
-		catch (Exception)
+		catch
 		{
 		}
 	}
@@ -1915,11 +1829,11 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		EnsureResolved();
-		if (clientMainType == null || networkDelegateType == null || netDataReaderType == null)
+		if (customClientReceiverDelegateType == null || netDataReaderType == null)
 		{
 			return;
 		}
-		MethodInfo methodInfo = FindClientRegisterReceiverMethod(includeReliableFlag: true);
+		MethodInfo methodInfo = FindClientRegisterReceiverMethod();
 		if (methodInfo == null)
 		{
 			return;
@@ -1927,12 +1841,7 @@ internal static class KrokoshaMpCompat
 		try
 		{
 			object obj = CreateClientSpawnResultReceiverDelegate();
-			methodInfo.Invoke(null, new object[3]
-			{
-				(ushort)30996,
-				obj,
-				false
-			});
+			methodInfo.Invoke(null, new object[2] { "QoLUnknown.v1.SpawnResult", obj });
 			clientSpawnResultRegistered = true;
 		}
 		catch
@@ -1947,7 +1856,7 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		EnsureResolved();
-		if (serverMainType == null || networkDelegateType == null)
+		if (customServerReceiverDelegateType == null || netDataReaderType == null)
 		{
 			return;
 		}
@@ -1961,15 +1870,11 @@ internal static class KrokoshaMpCompat
 			object obj = CreateClientHealRequestReceiverDelegate();
 			if (obj != null)
 			{
-				methodInfo.Invoke(null, new object[2]
-				{
-					(ushort)30997,
-					obj
-				});
+				methodInfo.Invoke(null, new object[2] { "QoLUnknown.v1.HealRequest", obj });
 				clientHealRequestRegistered = true;
 			}
 		}
-		catch (Exception)
+		catch
 		{
 		}
 	}
@@ -1981,11 +1886,11 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		EnsureResolved();
-		if (clientMainType == null || networkDelegateType == null || netDataReaderType == null)
+		if (customClientReceiverDelegateType == null || netDataReaderType == null)
 		{
 			return;
 		}
-		MethodInfo methodInfo = FindClientRegisterReceiverMethod(includeReliableFlag: true);
+		MethodInfo methodInfo = FindClientRegisterReceiverMethod();
 		if (methodInfo == null)
 		{
 			return;
@@ -1993,12 +1898,7 @@ internal static class KrokoshaMpCompat
 		try
 		{
 			object obj = CreateClientHealResultReceiverDelegate();
-			methodInfo.Invoke(null, new object[3]
-			{
-				(ushort)30998,
-				obj,
-				false
-			});
+			methodInfo.Invoke(null, new object[2] { "QoLUnknown.v1.HealResult", obj });
 			clientHealResultRegistered = true;
 		}
 		catch
@@ -2013,11 +1913,11 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		EnsureResolved();
-		if (clientMainType == null || networkDelegateType == null)
+		if (customClientReceiverDelegateType == null || netDataReaderType == null)
 		{
 			return;
 		}
-		MethodInfo methodInfo = FindClientRegisterReceiverMethod(includeReliableFlag: true);
+		MethodInfo methodInfo = FindClientRegisterReceiverMethod();
 		if (methodInfo == null)
 		{
 			return;
@@ -2025,12 +1925,7 @@ internal static class KrokoshaMpCompat
 		try
 		{
 			object obj = CreateClientPrepareReconnectForHostLoadReceiverDelegate();
-			methodInfo.Invoke(null, new object[3]
-			{
-				(ushort)30999,
-				obj,
-				true
-			});
+			methodInfo.Invoke(null, new object[2] { "QoLUnknown.v1.PrepareReconnectForHostLoad", obj });
 			clientPrepareReconnectForHostLoadRegistered = true;
 		}
 		catch
@@ -2040,112 +1935,110 @@ internal static class KrokoshaMpCompat
 
 	private static object CreateSeedSyncReceiverDelegate()
 	{
-		return CreateReceiverDelegateWithReader("QoL_KrokoshaSeedSyncReceiver", "HandleSeedSyncMessage");
+		return CreateClientReceiverDelegate("QoL_TogetherSeedSyncReceiver", "HandleSeedSyncMessage");
 	}
 
 	private static object CreateSeedRequestReceiverDelegate()
 	{
-		return CreateReceiverDelegateWithoutReader("QoL_KrokoshaSeedRequestReceiver", "HandleSeedRequestMessage");
-	}
-
-	private static object CreateBulkCraftReceiverDelegate()
-	{
-		return CreateReceiverDelegateWithReader("QoL_KrokoshaBulkCraftReceiver", "HandleBulkCraftMessage");
+		return CreateServerReceiverDelegate("QoL_TogetherSeedRequestReceiver", "HandleSeedRequestMessage", includeReader: false);
 	}
 
 	private static object CreateClientInventoryRestoreRequestReceiverDelegate()
 	{
-		return CreateReceiverDelegateWithReader("QoL_KrokoshaClientInventoryRestoreRequestReceiver", "HandleClientInventoryRestoreRequestMessage");
+		return CreateServerReceiverDelegate("QoL_TogetherClientInventoryRestoreRequestReceiver", "HandleClientInventoryRestoreRequestMessage", includeReader: true);
 	}
 
 	private static object CreateClientInventoryRestoreResultReceiverDelegate()
 	{
-		return CreateReceiverDelegateWithReader("QoL_KrokoshaClientInventoryRestoreResultReceiver", "HandleClientInventoryRestoreResultMessage");
+		return CreateClientReceiverDelegate("QoL_TogetherClientInventoryRestoreResultReceiver", "HandleClientInventoryRestoreResultMessage");
 	}
 
 	private static object CreateClientSpawnRequestReceiverDelegate()
 	{
-		return CreateReceiverDelegateWithReader("QoL_KrokoshaClientSpawnRequestReceiver", "HandleClientSpawnRequestMessage");
+		return CreateServerReceiverDelegate("QoL_TogetherClientSpawnRequestReceiver", "HandleClientSpawnRequestMessage", includeReader: true);
 	}
 
 	private static object CreateClientSpawnResultReceiverDelegate()
 	{
-		return CreateReceiverDelegateWithReader("QoL_KrokoshaClientSpawnResultReceiver", "HandleClientSpawnResultMessage");
+		return CreateClientReceiverDelegate("QoL_TogetherClientSpawnResultReceiver", "HandleClientSpawnResultMessage");
 	}
 
 	private static object CreateClientHealRequestReceiverDelegate()
 	{
-		return CreateReceiverDelegateWithoutReader("QoL_KrokoshaClientHealRequestReceiver", "HandleClientHealRequestMessage");
+		return CreateServerReceiverDelegate("QoL_TogetherClientHealRequestReceiver", "HandleClientHealRequestMessage", includeReader: false);
 	}
 
 	private static object CreateClientHealResultReceiverDelegate()
 	{
-		return CreateReceiverDelegateWithReader("QoL_KrokoshaClientHealResultReceiver", "HandleClientHealResultMessage");
+		return CreateClientReceiverDelegate("QoL_TogetherClientHealResultReceiver", "HandleClientHealResultMessage");
 	}
 
 	private static object CreateClientPrepareReconnectForHostLoadReceiverDelegate()
 	{
-		return CreateReceiverDelegateWithoutReader("QoL_KrokoshaClientPrepareReconnectForHostLoadReceiver", "HandleClientPrepareReconnectForHostLoadMessage");
+		return CreateClientReceiverDelegate("QoL_TogetherClientPrepareReconnectForHostLoadReceiver", "HandleClientPrepareReconnectForHostLoadMessage");
 	}
 
-	private static object CreateReceiverDelegateWithReader(string methodName, string handlerName)
+	private static object CreateClientReceiverDelegate(string methodName, string handlerName)
 	{
 		EnsureResolved();
-		MethodInfo methodInfo = networkDelegateType?.GetMethod("Invoke");
-		MethodInfo method = typeof(KrokoshaMpCompat).GetMethod(handlerName, BindingFlags.Static | BindingFlags.NonPublic);
+		MethodInfo methodInfo = customClientReceiverDelegateType?.GetMethod("Invoke");
+		MethodInfo method = typeof(MultiplayerCompat).GetMethod(handlerName, BindingFlags.Static | BindingFlags.NonPublic);
 		if (methodInfo == null || method == null)
 		{
 			return null;
 		}
 		ParameterInfo[] parameters = methodInfo.GetParameters();
-		if (parameters.Length < 2)
+		if (parameters.Length != 1)
 		{
 			return null;
 		}
-		Type parameterType = parameters[0].ParameterType;
-		Type parameterType2 = parameters[1].ParameterType;
-		DynamicMethod dynamicMethod = new DynamicMethod(methodName, typeof(void), new Type[2] { parameterType, parameterType2 }, typeof(KrokoshaMpCompat).Module, skipVisibility: true);
+		Type type = UnwrapByRef(parameters[0].ParameterType);
+		DynamicMethod dynamicMethod = new DynamicMethod(methodName, typeof(void), new Type[1] { type }, typeof(MultiplayerCompat).Module, skipVisibility: true);
 		ILGenerator iLGenerator = dynamicMethod.GetILGenerator();
-		EmitLoadNormalizedClientId(iLGenerator, parameterType);
-		iLGenerator.Emit(OpCodes.Ldarg_1);
-		iLGenerator.Emit(OpCodes.Ldind_Ref);
+		iLGenerator.Emit(OpCodes.Ldc_I4_0);
+		iLGenerator.Emit(OpCodes.Ldarg_0);
 		iLGenerator.Emit(OpCodes.Call, method);
 		iLGenerator.Emit(OpCodes.Ret);
-		return dynamicMethod.CreateDelegate(networkDelegateType);
+		return dynamicMethod.CreateDelegate(customClientReceiverDelegateType);
 	}
 
-	private static object CreateReceiverDelegateWithoutReader(string methodName, string handlerName)
+	private static object CreateServerReceiverDelegate(string methodName, string handlerName, bool includeReader)
 	{
 		EnsureResolved();
-		MethodInfo methodInfo = networkDelegateType?.GetMethod("Invoke");
-		MethodInfo method = typeof(KrokoshaMpCompat).GetMethod(handlerName, BindingFlags.Static | BindingFlags.NonPublic);
+		MethodInfo methodInfo = customServerReceiverDelegateType?.GetMethod("Invoke");
+		MethodInfo method = typeof(MultiplayerCompat).GetMethod(handlerName, BindingFlags.Static | BindingFlags.NonPublic);
 		if (methodInfo == null || method == null)
 		{
 			return null;
 		}
 		ParameterInfo[] parameters = methodInfo.GetParameters();
-		if (parameters.Length < 1)
+		if (parameters.Length != 2)
 		{
 			return null;
 		}
-		Type parameterType = parameters[0].ParameterType;
-		Type type = ((parameters.Length > 1) ? parameters[1].ParameterType : netDataReaderType.MakeByRefType());
-		DynamicMethod dynamicMethod = new DynamicMethod(methodName, typeof(void), new Type[2] { parameterType, type }, typeof(KrokoshaMpCompat).Module, skipVisibility: true);
+		Type type = UnwrapByRef(parameters[0].ParameterType);
+		Type type2 = UnwrapByRef(parameters[1].ParameterType);
+		DynamicMethod dynamicMethod = new DynamicMethod(methodName, typeof(void), new Type[2] { type, type2 }, typeof(MultiplayerCompat).Module, skipVisibility: true);
 		ILGenerator iLGenerator = dynamicMethod.GetILGenerator();
-		EmitLoadNormalizedClientId(iLGenerator, parameterType);
+		iLGenerator.Emit(OpCodes.Ldarg_0);
+		iLGenerator.Emit(OpCodes.Call, typeof(MultiplayerCompat).GetMethod("GetPlayerClientId", BindingFlags.Static | BindingFlags.NonPublic));
+		if (includeReader)
+		{
+			iLGenerator.Emit(OpCodes.Ldarg_1);
+		}
 		iLGenerator.Emit(OpCodes.Call, method);
 		iLGenerator.Emit(OpCodes.Ret);
-		return dynamicMethod.CreateDelegate(networkDelegateType);
+		return dynamicMethod.CreateDelegate(customServerReceiverDelegateType);
 	}
 
-	private static void EmitLoadNormalizedClientId(ILGenerator il, Type clientIdType)
+	private static uint GetPlayerClientId(object player)
 	{
-		il.Emit(OpCodes.Ldarg_0);
-		if (clientIdType.IsValueType)
+		if (player == null)
 		{
-			il.Emit(OpCodes.Box, clientIdType);
+			return 0u;
 		}
-		il.Emit(OpCodes.Call, typeof(KrokoshaMpCompat).GetMethod("ConvertSenderIdToUInt", BindingFlags.Static | BindingFlags.NonPublic));
+		object senderClientId = ReadInstanceMemberValue(player, "playerId");
+		return ConvertSenderIdToUInt(senderClientId);
 	}
 
 	private static uint ConvertSenderIdToUInt(object senderClientId)
@@ -2189,12 +2082,12 @@ internal static class KrokoshaMpCompat
 
 	private static void PatchSeedAnnouncementHooks()
 	{
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0097: Expected O, but got Unknown
-		//IL_00e8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f6: Expected O, but got Unknown
-		//IL_0150: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015d: Expected O, but got Unknown
+		//IL_010b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0119: Expected O, but got Unknown
+		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012f: Expected O, but got Unknown
+		//IL_013a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0147: Expected O, but got Unknown
 		if (seedAnnouncementHooksPatched)
 		{
 			return;
@@ -2205,26 +2098,20 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		MethodInfo method = serverMainType.GetMethod("Server_Announce_GAME_START", BindingFlags.Static | BindingFlags.Public);
-		MethodInfo method2 = typeof(KrokoshaMpCompat).GetMethod("ServerAnnounceGameStart_Prefix", BindingFlags.Static | BindingFlags.NonPublic);
-		if (method == null || method2 == null)
+		MethodInfo method2 = typeof(MultiplayerCompat).GetMethod("ServerAnnounceGameStart_Prefix", BindingFlags.Static | BindingFlags.NonPublic);
+		MethodInfo method3 = serverMainType.GetMethod("Server_AnnounceSeed", BindingFlags.Static | BindingFlags.Public);
+		MethodInfo method4 = typeof(MultiplayerCompat).GetMethod("ServerAnnounceSeed_Prefix", BindingFlags.Static | BindingFlags.NonPublic);
+		MethodInfo methodInfo = clientMainType?.GetMethod("ClientReceiver__GenerateWorld_SeedAnnounce", BindingFlags.Static | BindingFlags.NonPublic);
+		MethodInfo method5 = typeof(MultiplayerCompat).GetMethod("ClientGenerateWorldSeedAnnounce_Postfix", BindingFlags.Static | BindingFlags.NonPublic);
+		if (method == null || method2 == null || method3 == null || method4 == null || methodInfo == null || method5 == null)
 		{
 			return;
 		}
 		try
 		{
 			harmony.Patch((MethodBase)method, new HarmonyMethod(method2), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
-			MethodInfo method3 = serverMainType.GetMethod("Server_AnnounceSeed", BindingFlags.Static | BindingFlags.Public);
-			MethodInfo method4 = typeof(KrokoshaMpCompat).GetMethod("ServerAnnounceSeed_Prefix", BindingFlags.Static | BindingFlags.NonPublic);
-			if (method3 != null && method4 != null)
-			{
-				harmony.Patch((MethodBase)method3, new HarmonyMethod(method4), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
-			}
-			MethodInfo methodInfo = clientMainType?.GetMethod("ClientReciever__GenerateWorld_SeedAnnounce", BindingFlags.Static | BindingFlags.NonPublic);
-			MethodInfo method5 = typeof(KrokoshaMpCompat).GetMethod("ClientGenerateWorldSeedAnnounce_Postfix", BindingFlags.Static | BindingFlags.NonPublic);
-			if (methodInfo != null && method5 != null)
-			{
-				harmony.Patch((MethodBase)methodInfo, (HarmonyMethod)null, new HarmonyMethod(method5), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
-			}
+			harmony.Patch((MethodBase)method3, new HarmonyMethod(method4), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
+			harmony.Patch((MethodBase)methodInfo, (HarmonyMethod)null, new HarmonyMethod(method5), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
 			seedAnnouncementHooksPatched = true;
 		}
 		catch
@@ -2234,58 +2121,28 @@ internal static class KrokoshaMpCompat
 
 	private static void PatchPingSuppressionHooks()
 	{
-		//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c5: Expected O, but got Unknown
-		//IL_00eb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f9: Expected O, but got Unknown
+		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d7: Expected O, but got Unknown
+		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ed: Expected O, but got Unknown
 		if (pingSuppressionHooksPatched || !pluginPresent)
 		{
 			return;
 		}
 		EnsureResolved();
-		MethodInfo methodInfo = netPlayerType?.GetMethod("PointFingerAt", BindingFlags.Instance | BindingFlags.Public);
+		MethodInfo methodInfo = scavPlayerType?.GetMethod("PointFingerAt", BindingFlags.Instance | BindingFlags.Public);
 		MethodInfo methodInfo2 = FindStaticMethod(netType, "Client_Send", new Type[2] { deliveryMethodType, netDataWriterType });
-		MethodInfo method = typeof(KrokoshaMpCompat).GetMethod("PointFingerAtSuppressionPrefix", BindingFlags.Static | BindingFlags.NonPublic);
-		MethodInfo method2 = typeof(KrokoshaMpCompat).GetMethod("ClientSendAfterPointFingerPrefix", BindingFlags.Static | BindingFlags.NonPublic);
-		try
-		{
-			bool flag = false;
-			if (methodInfo != null && method != null)
-			{
-				harmony.Patch((MethodBase)methodInfo, new HarmonyMethod(method), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
-				flag = true;
-			}
-			if (methodInfo2 != null && method2 != null)
-			{
-				harmony.Patch((MethodBase)methodInfo2, new HarmonyMethod(method2), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
-				flag = true;
-			}
-			pingSuppressionHooksPatched = flag;
-		}
-		catch
-		{
-		}
-	}
-
-	private static void PatchCraftSuppressionHooks()
-	{
-		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Expected O, but got Unknown
-		if (craftSuppressionHooksPatched || !pluginPresent)
-		{
-			return;
-		}
-		EnsureResolved();
-		MethodInfo methodInfo = playerCameraTryCraftPatchType?.GetMethod("Prefix", BindingFlags.Static | BindingFlags.NonPublic);
-		MethodInfo method = typeof(KrokoshaMpCompat).GetMethod("KrokoshaTryCraftPrefixGuard", BindingFlags.Static | BindingFlags.NonPublic);
-		if (methodInfo == null || method == null)
+		MethodInfo method = typeof(MultiplayerCompat).GetMethod("PointFingerAtSuppressionPrefix", BindingFlags.Static | BindingFlags.NonPublic);
+		MethodInfo method2 = typeof(MultiplayerCompat).GetMethod("ClientSendAfterPointFingerPrefix", BindingFlags.Static | BindingFlags.NonPublic);
+		if (methodInfo == null || methodInfo2 == null || method == null || method2 == null)
 		{
 			return;
 		}
 		try
 		{
 			harmony.Patch((MethodBase)methodInfo, new HarmonyMethod(method), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
-			craftSuppressionHooksPatched = true;
+			harmony.Patch((MethodBase)methodInfo2, new HarmonyMethod(method2), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
+			pingSuppressionHooksPatched = true;
 		}
 		catch
 		{
@@ -2305,20 +2162,20 @@ internal static class KrokoshaMpCompat
 			return;
 		}
 		EnsureResolved();
-		if (krokoshaOnSceneLoadedMethod == null || serverFinishedWorldgenReceiverMethod == null)
+		if (multiplayerOnSceneLoadedMethod == null || serverFinishedWorldgenReceiverMethod == null)
 		{
 			return;
 		}
-		MethodInfo method = typeof(KrokoshaMpCompat).GetMethod("KrokoshaOnSceneLoaded_Prefix", BindingFlags.Static | BindingFlags.NonPublic);
-		MethodInfo method2 = typeof(KrokoshaMpCompat).GetMethod("KrokoshaOnSceneLoaded_Postfix", BindingFlags.Static | BindingFlags.NonPublic);
-		MethodInfo method3 = typeof(KrokoshaMpCompat).GetMethod("ServerReceiverFinishedWorldgen_Postfix", BindingFlags.Static | BindingFlags.NonPublic);
+		MethodInfo method = typeof(MultiplayerCompat).GetMethod("MultiplayerOnSceneLoaded_Prefix", BindingFlags.Static | BindingFlags.NonPublic);
+		MethodInfo method2 = typeof(MultiplayerCompat).GetMethod("MultiplayerOnSceneLoaded_Postfix", BindingFlags.Static | BindingFlags.NonPublic);
+		MethodInfo method3 = typeof(MultiplayerCompat).GetMethod("ServerReceiverFinishedWorldgen_Postfix", BindingFlags.Static | BindingFlags.NonPublic);
 		if (method == null || method2 == null || method3 == null)
 		{
 			return;
 		}
 		try
 		{
-			harmony.Patch((MethodBase)krokoshaOnSceneLoadedMethod, new HarmonyMethod(method), new HarmonyMethod(method2), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
+			harmony.Patch((MethodBase)multiplayerOnSceneLoadedMethod, new HarmonyMethod(method), new HarmonyMethod(method2), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
 			harmony.Patch((MethodBase)serverFinishedWorldgenReceiverMethod, (HarmonyMethod)null, new HarmonyMethod(method3), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
 			hostSaveLoadHooksPatched = true;
 		}
@@ -2335,7 +2192,7 @@ internal static class KrokoshaMpCompat
 		{
 			return;
 		}
-		MethodInfo method = typeof(KrokoshaMpCompat).GetMethod("MpRecipeTryMakeGuardPrefix", BindingFlags.Static | BindingFlags.NonPublic);
+		MethodInfo method = typeof(MultiplayerCompat).GetMethod("MpRecipeTryMakeGuardPrefix", BindingFlags.Static | BindingFlags.NonPublic);
 		if (method == null)
 		{
 			return;
@@ -2345,19 +2202,28 @@ internal static class KrokoshaMpCompat
 			harmony.Patch((MethodBase)mpRecipeTryMakeMethod, new HarmonyMethod(method), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
 			craftTryMakeGuardPatched = true;
 		}
-		catch
+		catch (Exception ex)
 		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)("Failed to install the client crafting guard: " + ex.Message));
+			}
 		}
-	}
-
-	private static bool KrokoshaTryCraftPrefixGuard()
-	{
-		return !suppressKrokoshaTryCraftPrefix && Time.frameCount > suppressKrokoshaTryCraftPrefixThroughFrame;
 	}
 
 	private static bool MpRecipeTryMakeGuardPrefix(Body crafter, Recipe craftingtable, ref List<Item> items_to_craft_with, ref bool __result)
 	{
 		if ((Object)(object)crafter == (Object)null || craftingtable == null)
+		{
+			__result = false;
+			return false;
+		}
+		if (bypassCraftGuard)
+		{
+			return true;
+		}
+		if (items_to_craft_with == null && (((CraftRunner.IsClientCraftRunning || Time.frameCount == handledClientCraftFrame) && (Object)(object)crafter == (Object)(object)PlayerCamera.main?.body) || (craftingtable.index == lastExplicitCraftRecipeIndex && Time.frameCount == lastExplicitCraftFrame)))
 		{
 			__result = false;
 			return false;
@@ -2387,12 +2253,12 @@ internal static class KrokoshaMpCompat
 		{
 			return true;
 		}
-		if (QuickStashPatcher.TryHandleQuickStashBeforeKrokoshaPing())
+		if (QuickStashPatcher.TryHandleQuickStashBeforeMultiplayerPing())
 		{
 			suppressNextPointFingerClientSend = true;
 			return false;
 		}
-		if (!QuickStashPatcher.ShouldSuppressKrokoshaPointPingNow())
+		if (!QuickStashPatcher.ShouldSuppressMultiplayerPointPingNow())
 		{
 			return true;
 		}
@@ -2402,13 +2268,13 @@ internal static class KrokoshaMpCompat
 
 	private static bool IsLocalNetPlayer(object player)
 	{
-		if (player == null || netPlayerLocalPlayerField == null)
+		if (player == null || localPlayerField == null)
 		{
 			return false;
 		}
 		try
 		{
-			return player == netPlayerLocalPlayerField.GetValue(null);
+			return player == localPlayerField.GetValue(null);
 		}
 		catch
 		{
@@ -2426,7 +2292,7 @@ internal static class KrokoshaMpCompat
 		return false;
 	}
 
-	private static void KrokoshaOnSceneLoaded_Prefix()
+	private static void MultiplayerOnSceneLoaded_Prefix()
 	{
 		if (preserveServerPlayerStatesForHostSaveLoad)
 		{
@@ -2434,7 +2300,7 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static void KrokoshaOnSceneLoaded_Postfix()
+	private static void MultiplayerOnSceneLoaded_Postfix()
 	{
 		if (preservedServerPlayerStatesForHostSaveLoad == null || preservedServerPlayerStatesForHostSaveLoad.Count == 0)
 		{
@@ -2447,7 +2313,7 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static void ServerReceiverFinishedWorldgen_Postfix(object clientId)
+	private static void ServerReceiverFinishedWorldgen_Postfix(object __0)
 	{
 		if (!IsNetworkRunning || !IsServer || pendingClientInventoryRestorePayloadsByPersistentId == null || pendingClientInventoryRestorePayloadsByPersistentId.Count == 0)
 		{
@@ -2455,15 +2321,15 @@ internal static class KrokoshaMpCompat
 		}
 		try
 		{
-			uint clientId2 = Convert.ToUInt32(clientId, CultureInfo.InvariantCulture);
-			Body bodyFromClientId = GetBodyFromClientId(clientId2);
+			uint clientId = ConvertSenderIdToUInt(__0);
+			Body bodyFromClientId = GetBodyFromClientId(clientId);
 			if ((Object)(object)bodyFromClientId == (Object)null)
 			{
 				return;
 			}
 			object[] array = new object[3]
 			{
-				CoerceClientIdForMethod(netPlayerLookupMethod, clientId2),
+				CoerceClientIdForMethod(netPlayerLookupMethod, clientId),
 				null,
 				null
 			};
@@ -2486,11 +2352,11 @@ internal static class KrokoshaMpCompat
 				PlayerCamera main = PlayerCamera.main;
 				if (main != null)
 				{
-					((MonoBehaviour)main).StartCoroutine(ApplyPostWorldgenClientInventoryRestoreCoroutine(clientId2, text, value));
+					((MonoBehaviour)main).StartCoroutine(ApplyPostWorldgenClientInventoryRestoreCoroutine(clientId, text, value));
 				}
 			}
 		}
-		catch (Exception)
+		catch
 		{
 		}
 	}
@@ -2499,7 +2365,7 @@ internal static class KrokoshaMpCompat
 	{
 		yield return (object)new WaitForSeconds(0.5f);
 		Body body = GetBodyFromClientId(clientId);
-		if (!((Object)(object)body == (Object)null) && pendingClientInventoryRestorePayloadsByPersistentId.TryGetValue(persistentId, out var currentPayload) && string.Equals(currentPayload, payload, StringComparison.Ordinal) && KrokoshaMpSaveBundle.TryApplyClientInventoryPayload(body, payload, out var _))
+		if (!((Object)(object)body == (Object)null) && pendingClientInventoryRestorePayloadsByPersistentId.TryGetValue(persistentId, out var currentPayload) && string.Equals(currentPayload, payload, StringComparison.Ordinal) && MultiplayerSaveBundle.TryApplyClientInventoryPayload(body, payload, out var _))
 		{
 			SyncBodyInventory(body);
 			pendingClientInventoryRestorePayloadsByPersistentId.Remove(persistentId);
@@ -2519,7 +2385,7 @@ internal static class KrokoshaMpCompat
 	{
 		if (!ApplyPendingHostWorldgenState())
 		{
-			ApplyQoLSeedBeforeKrokoshaHostWorldgenCapture();
+			ApplyQoLSeedBeforeMultiplayerHostWorldgenCapture();
 		}
 		AnnounceCurrentSeedToTargets(__0);
 	}
@@ -2532,7 +2398,7 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static bool ApplyQoLSeedBeforeKrokoshaHostWorldgenCapture()
+	private static bool ApplyQoLSeedBeforeMultiplayerHostWorldgenCapture()
 	{
 		if (!IsNetworkRunning || !IsServer || !SeedManager.IsSeeded || HasPendingHostWorldgenState)
 		{
@@ -2550,7 +2416,7 @@ internal static class KrokoshaMpCompat
 			}
 			return true;
 		}
-		catch (Exception)
+		catch
 		{
 			return false;
 		}
@@ -2577,7 +2443,7 @@ internal static class KrokoshaMpCompat
 				preservedServerPlayerStatesForHostSaveLoad.Add(item);
 			}
 		}
-		catch (Exception)
+		catch
 		{
 			preserveServerPlayerStatesForHostSaveLoad = false;
 			preservedServerPlayerStatesForHostSaveLoad = null;
@@ -2598,7 +2464,7 @@ internal static class KrokoshaMpCompat
 				dictionary[item.Key] = item.Value;
 			}
 		}
-		catch (Exception)
+		catch
 		{
 		}
 		finally
@@ -2631,7 +2497,7 @@ internal static class KrokoshaMpCompat
 			lastBeforeGenerationStateApplyMethod?.Invoke(state, null);
 			return true;
 		}
-		catch (Exception)
+		catch
 		{
 			return false;
 		}
@@ -2648,7 +2514,7 @@ internal static class KrokoshaMpCompat
 		try
 		{
 			object obj = Activator.CreateInstance(netDataWriterType);
-			MethodInfo methodInfo = FindKrokoshaMemcpyMethod("Put", netDataWriterType, lastBeforeGenerationStateType);
+			MethodInfo methodInfo = FindNetworkMemcpyMethod("Put", netDataWriterType, lastBeforeGenerationStateType);
 			MethodInfo methodInfo2 = FindStaticMethod(netExtensionsType, "CopyData", new Type[2]
 			{
 				netDataWriterType,
@@ -2685,7 +2551,7 @@ internal static class KrokoshaMpCompat
 		{
 			byte[] array = Convert.FromBase64String(payload.Trim());
 			object obj = Activator.CreateInstance(netDataReaderType, array);
-			MethodInfo methodInfo = FindKrokoshaMemcpyMethod("Get", netDataReaderType, lastBeforeGenerationStateType.MakeByRefType());
+			MethodInfo methodInfo = FindNetworkMemcpyMethod("Get", netDataReaderType, lastBeforeGenerationStateType.MakeByRefType());
 			if (methodInfo == null)
 			{
 				return false;
@@ -2706,7 +2572,7 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static MethodInfo FindKrokoshaMemcpyMethod(string name, Type firstParameter, Type secondParameter)
+	private static MethodInfo FindNetworkMemcpyMethod(string name, Type firstParameter, Type secondParameter)
 	{
 		if (netExtensionsType == null || firstParameter == null || secondParameter == null)
 		{
@@ -2753,7 +2619,7 @@ internal static class KrokoshaMpCompat
 		if (IsNetworkRunning && IsServer && SeedManager.IsSeeded)
 		{
 			string payload = BuildSeedPayload(SeedManager.CurrentSeed, SeedManager.InputString);
-			SendOrderedStringToTargets(30990, payload, targets);
+			SendNamedStringToTargets("QoLUnknown.v1.SeedSync", payload, targets);
 		}
 	}
 
@@ -2764,39 +2630,10 @@ internal static class KrokoshaMpCompat
 			if (IsNetworkRunning && IsServer && SeedManager.IsSeeded)
 			{
 				string payload = BuildSeedPayload(SeedManager.CurrentSeed, SeedManager.InputString);
-				SendOrderedStringToClient(30990, payload, senderClientId);
+				SendNamedStringToClient("QoLUnknown.v1.SeedSync", payload, senderClientId);
 			}
 		}
 		catch
-		{
-		}
-	}
-
-	private static void HandleBulkCraftMessage(uint senderClientId, object reader)
-	{
-		try
-		{
-			if (!IsNetworkRunning || !IsServer || reader == null)
-			{
-				return;
-			}
-			uint num = ReadUInt(reader);
-			byte b = ReadByte(reader);
-			if (Recipes.recipes == null || num >= Recipes.recipes.Count || b == 0)
-			{
-				return;
-			}
-			Body bodyFromClientId = GetBodyFromClientId(senderClientId);
-			if (!((Object)(object)bodyFromClientId == (Object)null) && bodyFromClientId.conscious)
-			{
-				Recipe finalRecipe = Recipes.recipes[(int)num];
-				if (TryExecuteBulkCraftOnServer(bodyFromClientId, finalRecipe, b))
-				{
-					AnnounceCraftSound(bodyFromClientId, senderClientId);
-				}
-			}
-		}
-		catch (Exception)
 		{
 		}
 	}
@@ -2814,27 +2651,29 @@ internal static class KrokoshaMpCompat
 				SendClientInventoryRestoreResult(senderClientId, ok: false, "Host has sv_cheats or client commands disabled.");
 				return;
 			}
-			string text = ReadOneByteString(reader);
-			if (string.IsNullOrWhiteSpace(text))
+			string payload = ReadNamedUtf8Payload(reader);
+			if (!TryAcceptInventoryRestoreChunk(senderClientId, payload, out var completedPayload, out var errorMessage))
 			{
-				SendClientInventoryRestoreResult(senderClientId, ok: false, "Inventory snapshot was empty.");
-				return;
+				SendClientInventoryRestoreResult(senderClientId, ok: false, errorMessage ?? "Inventory snapshot transfer was invalid.");
 			}
-			Body bodyFromClientId = GetBodyFromClientId(senderClientId);
-			if ((Object)(object)bodyFromClientId == (Object)null)
+			else if (completedPayload != null)
 			{
-				SendClientInventoryRestoreResult(senderClientId, ok: false, "Host could not find your player body.");
-				return;
+				Body bodyFromClientId = GetBodyFromClientId(senderClientId);
+				if ((Object)(object)bodyFromClientId == (Object)null)
+				{
+					SendClientInventoryRestoreResult(senderClientId, ok: false, "Host could not find your player body.");
+					return;
+				}
+				if (!MultiplayerSaveBundle.TryApplyClientInventoryPayload(bodyFromClientId, completedPayload, out var message))
+				{
+					SendClientInventoryRestoreResult(senderClientId, ok: false, message ?? "Inventory restore failed.");
+					return;
+				}
+				SyncBodyInventory(bodyFromClientId);
+				SendClientInventoryRestoreResult(senderClientId, ok: true, "Restored inventory from QoL slot.");
 			}
-			if (!KrokoshaMpSaveBundle.TryApplyClientInventoryPayload(bodyFromClientId, text, out var message))
-			{
-				SendClientInventoryRestoreResult(senderClientId, ok: false, message ?? "Inventory restore failed.");
-				return;
-			}
-			SyncBodyInventory(bodyFromClientId);
-			SendClientInventoryRestoreResult(senderClientId, ok: true, "Restored inventory from QoL slot.");
 		}
-		catch (Exception)
+		catch
 		{
 			SendClientInventoryRestoreResult(senderClientId, ok: false, "Inventory restore failed on host.");
 		}
@@ -2844,7 +2683,7 @@ internal static class KrokoshaMpCompat
 	{
 		try
 		{
-			string text = ReadOneByteString(reader);
+			string text = ReadNamedUtf8Payload(reader);
 			if (!string.IsNullOrWhiteSpace(text))
 			{
 				string[] array = text.Split(new char[1] { '|' }, 2);
@@ -2874,17 +2713,24 @@ internal static class KrokoshaMpCompat
 				SendClientSpawnResult(senderClientId, ok: false, "Host has sv_cheats or client commands disabled.");
 				return;
 			}
-			string text = ReadOneByteString(reader);
-			string resultMessage;
+			string text = ReadNamedUtf8Payload(reader);
 			if (string.IsNullOrWhiteSpace(text))
 			{
 				SendClientSpawnResult(senderClientId, ok: false, "Spawn command was empty.");
+				return;
 			}
-			else if (!text.TrimStart(Array.Empty<char>()).StartsWith("spawn ", StringComparison.OrdinalIgnoreCase))
+			if (!text.TrimStart(Array.Empty<char>()).StartsWith("spawn ", StringComparison.OrdinalIgnoreCase))
 			{
 				SendClientSpawnResult(senderClientId, ok: false, "Only spawn commands can be forwarded.");
+				return;
 			}
-			else if (!TryExecuteClientSpawnCommand(text, out resultMessage))
+			Body bodyFromClientId = GetBodyFromClientId(senderClientId);
+			string resultMessage;
+			if ((Object)(object)bodyFromClientId == (Object)null || !bodyFromClientId.conscious)
+			{
+				SendClientSpawnResult(senderClientId, ok: false, "Host could not find your active player body.");
+			}
+			else if (!TryExecuteClientSpawnCommand(text, bodyFromClientId, out resultMessage))
 			{
 				SendClientSpawnResult(senderClientId, ok: false, string.IsNullOrWhiteSpace(resultMessage) ? "Spawn request failed on host." : resultMessage);
 			}
@@ -2893,7 +2739,7 @@ internal static class KrokoshaMpCompat
 				SendClientSpawnResult(senderClientId, ok: true, resultMessage);
 			}
 		}
-		catch (Exception)
+		catch
 		{
 			SendClientSpawnResult(senderClientId, ok: false, "Spawn request failed on host.");
 		}
@@ -2903,7 +2749,7 @@ internal static class KrokoshaMpCompat
 	{
 		try
 		{
-			string text = ReadOneByteString(reader);
+			string text = ReadNamedUtf8Payload(reader);
 			if (!string.IsNullOrWhiteSpace(text))
 			{
 				string[] array = text.Split(new char[1] { '|' }, 2);
@@ -2933,22 +2779,28 @@ internal static class KrokoshaMpCompat
 				SendClientHealResult(senderClientId, ok: false, "Host has sv_cheats or client commands disabled.");
 				return;
 			}
-			string playerNameFromClientId = GetPlayerNameFromClientId(senderClientId);
-			if (string.IsNullOrWhiteSpace(playerNameFromClientId))
+			object playerFromClientId = GetPlayerFromClientId(senderClientId);
+			string value = ReadInstanceMemberValue(playerFromClientId, "playerName") as string;
+			if (playerFromClientId == null || string.IsNullOrWhiteSpace(value))
 			{
 				SendClientHealResult(senderClientId, ok: false, "Host could not find your player name.");
 				return;
 			}
-			Body bodyFromClientId = GetBodyFromClientId(senderClientId);
-			if ((Object)(object)bodyFromClientId == (Object)null)
+			MethodInfo method = playerFromClientId.GetType().GetMethod("Server_HealCharacter", BindingFlags.Instance | BindingFlags.Public);
+			if (method == null)
 			{
-				SendClientHealResult(senderClientId, ok: false, "Host could not find your body.");
+				SendClientHealResult(senderClientId, ok: false, "Together's server heal operation is unavailable.");
 				return;
 			}
-			ApplyHealToBody(bodyFromClientId);
+			method.Invoke(playerFromClientId, null);
+			Body bodyFromClientId = GetBodyFromClientId(senderClientId);
+			if ((Object)(object)bodyFromClientId != (Object)null)
+			{
+				TryRaiseCUCoreLibHealEvent(bodyFromClientId);
+			}
 			SendClientHealResult(senderClientId, ok: true, "Healed player on host.");
 		}
-		catch (Exception)
+		catch
 		{
 			SendClientHealResult(senderClientId, ok: false, "Heal request failed on host.");
 		}
@@ -2958,7 +2810,7 @@ internal static class KrokoshaMpCompat
 	{
 		try
 		{
-			string text = ReadOneByteString(reader);
+			string text = ReadNamedUtf8Payload(reader);
 			if (!string.IsNullOrWhiteSpace(text))
 			{
 				string[] array = text.Split(new char[1] { '|' }, 2);
@@ -2975,9 +2827,18 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static void HandleClientPrepareReconnectForHostLoadMessage(uint senderClientId)
+	private static void HandleClientPrepareReconnectForHostLoadMessage(uint senderClientId, object reader)
 	{
-		if (IsNetworkRunning && IsClient && TryCaptureCurrentReconnectTarget(out var useSteam, out var ipPort, out var lobbyId))
+		if (!IsNetworkRunning || !IsClient)
+		{
+			return;
+		}
+		ManualLogSource logger = Logger;
+		if (logger != null)
+		{
+			logger.LogInfo((object)"[MultiplayerCompat] Client received host-load prepare-reconnect; leaving the world before the host re-announces.");
+		}
+		if (TryCaptureCurrentReconnectTarget(out var useSteam, out var ipPort, out var lobbyId))
 		{
 			autoReconnectAfterHostLoadArmed = true;
 			autoReconnectAfterHostLoadUseSteam = useSteam;
@@ -2993,6 +2854,51 @@ internal static class KrokoshaMpCompat
 				SharedCoroutineStarter.StartCoroutine(AutoReconnectAfterHostLoadCoroutine());
 			}
 		}
+		else
+		{
+			ManualLogSource logger2 = Logger;
+			if (logger2 != null)
+			{
+				logger2.LogWarning((object)"[MultiplayerCompat] Could not capture reconnect target for host load; returning to menu without auto-rejoin.");
+			}
+		}
+		TryGoBackToMainMenuAsClient();
+	}
+
+	private static void TryGoBackToMainMenuAsClient()
+	{
+		EnsureResolved();
+		try
+		{
+			if (goBackToMainMenuMethod != null)
+			{
+				goBackToMainMenuMethod.Invoke(null, null);
+				ManualLogSource logger = Logger;
+				if (logger != null)
+				{
+					logger.LogInfo((object)"[MultiplayerCompat] Invoked Together GoBackToMainMenuIfImClientAndInGame on host load.");
+				}
+				return;
+			}
+			ManualLogSource logger2 = Logger;
+			if (logger2 != null)
+			{
+				logger2.LogWarning((object)"[MultiplayerCompat] Together GoBackToMainMenuIfImClientAndInGame not found; falling back to ToMainMenu.");
+			}
+		}
+		catch (Exception ex)
+		{
+			ManualLogSource logger3 = Logger;
+			if (logger3 != null)
+			{
+				logger3.LogWarning((object)("[MultiplayerCompat] GoBackToMainMenuIfImClientAndInGame threw: " + ex.Message));
+			}
+		}
+		if ((Object)(object)PlayerCamera.main != (Object)null)
+		{
+			showMultiplayerMenuField?.SetValue(null, true);
+			PlayerCamera.main.ToMainMenu();
+		}
 	}
 
 	private static bool TryCaptureCurrentReconnectTarget(out bool useSteam, out string ipPort, out ulong lobbyId)
@@ -3005,10 +2911,10 @@ internal static class KrokoshaMpCompat
 		{
 			return false;
 		}
-		useSteam = ReadStaticBool(netType, "is_playing_with_steam");
+		useSteam = ReadStaticBool(netType, "IsRunningSteam");
 		if (useSteam)
 		{
-			object value = ReadStaticMemberValue(kSteamType, "lobbyId");
+			object value = ReadStaticMemberValue(kSteamType, "LobbyId");
 			if (TryConvertToUInt64(value, out lobbyId) && lobbyId != 0)
 			{
 				return true;
@@ -3119,7 +3025,7 @@ internal static class KrokoshaMpCompat
 		{
 			forceDisconnectMethod?.Invoke(null, null);
 		}
-		catch (Exception)
+		catch
 		{
 		}
 	}
@@ -3184,7 +3090,7 @@ internal static class KrokoshaMpCompat
 			}
 			return flag4;
 		}
-		catch (Exception)
+		catch
 		{
 			return false;
 		}
@@ -3210,7 +3116,7 @@ internal static class KrokoshaMpCompat
 			}
 			uiMainMenuSetOpenMethod?.Invoke(null, new object[1] { true });
 		}
-		catch (Exception)
+		catch
 		{
 		}
 	}
@@ -3231,7 +3137,7 @@ internal static class KrokoshaMpCompat
 	{
 		try
 		{
-			string payload = ReadOneByteString(reader);
+			string payload = ReadNamedUtf8Payload(reader);
 			if (TryParseSeedPayload(payload, out var seed, out var input))
 			{
 				SeedManager.SetNetworkSeed(seed, input);
@@ -3272,26 +3178,25 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static string ReadOneByteString(object reader)
+	private static string ReadNamedUtf8Payload(object reader)
 	{
 		EnsureResolved();
-		if (reader == null || netExtensionsType == null || netDataReaderType == null)
+		if (reader == null || readerGetRemainingBytesMethod == null || readerAvailableBytesProperty == null)
 		{
 			return null;
 		}
-		MethodInfo methodInfo = FindStaticMethod(netExtensionsType, "Get", new Type[3]
+		try
 		{
-			netDataReaderType,
-			typeof(string),
-			typeof(bool)
-		});
-		if (methodInfo == null)
+			if (!(readerAvailableBytesProperty.GetValue(reader, null) is int num) || num < 0 || num > 1048576)
+			{
+				return null;
+			}
+			return (!(readerGetRemainingBytesMethod.Invoke(reader, null) is byte[] bytes)) ? null : Encoding.UTF8.GetString(bytes);
+		}
+		catch
 		{
 			return null;
 		}
-		object[] array = new object[3] { reader, null, true };
-		methodInfo.Invoke(null, array);
-		return array[1] as string;
 	}
 
 	private static uint ReadUInt(object reader)
@@ -3300,20 +3205,14 @@ internal static class KrokoshaMpCompat
 		{
 			return 0u;
 		}
-		object[] array = new object[1] { 0u };
-		reader.GetType().GetMethod("Get", new Type[1] { typeof(uint).MakeByRefType() })?.Invoke(reader, array);
-		return (array[0] is uint num) ? num : 0u;
-	}
-
-	private static byte ReadByte(object reader)
-	{
-		if (reader == null)
+		try
 		{
-			return 0;
+			return (readerGetUIntMethod?.Invoke(reader, null) is uint num) ? num : 0u;
 		}
-		object[] array = new object[1] { (byte)0 };
-		reader.GetType().GetMethod("Get", new Type[1] { typeof(byte).MakeByRefType() })?.Invoke(reader, array);
-		return (byte)((array[0] is byte b) ? b : 0);
+		catch
+		{
+			return 0u;
+		}
 	}
 
 	private static Body GetBodyFromClientId(uint clientId)
@@ -3364,13 +3263,13 @@ internal static class KrokoshaMpCompat
 	private static bool ClientCheatCommandsAllowed()
 	{
 		EnsureResolved();
-		if (mpRulesField == null)
+		if (multiplayerRulesField == null)
 		{
 			return false;
 		}
 		try
 		{
-			object value = mpRulesField.GetValue(null);
+			object value = multiplayerRulesField.GetValue(null);
 			if (value == null)
 			{
 				return false;
@@ -3423,22 +3322,144 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
+	private static void TryRaiseCUCoreLibHealEvent(Body body)
+	{
+		try
+		{
+			Type type = null;
+			Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			foreach (Assembly assembly in assemblies)
+			{
+				type = assembly.GetType("CUCoreLib.Helpers.CUCoreUtils");
+				if (type != null)
+				{
+					break;
+				}
+			}
+			if (!(type == null))
+			{
+				MethodInfo method = type.GetMethod("RaiseOnHeal", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+				if (method != null)
+				{
+					method.Invoke(null, new object[1] { body });
+				}
+			}
+		}
+		catch
+		{
+		}
+	}
+
 	private static void SendClientInventoryRestoreResult(uint clientId, bool ok, string message)
 	{
 		string text = Convert.ToBase64String(Encoding.UTF8.GetBytes(message ?? ""));
-		SendOrderedStringToClient(30994, (ok ? "1" : "0") + "|" + text, clientId);
+		SendNamedStringToClient("QoLUnknown.v1.InventoryRestoreResult", (ok ? "1" : "0") + "|" + text, clientId);
+	}
+
+	private static bool TryAcceptInventoryRestoreChunk(uint senderClientId, string payload, out string completedPayload, out string errorMessage)
+	{
+		completedPayload = null;
+		errorMessage = null;
+		if (string.IsNullOrWhiteSpace(payload))
+		{
+			errorMessage = "Inventory snapshot transfer was empty.";
+			return false;
+		}
+		string[] array = payload.Split(new char[1] { '|' }, 6);
+		if (array.Length != 6 || array[0] != "1" || array[1].Length != 32 || !Guid.TryParseExact(array[1], "N", out var _) || !int.TryParse(array[2], NumberStyles.None, CultureInfo.InvariantCulture, out var result2) || !int.TryParse(array[3], NumberStyles.None, CultureInfo.InvariantCulture, out var result3) || !int.TryParse(array[4], NumberStyles.None, CultureInfo.InvariantCulture, out var result4))
+		{
+			errorMessage = "Inventory snapshot transfer header was invalid.";
+			return false;
+		}
+		int num = 32;
+		if (result3 < 1 || result3 > num || result2 < 0 || result2 >= result3 || result4 < 1 || result4 > 1048576 || result3 != (result4 + 32768 - 1) / 32768)
+		{
+			errorMessage = "Inventory snapshot transfer exceeded its limits.";
+			return false;
+		}
+		byte[] array2;
+		try
+		{
+			array2 = Convert.FromBase64String(array[5]);
+		}
+		catch
+		{
+			errorMessage = "Inventory snapshot transfer data was invalid.";
+			return false;
+		}
+		int num2 = Math.Min(32768, result4 - result2 * 32768);
+		if (array2.Length != num2)
+		{
+			errorMessage = "Inventory snapshot transfer chunk length was invalid.";
+			return false;
+		}
+		float now = Time.realtimeSinceStartup;
+		uint[] array3 = (from entry in incomingInventoryRestoreChunks
+			where now - entry.Value.LastReceivedTime > 30f
+			select entry.Key).ToArray();
+		foreach (uint key in array3)
+		{
+			incomingInventoryRestoreChunks.Remove(key);
+		}
+		if (!incomingInventoryRestoreChunks.TryGetValue(senderClientId, out var value) || value.RequestId != array[1] || value.TotalLength != result4 || value.Chunks.Length != result3 || now - value.LastReceivedTime > 30f)
+		{
+			value = new InventoryRestoreChunkAssembly(array[1], result3, result4, now);
+			incomingInventoryRestoreChunks[senderClientId] = value;
+		}
+		value.LastReceivedTime = now;
+		byte[] array4 = value.Chunks[result2];
+		if (array4 != null)
+		{
+			if (!array4.SequenceEqual(array2))
+			{
+				incomingInventoryRestoreChunks.Remove(senderClientId);
+				errorMessage = "Inventory snapshot transfer contained a conflicting chunk.";
+				return false;
+			}
+			return true;
+		}
+		value.Chunks[result2] = array2;
+		value.ReceivedChunkCount++;
+		value.ReceivedLength += array2.Length;
+		if (value.ReceivedChunkCount != result3)
+		{
+			return true;
+		}
+		if (value.ReceivedLength != result4)
+		{
+			incomingInventoryRestoreChunks.Remove(senderClientId);
+			errorMessage = "Inventory snapshot transfer length did not match.";
+			return false;
+		}
+		byte[] array5 = new byte[result4];
+		int num4 = 0;
+		for (int num5 = 0; num5 < value.Chunks.Length; num5++)
+		{
+			byte[] array6 = value.Chunks[num5];
+			if (array6 == null)
+			{
+				incomingInventoryRestoreChunks.Remove(senderClientId);
+				errorMessage = "Inventory snapshot transfer was incomplete.";
+				return false;
+			}
+			Buffer.BlockCopy(array6, 0, array5, num4, array6.Length);
+			num4 += array6.Length;
+		}
+		incomingInventoryRestoreChunks.Remove(senderClientId);
+		completedPayload = Encoding.UTF8.GetString(array5);
+		return true;
 	}
 
 	private static void SendClientSpawnResult(uint clientId, bool ok, string message)
 	{
 		string text = Convert.ToBase64String(Encoding.UTF8.GetBytes(message ?? ""));
-		SendOrderedStringToClient(30996, (ok ? "1" : "0") + "|" + text, clientId);
+		SendNamedStringToClient("QoLUnknown.v1.SpawnResult", (ok ? "1" : "0") + "|" + text, clientId);
 	}
 
 	private static void SendClientHealResult(uint clientId, bool ok, string message)
 	{
 		string text = Convert.ToBase64String(Encoding.UTF8.GetBytes(message ?? ""));
-		SendOrderedStringToClient(30998, (ok ? "1" : "0") + "|" + text, clientId);
+		SendNamedStringToClient("QoLUnknown.v1.HealResult", (ok ? "1" : "0") + "|" + text, clientId);
 	}
 
 	private static void SyncBodyInventory(Body body)
@@ -3453,157 +3474,24 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static string GetPlayerNameFromClientId(uint clientId)
+	private static bool TryExecuteClientSpawnCommand(string commandString, Body requesterBody, out string resultMessage)
 	{
-		EnsureResolved();
-		if (netPlayerLookupMethod == null)
-		{
-			return null;
-		}
-		try
-		{
-			object[] array = new object[3]
-			{
-				CoerceClientIdForMethod(netPlayerLookupMethod, clientId),
-				null,
-				null
-			};
-			object obj = netPlayerLookupMethod.Invoke(null, array);
-			bool flag = default(bool);
-			int num;
-			if (obj is bool)
-			{
-				flag = (bool)obj;
-				num = 1;
-			}
-			else
-			{
-				num = 0;
-			}
-			if (((uint)num & (flag ? 1u : 0u)) == 0 || array[1] == null)
-			{
-				return null;
-			}
-			return array[1].GetType().GetField("playername", BindingFlags.Instance | BindingFlags.Public)?.GetValue(array[1]) as string;
-		}
-		catch
-		{
-			return null;
-		}
-	}
-
-	private static void ApplyHealToBody(Body body)
-	{
-		if ((Object)(object)body == (Object)null)
-		{
-			return;
-		}
-		Limb[] limbs = body.limbs;
-		if (limbs != null)
-		{
-			foreach (Limb val in limbs)
-			{
-				if (!((Object)(object)val == (Object)null))
-				{
-					val.muscleHealth = 100f;
-					val.skinHealth = 100f;
-					val.boneHealTimer = 0f;
-					val.dislocationTimer = 0f;
-					val.infectionAmount = 0f;
-					val.bleedAmount = 0f;
-					val.pain = 0f;
-					val.shrapnel = 0;
-					val.infected = false;
-					val.dismembered = false;
-					if (!((Component)val).gameObject.activeSelf)
-					{
-						((Component)val).gameObject.SetActive(true);
-					}
-				}
-			}
-		}
-		body.brainHealth = 100f;
-		SetBodyFloatCompat(body, 100f, "bloodAmount", "bloodVolume");
-		SetBodyFloatCompat(body, 100f, "oxygenAmount", "bloodOxygen");
-		body.hunger = 100f;
-		body.thirst = 100f;
-		body.septicShock = 0f;
-		body.temperature = 37f;
-		body.sicknessAmount = 0f;
-		body.consciousness = 100f;
-		body.stamina = 100f;
-		body.energy = 100f;
-		body.happiness = 0f;
-		body.weightOffset = 0f;
-		body.radiationSickness = 0f;
-		body.disfigured = false;
-		body.eyeGone = false;
-		body.internalBleeding = 0f;
-		body.hemothorax = 0f;
-		body.traumaAmount = 0f;
-		body.dirtyness = 0f;
-		body.wetness = 0f;
-		body.badSleepAmount = 0f;
-		body.hearingLoss = 0f;
-		body.antidepressantHappiness = 0f;
-		body.opiateHappiness = 0f;
-		body.antibioticImmunityTime = 0f;
-		body.brainGrowSickness = 0f;
-		body.triedRollingLastStand = false;
-		body.succesfullyRolledLastStand = false;
-		body.lastStandTime = -1000f;
-		body.adrenaline = 0f;
-		body.curAdrenaline = 0f;
-		Painkillers val2 = default(Painkillers);
-		if (((Component)body).TryGetComponent<Painkillers>(ref val2))
-		{
-			Object.Destroy((Object)(object)val2);
-		}
-		SleepingPills val3 = default(SleepingPills);
-		if (((Component)body).TryGetComponent<SleepingPills>(ref val3))
-		{
-			Object.Destroy((Object)(object)val3);
-		}
-		Antidepressants val4 = default(Antidepressants);
-		if (((Component)body).TryGetComponent<Antidepressants>(ref val4))
-		{
-			Object.Destroy((Object)(object)val4);
-		}
-		MindwipeScript[] components = ((Component)body).GetComponents<MindwipeScript>();
-		for (int j = 0; j < components.Length; j++)
-		{
-			Object.Destroy((Object)(object)components[j]);
-		}
-		body.mindWipe = null;
-		CoUtils instance = CoUtils.instance;
-		if (instance != null)
-		{
-			instance.Stop("bleach");
-		}
-		CoUtils instance2 = CoUtils.instance;
-		if (instance2 != null)
-		{
-			instance2.Stop("mercury");
-		}
-	}
-
-	private static bool TryExecuteClientSpawnCommand(string commandString, out string resultMessage)
-	{
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0177: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e5: Invalid comparison between Unknown and I4
-		//IL_0228: Unknown result type (might be due to invalid IL or missing references)
-		//IL_022d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0241: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0246: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0167: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0175: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0183: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0191: Unknown result type (might be due to invalid IL or missing references)
+		//IL_019f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01b2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0223: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0334: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0288: Unknown result type (might be due to invalid IL or missing references)
+		//IL_028e: Invalid comparison between Unknown and I4
+		//IL_02b8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02bd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02c8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02cd: Unknown result type (might be due to invalid IL or missing references)
 		resultMessage = null;
-		if (string.IsNullOrWhiteSpace(commandString))
+		if (string.IsNullOrWhiteSpace(commandString) || (Object)(object)requesterBody == (Object)null)
 		{
 			resultMessage = "Spawn command was empty.";
 			return false;
@@ -3614,16 +3502,20 @@ internal static class KrokoshaMpCompat
 			return false;
 		}
 		string[] array = commandString.Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-		if (array.Length < 2 || !array[0].Equals("spawn", StringComparison.OrdinalIgnoreCase))
+		if (array.Length < 3 || !array[0].Equals("spawn", StringComparison.OrdinalIgnoreCase))
 		{
-			resultMessage = "Only spawn commands can be forwarded.";
+			resultMessage = "Forwarded spawn commands require a resolved numeric position.";
 			return false;
 		}
 		string text = array[1];
+		if (array.Length > 5 || text.Length > 128)
+		{
+			resultMessage = "Spawn request contains too many or oversized arguments.";
+			return false;
+		}
 		float result = 1f;
 		int result2 = 1;
-		Vector2 position = (((Object)(object)Camera.main != (Object)null) ? Vector2.op_Implicit(Camera.main.ScreenToWorldPoint(Input.mousePosition)) : Vector2.zero);
-		if (array.Length > 2 && !TryParseSpawnPosition(array[2], out position, out resultMessage))
+		if (!TryParseSpawnPosition(array[2], out var position, out resultMessage))
 		{
 			return false;
 		}
@@ -3637,7 +3529,18 @@ internal static class KrokoshaMpCompat
 			resultMessage = "\"" + array[4] + "\" is not a valid amount value.";
 			return false;
 		}
-		result2 = Mathf.Max(1, result2);
+		if (float.IsNaN(position.x) || float.IsInfinity(position.x) || float.IsNaN(position.y) || float.IsInfinity(position.y) || Mathf.Abs(position.x) > 1000000f || Mathf.Abs(position.y) > 1000000f)
+		{
+			resultMessage = "Spawn position is outside the supported world range.";
+			return false;
+		}
+		if (float.IsNaN(result) || float.IsInfinity(result))
+		{
+			resultMessage = "Spawn condition must be a finite number.";
+			return false;
+		}
+		result = Mathf.Clamp01(result);
+		result2 = Mathf.Clamp(result2, 1, 50);
 		int num = 0;
 		Item val2 = default(Item);
 		AmmoScript val3 = default(AmmoScript);
@@ -3657,9 +3560,9 @@ internal static class KrokoshaMpCompat
 				{
 					val3.rounds = Mathf.RoundToInt((float)val3.maxRounds * result);
 				}
-				if ((Object)(object)PlayerCamera.main?.body != (Object)null && Vector2.Distance(Vector2.op_Implicit(val.transform.position), Vector2.op_Implicit(((Component)PlayerCamera.main.body).transform.position)) < 2f)
+				if (Vector2.Distance(Vector2.op_Implicit(val.transform.position), Vector2.op_Implicit(((Component)requesterBody).transform.position)) < 2f)
 				{
-					PlayerCamera.main.body.AutoPickUpItem(val2);
+					requesterBody.AutoPickUpItem(val2);
 				}
 			}
 			num++;
@@ -3672,73 +3575,18 @@ internal static class KrokoshaMpCompat
 	{
 		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0114: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0119: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0191: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
 		position = Vector2.zero;
 		errorMessage = null;
-		switch (raw)
+		string[] array = raw.Split(new char[1] { ',' });
+		if (array.Length != 2 || !float.TryParse(array[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var result) || !float.TryParse(array[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var result2))
 		{
-		case "cursor":
-			if ((Object)(object)Camera.main == (Object)null)
-			{
-				errorMessage = "Host camera is unavailable for cursor position.";
-				return false;
-			}
-			position = Vector2.op_Implicit(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-			return true;
-		case "player":
-			if ((Object)(object)PlayerCamera.main?.body == (Object)null)
-			{
-				errorMessage = "Host player body is unavailable for player position.";
-				return false;
-			}
-			position = Vector2.op_Implicit(((Component)PlayerCamera.main.body).transform.position);
-			return true;
-		case "random":
-			position = new Vector2(Random.Range(-1f, 1f) * (float)WorldGeneration.world.halfWidth, Random.Range(-1f, 1f) * (float)WorldGeneration.world.halfHeight);
-			return true;
-		default:
-		{
-			string[] array = raw.Split(new char[1] { ',' });
-			if (array.Length != 2 || !float.TryParse(array[0], NumberStyles.Float, CultureInfo.InvariantCulture, out var result) || !float.TryParse(array[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var result2))
-			{
-				errorMessage = "\"" + raw + "\" is not a valid position! (cursor/player/random/#,#)";
-				return false;
-			}
-			position = new Vector2(result, result2);
-			return true;
+			errorMessage = "\"" + raw + "\" is not a valid resolved spawn position.";
+			return false;
 		}
-		}
-	}
-
-	private static void SetBodyFloatCompat(Body body, float value, params string[] fieldNames)
-	{
-		if ((Object)(object)body == (Object)null || fieldNames == null)
-		{
-			return;
-		}
-		Type type = ((object)body).GetType();
-		foreach (string text in fieldNames)
-		{
-			if (!string.IsNullOrEmpty(text))
-			{
-				FieldInfo field = type.GetField(text, BindingFlags.Instance | BindingFlags.Public);
-				if (field != null && field.FieldType == typeof(float))
-				{
-					field.SetValue(body, value);
-					break;
-				}
-			}
-		}
+		position = new Vector2(result, result2);
+		return true;
 	}
 
 	private static bool TryExecuteMpRecipe(Body crafter, Recipe recipe)
@@ -3770,11 +3618,18 @@ internal static class KrokoshaMpCompat
 			if (flag2)
 			{
 				recipe.hasMadeBefore = true;
+				lastExplicitCraftFrame = Time.frameCount;
+				lastExplicitCraftRecipeIndex = recipe.index;
 			}
 			return flag2;
 		}
-		catch
+		catch (Exception ex)
 		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)$"[Crafting] Together recipe execution failed for recipe {recipe.index}: {ex.GetBaseException()}");
+			}
 			return false;
 		}
 	}
@@ -3793,10 +3648,6 @@ internal static class KrokoshaMpCompat
 			{
 				return false;
 			}
-			if (IsClient && !TrySendKrokoshaCraftAnnouncement(recipe))
-			{
-				return false;
-			}
 			if (IsServer)
 			{
 				AnnounceCraftSound(crafter, 0u);
@@ -3809,195 +3660,9 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static bool TryExecuteClientCraftViaKrokoshaPrefix(PlayerCamera camera, Recipe recipe)
-	{
-		if ((Object)(object)camera == (Object)null || recipe == null)
-		{
-			return false;
-		}
-		EnsureResolved();
-		if (mpTryCraftPrefixMethod == null)
-		{
-			return false;
-		}
-		if (!CanDirectCraftViaKrokosha(camera.body, recipe))
-		{
-			return false;
-		}
-		int selectedRecipe = camera.selectedRecipe;
-		try
-		{
-			camera.selectedRecipe = recipe.index;
-			return !(mpTryCraftPrefixMethod.Invoke(null, new object[1] { camera }) is bool flag) || !flag;
-		}
-		catch
-		{
-			return false;
-		}
-		finally
-		{
-			camera.selectedRecipe = selectedRecipe;
-		}
-	}
-
-	private static bool TrySendKrokoshaCraftAnnouncement(Recipe recipe)
-	{
-		EnsureResolved();
-		if (recipe == null || netType == null || netDataWriterType == null || deliveryMethodType == null || mpLastRecipeItemsField == null)
-		{
-			return false;
-		}
-		try
-		{
-			if (!(mpLastRecipeItemsField.GetValue(null) is IEnumerable entries))
-			{
-				return false;
-			}
-			MethodInfo methodInfo = FindStaticMethod(netType, "CreateWriter", new Type[1] { typeof(ushort) });
-			MethodInfo methodInfo2 = FindStaticMethod(netType, "Client_Send", new Type[2] { deliveryMethodType, netDataWriterType });
-			if (methodInfo == null || methodInfo2 == null)
-			{
-				return false;
-			}
-			object obj = methodInfo.Invoke(null, new object[1] { (ushort)10053 });
-			MethodInfo method = obj.GetType().GetMethod("Put", new Type[1] { typeof(ushort) });
-			MethodInfo method2 = obj.GetType().GetMethod("PutArray", new Type[1] { typeof(ushort[]) });
-			if (method == null || method2 == null)
-			{
-				return false;
-			}
-			ushort[] array = ExtractCraftSyncIds(entries);
-			if (array == null)
-			{
-				return false;
-			}
-			method.Invoke(obj, new object[1] { (ushort)recipe.index });
-			method2.Invoke(obj, new object[1] { array });
-			object obj2 = Enum.Parse(deliveryMethodType, "ReliableOrdered");
-			methodInfo2.Invoke(null, new object[2] { obj2, obj });
-			return true;
-		}
-		catch
-		{
-			return false;
-		}
-	}
-
-	private static ushort[] ExtractCraftSyncIds(IEnumerable entries)
-	{
-		if (entries == null)
-		{
-			return null;
-		}
-		List<ushort> list = new List<ushort>();
-		foreach (object entry in entries)
-		{
-			if (entry == null)
-			{
-				return null;
-			}
-			Item val = (Item)((entry is Item) ? entry : null);
-			if (val != null)
-			{
-				if (!TryGetSyncInfo(val, out var syncInfo) || !TryGetSyncId(syncInfo, out var syncId) || syncId > 65535)
-				{
-					return null;
-				}
-				list.Add((ushort)syncId);
-			}
-			else
-			{
-				if (!TryConvertToUshort(entry, out var result))
-				{
-					return null;
-				}
-				list.Add(result);
-			}
-		}
-		return list.ToArray();
-	}
-
-	private static bool TryConvertToUshort(object value, out ushort result)
-	{
-		try
-		{
-			if (!(value is ushort num))
-			{
-				if (!(value is byte b))
-				{
-					if (!(value is sbyte b2))
-					{
-						if (!(value is short num2))
-						{
-							if (!(value is uint num3))
-							{
-								if (!(value is int num4))
-								{
-									if (value is long num5 && num5 >= 0 && num5 <= 65535)
-									{
-										result = (ushort)num5;
-										return true;
-									}
-								}
-								else if (num4 >= 0 && num4 <= 65535)
-								{
-									result = (ushort)num4;
-									return true;
-								}
-							}
-							else if (num3 <= 65535)
-							{
-								result = (ushort)num3;
-								return true;
-							}
-						}
-						else if (num2 >= 0)
-						{
-							result = (ushort)num2;
-							return true;
-						}
-					}
-					else if (b2 >= 0)
-					{
-						result = (ushort)b2;
-						return true;
-					}
-					result = Convert.ToUInt16(value, CultureInfo.InvariantCulture);
-					return true;
-				}
-				result = b;
-				return true;
-			}
-			result = num;
-			return true;
-		}
-		catch
-		{
-			result = 0;
-			return false;
-		}
-	}
-
-	private static bool CraftItemsHaveSyncIds(IEnumerable items)
-	{
-		if (items == null)
-		{
-			return false;
-		}
-		foreach (object item in items)
-		{
-			Item val = (Item)((item is Item) ? item : null);
-			if ((Object)(object)val == (Object)null || !TryGetSyncInfo(val, out var syncInfo) || !TryGetSyncId(syncInfo, out var _))
-			{
-				return false;
-			}
-		}
-		return true;
-	}
-
 	private static void AnnounceCraftSound(Body crafter, uint senderClientId)
 	{
-		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
 		EnsureResolved();
 		if (serverMainType == null || (Object)(object)crafter == (Object)null)
 		{
@@ -4005,14 +3670,15 @@ internal static class KrokoshaMpCompat
 		}
 		try
 		{
-			MethodInfo method = serverMainType.GetMethod("GetListOfClientIdsExceptThis", BindingFlags.Static | BindingFlags.Public);
-			MethodInfo method2 = serverMainType.GetMethod("Server_AnnounceSound", BindingFlags.Static | BindingFlags.Public);
-			object obj = method?.Invoke(null, new object[1] { senderClientId });
-			method2?.Invoke(null, new object[3]
+			object obj = CoerceClientIdObject(senderClientId);
+			MethodInfo methodInfo = FindStaticMethod(serverMainType, "GetListOfClientIdsExceptThis", new Type[1] { netClientIdType });
+			MethodInfo methodInfo2 = serverMainType.GetMethods(BindingFlags.Static | BindingFlags.Public).FirstOrDefault((MethodInfo method) => method.Name == "Server_AnnounceSound" && method.GetParameters().Length == 3);
+			object obj2 = methodInfo?.Invoke(null, new object[1] { obj });
+			methodInfo2?.Invoke(null, new object[3]
 			{
 				((Component)crafter).transform.position,
 				"combine",
-				obj
+				obj2
 			});
 		}
 		catch
@@ -4020,51 +3686,34 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static bool SendOrderedStringToClients(ushort msgId, string payload)
+	private static bool SendNamedStringToClients(string messageName, string payload)
 	{
 		EnsureResolved();
-		if (serverMainType == null)
+		if (serverAllClientIdsExceptHostProperty == null)
 		{
 			return false;
 		}
-		object targets = serverMainType.GetProperty("AllClientIdsExceptHost", BindingFlags.Static | BindingFlags.Public)?.GetValue(null, null);
-		return SendOrderedStringToTargets(msgId, payload, targets);
+		object value = serverAllClientIdsExceptHostProperty.GetValue(null, null);
+		return SendNamedStringToTargets(messageName, payload, value);
 	}
 
-	private static bool SendOrderedStringToClient(ushort msgId, string payload, uint clientId)
+	private static bool SendNamedStringToClient(string messageName, string payload, uint clientId)
 	{
 		EnsureResolved();
-		if (netType == null || netExtensionsType == null || netDataWriterType == null || deliveryMethodType == null)
+		object playerFromClientId = GetPlayerFromClientId(clientId);
+		if (playerFromClientId == null || serverSendToPlayerMethod == null)
 		{
 			return false;
 		}
 		try
 		{
-			MethodInfo methodInfo = FindStaticMethod(netType, "CreateWriter", new Type[1] { typeof(ushort) });
-			MethodInfo methodInfo2 = FindStaticMethod(netExtensionsType, "Put", new Type[3]
-			{
-				netDataWriterType,
-				typeof(string),
-				typeof(bool)
-			});
-			object coercedClientId = CoerceClientIdObject(clientId);
-			MethodInfo methodInfo3 = netType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(delegate(MethodInfo method)
-			{
-				if (method.Name != "Server_SendToClients")
-				{
-					return false;
-				}
-				ParameterInfo[] parameters = method.GetParameters();
-				return parameters.Length == 3 && parameters[0].ParameterType.IsAssignableFrom(deliveryMethodType) && parameters[1].ParameterType.IsAssignableFrom(netDataWriterType) && coercedClientId != null && parameters[2].ParameterType.IsAssignableFrom(coercedClientId.GetType());
-			});
-			if (methodInfo == null || methodInfo2 == null || methodInfo3 == null || coercedClientId == null)
+			object obj = CreateNamedUtf8Writer(messageName, payload);
+			if (obj == null)
 			{
 				return false;
 			}
-			object obj = methodInfo.Invoke(null, new object[1] { msgId });
-			methodInfo2.Invoke(null, new object[3] { obj, payload, true });
 			object obj2 = Enum.Parse(deliveryMethodType, "ReliableOrdered");
-			methodInfo3.Invoke(null, new object[3] { obj2, obj, coercedClientId });
+			serverSendToPlayerMethod.Invoke(null, new object[3] { obj2, obj, playerFromClientId });
 			return true;
 		}
 		catch
@@ -4073,31 +3722,22 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static bool SendOrderedStringToServer(ushort msgId, string payload)
+	private static bool SendNamedStringToServer(string messageName, string payload)
 	{
 		EnsureResolved();
-		if (netType == null || netExtensionsType == null || netDataWriterType == null || deliveryMethodType == null)
+		if (clientSendMethod == null)
 		{
 			return false;
 		}
 		try
 		{
-			MethodInfo methodInfo = FindStaticMethod(netType, "CreateWriter", new Type[1] { typeof(ushort) });
-			MethodInfo methodInfo2 = FindStaticMethod(netExtensionsType, "Put", new Type[3]
-			{
-				netDataWriterType,
-				typeof(string),
-				typeof(bool)
-			});
-			MethodInfo methodInfo3 = FindStaticMethod(netType, "Client_Send", new Type[2] { deliveryMethodType, netDataWriterType });
-			if (methodInfo == null || methodInfo2 == null || methodInfo3 == null)
+			object obj = CreateNamedUtf8Writer(messageName, payload);
+			if (obj == null)
 			{
 				return false;
 			}
-			object obj = methodInfo.Invoke(null, new object[1] { msgId });
-			methodInfo2.Invoke(null, new object[3] { obj, payload, true });
 			object obj2 = Enum.Parse(deliveryMethodType, "ReliableOrdered");
-			methodInfo3.Invoke(null, new object[2] { obj2, obj });
+			clientSendMethod.Invoke(null, new object[2] { obj2, obj });
 			return true;
 		}
 		catch
@@ -4115,27 +3755,13 @@ internal static class KrokoshaMpCompat
 		}
 		try
 		{
-			MethodInfo methodInfo = FindStaticMethod(netObjectRegistryType, "TryGetSyncInfoOrRegister", new Type[2]
+			if (IsServer)
 			{
-				typeof(Component),
-				null
-			});
-			object obj = null;
-			if (methodInfo != null)
-			{
-				object obj2 = ((object)gameObject.GetComponent<Item>()) ?? ((object)gameObject.GetComponent<Component>());
-				object[] array = new object[2] { obj2, null };
-				methodInfo.Invoke(null, array);
-				obj = array[1];
-			}
-			if (obj != null)
-			{
-				InvokeStatic(netObjectRegistryType, "ForceAddFastSync", obj);
-				InvokeStatic(netObjectRegistryType, "Server_ObjectSyncSingle", obj, true);
+				FindStaticMethod(netObjectRegistryType, "Server_EnsureItemIsNetworkRegistered", new Type[1] { typeof(GameObject) })?.Invoke(null, new object[1] { gameObject });
 			}
 			else
 			{
-				FindStaticMethod(netObjectRegistryType, "NewGO", new Type[1] { typeof(GameObject) })?.Invoke(null, new object[1] { gameObject });
+				FindStaticMethod(netObjectRegistryType, "SafeNewGO", new Type[1] { typeof(GameObject) })?.Invoke(null, new object[1] { gameObject });
 			}
 		}
 		catch
@@ -4160,39 +3786,22 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static bool SendOrderedStringToTargets(ushort msgId, string payload, object targets)
+	private static bool SendNamedStringToTargets(string messageName, string payload, object targets)
 	{
 		EnsureResolved();
-		if (netType == null || serverMainType == null || netExtensionsType == null || netDataWriterType == null || deliveryMethodType == null)
+		if (serverSendToClientsMethod == null || targets == null)
 		{
 			return false;
 		}
 		try
 		{
-			MethodInfo methodInfo = FindStaticMethod(netType, "CreateWriter", new Type[1] { typeof(ushort) });
-			MethodInfo methodInfo2 = FindStaticMethod(netExtensionsType, "Put", new Type[3]
-			{
-				netDataWriterType,
-				typeof(string),
-				typeof(bool)
-			});
-			MethodInfo methodInfo3 = netType.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).FirstOrDefault(delegate(MethodInfo method)
-			{
-				if (method.Name != "Server_SendToClients")
-				{
-					return false;
-				}
-				ParameterInfo[] parameters = method.GetParameters();
-				return parameters.Length == 3 && parameters[0].ParameterType.IsAssignableFrom(deliveryMethodType) && parameters[1].ParameterType.IsAssignableFrom(netDataWriterType) && targets != null && parameters[2].ParameterType.IsAssignableFrom(targets.GetType());
-			});
-			if (methodInfo == null || methodInfo2 == null || methodInfo3 == null || targets == null)
+			object obj = CreateNamedUtf8Writer(messageName, payload);
+			if (obj == null)
 			{
 				return false;
 			}
-			object obj = methodInfo.Invoke(null, new object[1] { msgId });
-			methodInfo2.Invoke(null, new object[3] { obj, payload, true });
 			object obj2 = Enum.Parse(deliveryMethodType, "ReliableOrdered");
-			methodInfo3.Invoke(null, new object[3] { obj2, obj, targets });
+			serverSendToClientsMethod.Invoke(null, new object[3] { obj2, obj, targets });
 			return true;
 		}
 		catch
@@ -4243,6 +3852,38 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
+	private static object CreateNamedUtf8Writer(string messageName, string payload)
+	{
+		if (createNamedWriterMethod == null || writerPutBytesMethod == null || string.IsNullOrWhiteSpace(messageName))
+		{
+			return null;
+		}
+		payload = payload ?? string.Empty;
+		byte[] bytes = Encoding.UTF8.GetBytes(payload);
+		if (bytes.Length > 1048576)
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)("[Together] Refused oversized '" + messageName + "' payload."));
+			}
+			return null;
+		}
+		object obj = createNamedWriterMethod.Invoke(null, new object[1] { messageName });
+		writerPutBytesMethod.Invoke(obj, new object[1] { bytes });
+		return obj;
+	}
+
+	private static object GetPlayerFromClientId(uint clientId)
+	{
+		if (!(playerClientIdToPlayerDictField?.GetValue(null) is IDictionary dictionary))
+		{
+			return null;
+		}
+		object obj = CoerceClientIdObject(clientId);
+		return (obj != null && dictionary.Contains(obj)) ? dictionary[obj] : null;
+	}
+
 	private static object ReadStaticMemberValue(Type type, string name)
 	{
 		EnsureResolved();
@@ -4258,6 +3899,28 @@ internal static class KrokoshaMpCompat
 				return property.GetValue(null, null);
 			}
 			return type.GetField(name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)?.GetValue(null);
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
+	private static object ReadInstanceMemberValue(object instance, string name)
+	{
+		if (instance == null || string.IsNullOrEmpty(name))
+		{
+			return null;
+		}
+		try
+		{
+			Type type = instance.GetType();
+			PropertyInfo property = type.GetProperty(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			if (property != null)
+			{
+				return property.GetValue(instance, null);
+			}
+			return type.GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)?.GetValue(instance);
 		}
 		catch
 		{
@@ -4377,7 +4040,7 @@ internal static class KrokoshaMpCompat
 			}
 			return Convert.ChangeType(clientId, type, CultureInfo.InvariantCulture);
 		}
-		catch (Exception)
+		catch
 		{
 			return null;
 		}
@@ -4535,7 +4198,7 @@ internal static class KrokoshaMpCompat
 		}
 		try
 		{
-			MethodInfo methodInfo = FindStaticMethod(netObjectRegistryType, "ObjectCanBeIgnoredForNetwork", new Type[1] { typeof(GameObject) });
+			MethodInfo methodInfo = FindStaticMethod(netObjectRegistryType, "ObjectShouldNotBeSynced", new Type[1] { typeof(GameObject) });
 			bool flag = default(bool);
 			int num;
 			if (methodInfo != null)
@@ -4563,15 +4226,15 @@ internal static class KrokoshaMpCompat
 		}
 	}
 
-	private static void AddContainerStatusChanged(object syncInfo)
+	private static void AddItemContainerChanged(object syncInfo)
 	{
-		if (containerStatusChangedField == null || syncInfo == null)
+		if (itemContainerChangedField == null || syncInfo == null)
 		{
 			return;
 		}
 		try
 		{
-			object value = containerStatusChangedField.GetValue(null);
+			object value = itemContainerChangedField.GetValue(null);
 			(value?.GetType().GetMethod("Add", BindingFlags.Instance | BindingFlags.Public))?.Invoke(value, new object[1] { syncInfo });
 		}
 		catch
@@ -4588,17 +4251,17 @@ internal static class KrokoshaMpCompat
 		}
 		try
 		{
-			FieldInfo field = syncInfo.GetType().GetField("syncid", BindingFlags.Instance | BindingFlags.Public);
-			if (field != null && field.GetValue(syncInfo) is uint num)
+			object obj = syncInfo.GetType().GetField("syncId", BindingFlags.Instance | BindingFlags.Public)?.GetValue(syncInfo);
+			if (obj != null)
 			{
-				syncId = num;
-				return true;
+				syncId = ConvertSenderIdToUInt(obj);
+				return syncId <= 65535;
 			}
-			PropertyInfo property = syncInfo.GetType().GetProperty("syncid", BindingFlags.Instance | BindingFlags.Public);
-			if (property != null && property.GetValue(syncInfo, null) is uint num2)
+			obj = syncInfo.GetType().GetProperty("syncId", BindingFlags.Instance | BindingFlags.Public)?.GetValue(syncInfo, null);
+			if (obj != null)
 			{
-				syncId = num2;
-				return true;
+				syncId = ConvertSenderIdToUInt(obj);
+				return syncId <= 65535;
 			}
 		}
 		catch

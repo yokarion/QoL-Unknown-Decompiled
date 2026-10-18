@@ -45,7 +45,6 @@ internal class SpawnAutofill
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.spawnautofill");
 		val.PatchAll(typeof(SpawnAutofill));
-		Logger.LogInfo((object)"SpawnAutofill initialized");
 	}
 
 	private static void EnsurePrefabLookup()
@@ -312,19 +311,19 @@ internal class SpawnAutofill
 	[HarmonyPostfix]
 	private static void HandleDescriptionText_Postfix(ConsoleScript __instance, string[] args)
 	{
-		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bf: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
 		try
 		{
 			if ((Object)(object)previewImageObject == (Object)null)
 			{
 				return;
 			}
-			if (args.Length >= 2 && args[0].Equals("spawn", StringComparison.OrdinalIgnoreCase))
+			if (args.Length >= 2 && (args[0].Equals("spawn", StringComparison.OrdinalIgnoreCase) || args[0].Equals("cuspawn", StringComparison.OrdinalIgnoreCase)))
 			{
 				string text = args[1];
-				Command val = ConsoleScript.SearchExact("spawn");
+				Command val = ConsoleScript.SearchExact(args[0]);
 				if (val != null && val.argAutofill != null && val.argAutofill.TryGetValue(0, out var value))
 				{
 					List<string> list = ConsoleScript.SearchArgumentAutofill(text, value);

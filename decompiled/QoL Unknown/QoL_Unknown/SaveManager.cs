@@ -25,6 +25,8 @@ public static class SaveManager
 
 	private static float autosaveTimer = 0f;
 
+	private static bool autosaveInProgress;
+
 	public static string SaveFolder => Application.persistentDataPath;
 
 	public static void Initialize(ManualLogSource logger)
@@ -34,7 +36,6 @@ public static class SaveManager
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.savemanager");
 		val.PatchAll(typeof(SaveManager));
-		Logger.LogInfo((object)"SaveManager initialized");
 	}
 
 	public static bool IsAutosaveOnExitEnabled()
@@ -68,19 +69,31 @@ public static class SaveManager
 
 	public static List<string> GetSaveFiles()
 	{
-		DirectoryInfo directoryInfo = new DirectoryInfo(SaveFolder);
-		return (from f in directoryInfo.GetFiles("*.sv")
-			orderby f.LastWriteTime descending
-			select f.Name).ToList();
+		try
+		{
+			Directory.CreateDirectory(SaveFolder);
+			return (from file in new DirectoryInfo(SaveFolder).GetFiles("*.sv")
+				orderby file.LastWriteTimeUtc descending
+				select file.Name).ToList();
+		}
+		catch (Exception arg)
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogError((object)$"Failed to enumerate save files: {arg}");
+			}
+			return new List<string>();
+		}
 	}
 
 	private static void UpdateAutosave()
 	{
-		if (!AutosaveEnabled || !Object.op_Implicit((Object)(object)PlayerCamera.main) || !PlayerCamera.main.body.alive)
+		if (!AutosaveEnabled || autosaveInProgress || !Object.op_Implicit((Object)(object)PlayerCamera.main) || !Object.op_Implicit((Object)(object)PlayerCamera.main.body) || !PlayerCamera.main.body.alive)
 		{
 			return;
 		}
-		if (KrokoshaMpCompat.IsActive)
+		if (MultiplayerCompat.IsActive)
 		{
 			autosaveTimer = 0f;
 			return;
@@ -95,77 +108,83 @@ public static class SaveManager
 
 	public static void PerformAutosave(bool showMessage = true)
 	{
-		//IL_01b8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0174: Unknown result type (might be due to invalid IL or missing references)
-		if (!QoLModuleManager.IsEnabled("qol_autosave") || KrokoshaMpCompat.IsActive || (Object)(object)WorldGeneration.world == (Object)null || !WorldGeneration.world.worldExists || !Object.op_Implicit((Object)(object)PlayerCamera.main) || !PlayerCamera.main.body.alive || !PlayerCamera.main.body.standing)
+		if (!QoLModuleManager.IsEnabled("qol_autosave") || autosaveInProgress || MultiplayerCompat.IsActive || (Object)(object)WorldGeneration.world == (Object)null || !WorldGeneration.world.worldExists || !Object.op_Implicit((Object)(object)PlayerCamera.main) || !Object.op_Implicit((Object)(object)PlayerCamera.main.body) || !PlayerCamera.main.body.alive || !PlayerCamera.main.body.standing)
 		{
 			return;
 		}
 		string path = Path.Combine(SaveFolder, "autosave.sv");
-		string path2 = Path.Combine(SaveFolder, "autosave.sv.meta");
+		string destinationPath = Path.Combine(SaveFolder, "autosave.sv.meta");
 		string text = Path.Combine(SaveFolder, "save.sv");
-		string text2 = Path.Combine(SaveFolder, "save_backup_temp.sv");
+		string text2 = Path.Combine(SaveFolder, "save.sv.qol-autosave-backup-" + Guid.NewGuid().ToString("N"));
 		bool flag = File.Exists(text);
-		if (flag)
-		{
-			File.Copy(text, text2, overwrite: true);
-		}
 		string currentSaveFile = CurrentSaveFile;
+		bool flag2 = false;
 		try
 		{
+			autosaveInProgress = true;
+			if (flag && !SaveFileStore.TryCopyAtomic(text, text2, Logger, "back up vanilla save before autosave"))
+			{
+				return;
+			}
 			CurrentSaveFile = "autosave.sv";
 			SaveSystemPatcher.IsAutosaveOperation = true;
-			using (KrokoshaMpCompat.BeginVanillaSaveSnapshot())
+			using (MultiplayerCompat.BeginVanillaSaveSnapshot())
 			{
 				SaveSystem.SaveGame();
+			}
+			if (!SaveSystemPatcher.LastSaveRedirectSucceeded || !File.Exists(path))
+			{
+				ManualLogSource logger = Logger;
+				if (logger != null)
+				{
+					logger.LogError((object)"Autosave did not commit a new autosave.sv.");
+				}
+				return;
+			}
+			SaveMetadata saveMetadata = MultiplayerSaveBundle.BuildBaseMetadata();
+			saveMetadata.SaveKind = "Singleplayer";
+			saveMetadata.SavedDuringMultiplayer = false;
+			string contents = JsonConvert.SerializeObject((object)saveMetadata, (Formatting)1);
+			flag2 = SaveFileStore.TryWriteAllTextAtomic(destinationPath, contents, Logger, "write autosave metadata");
+		}
+		catch (Exception arg)
+		{
+			ManualLogSource logger2 = Logger;
+			if (logger2 != null)
+			{
+				logger2.LogError((object)$"Autosave failed: {arg}");
 			}
 		}
 		finally
 		{
 			CurrentSaveFile = currentSaveFile;
 			SaveSystemPatcher.IsAutosaveOperation = false;
+			bool flag3 = true;
+			if (flag && File.Exists(text2))
+			{
+				if (!SaveFileStore.TryCopyAtomic(text2, text, Logger, "restore vanilla save after autosave"))
+				{
+					ManualLogSource logger3 = Logger;
+					if (logger3 != null)
+					{
+						logger3.LogError((object)("Vanilla save recovery copy remains at '" + text2 + "'."));
+					}
+					flag3 = false;
+				}
+			}
+			else if (!flag)
+			{
+				SaveFileStore.TryDelete(text, Logger, "remove autosave staging file");
+			}
+			if (flag3)
+			{
+				SaveFileStore.TryDelete(text2, Logger, "remove autosave recovery copy");
+			}
+			autosaveInProgress = false;
 		}
-		if (File.Exists(path))
+		if (flag2 && showMessage)
 		{
-			float radLinePosY = 0f;
-			bool radLineActive = false;
-			if ((Object)(object)RadiationLine.line != (Object)null)
-			{
-				radLinePosY = ((Component)RadiationLine.line).transform.position.y;
-				radLineActive = RadiationLine.line.active;
-			}
-			SaveMetadata saveMetadata = new SaveMetadata
-			{
-				SeedInput = SeedManager.InputString,
-				SeedValue = SeedManager.CurrentSeed,
-				PlayerPosition = new SerialVec3(((Component)PlayerCamera.main.body).transform.position),
-				LocationName = WorldGeneration.world.TotalDepthString() + " Deep",
-				Timestamp = DateTime.Now.ToString("g"),
-				BiomeIndex = WorldGeneration.world.biomeDepth,
-				RadLinePosY = radLinePosY,
-				RadLineActive = radLineActive,
-				SavedDuringMultiplayer = KrokoshaMpCompat.IsNetworkRunning
-			};
-			string contents = JsonConvert.SerializeObject((object)saveMetadata, (Formatting)1);
-			File.WriteAllText(path2, contents);
-			if (flag)
-			{
-				File.Copy(text2, text, overwrite: true);
-				File.Delete(text2);
-			}
-			else if (File.Exists(text))
-			{
-				File.Delete(text);
-			}
-			if (showMessage)
-			{
-				ConsoleHelper.LogToConsole(ConsoleScript.instance, "<color=yellow>Autosaved game.</color>");
-			}
-		}
-		else if (flag)
-		{
-			File.Copy(text2, text, overwrite: true);
-			File.Delete(text2);
+			ConsoleHelper.LogToConsole(ConsoleScript.instance, "<color=yellow>Autosaved game.</color>");
 		}
 	}
 
@@ -184,15 +203,19 @@ public static class SaveManager
 
 	public static void DeleteSave(string filename)
 	{
-		string text = Path.Combine(SaveFolder, filename);
-		string path = text + ".meta";
-		if (File.Exists(text))
+		if (!SaveFileStore.TryGetSavePath(SaveFolder, filename, out var path))
 		{
-			File.Delete(text);
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)("Refusing to delete invalid save file name '" + filename + "'."));
+			}
 		}
-		if (File.Exists(path))
+		else
 		{
-			File.Delete(path);
+			string path2 = path + ".meta";
+			SaveFileStore.TryDelete(path, Logger, "delete save '" + filename + "'");
+			SaveFileStore.TryDelete(path2, Logger, "delete metadata for '" + filename + "'");
 		}
 	}
 }

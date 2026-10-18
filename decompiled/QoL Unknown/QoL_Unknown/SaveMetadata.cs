@@ -9,6 +9,8 @@ public class SaveMetadata
 
 	public int SeedValue;
 
+	public int SeedFormatVersion;
+
 	public string LocationName;
 
 	public string Timestamp;
@@ -16,6 +18,8 @@ public class SaveMetadata
 	public int BiomeIndex;
 
 	public SerialVec3 PlayerPosition;
+
+	public bool UseVanillaLayerSpawn;
 
 	public float RadLinePosY;
 
@@ -32,6 +36,12 @@ public class SaveMetadata
 	public string SaveKind;
 
 	public string MultiplayerBundleName;
+
+	public string MultiplayerSaveId;
+
+	public string MultiplayerVersion;
+
+	public string MultiplayerGameVersion;
 
 	public string KrokoshaSaveId;
 

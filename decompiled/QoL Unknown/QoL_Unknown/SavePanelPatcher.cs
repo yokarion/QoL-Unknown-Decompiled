@@ -14,6 +14,5 @@ internal class SavePanelPatcher
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.savepanel");
 		val.PatchAll(typeof(SavePanelPatcher));
-		Logger.LogInfo((object)"SavePanelPatcher initialized");
 	}
 }

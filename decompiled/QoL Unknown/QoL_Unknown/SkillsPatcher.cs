@@ -19,7 +19,6 @@ internal class SkillsPatcher
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.skills");
 		val.PatchAll(typeof(SkillsPatcher));
-		Logger.LogInfo((object)"SkillsPatcher initialized");
 	}
 
 	[HarmonyPatch(typeof(Body), "Start")]

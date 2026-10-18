@@ -20,29 +20,41 @@ internal class ContainerScrollPatcher
 
 	private static bool positionsCaptured;
 
+	private static PlayerCamera capturedCamera;
+
+	private static RectTransform populateRect;
+
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.containerscroll");
-		val.PatchAll(typeof(ContainerScrollPatcher));
+		RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.containerscroll", typeof(ContainerScrollPatcher), logger);
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "OpenContainer")]
 	[HarmonyPostfix]
 	private static void OpenContainer_Postfix(PlayerCamera __instance)
 	{
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		if (!positionsCaptured)
+		//IL_00ac: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fa: Unknown result type (might be due to invalid IL or missing references)
+		if ((Object)(object)__instance == (Object)null || (Object)(object)__instance.containerMenu == (Object)null || (Object)(object)__instance.containerText == (Object)null || (Object)(object)__instance.contPopulate == (Object)null)
 		{
-			textOrigPos = ((Component)__instance.containerText).GetComponent<RectTransform>().anchoredPosition;
-			populateOrigPos = __instance.contPopulate.GetComponent<RectTransform>().anchoredPosition;
+			return;
+		}
+		if (!positionsCaptured || (Object)(object)capturedCamera != (Object)(object)__instance || (Object)(object)populateRect == (Object)null)
+		{
+			RectTransform component = ((Component)__instance.containerText).GetComponent<RectTransform>();
+			populateRect = __instance.contPopulate.GetComponent<RectTransform>();
+			if ((Object)(object)component == (Object)null || (Object)(object)populateRect == (Object)null)
+			{
+				positionsCaptured = false;
+				return;
+			}
+			textOrigPos = component.anchoredPosition;
+			populateOrigPos = populateRect.anchoredPosition;
 			Transform obj = __instance.containerMenu.transform.Find("Image");
 			RectTransform val = ((obj != null) ? ((Component)obj).GetComponent<RectTransform>() : null);
 			if ((Object)(object)val != (Object)null)
@@ -50,6 +62,7 @@ internal class ContainerScrollPatcher
 				imageOrigPos = val.anchoredPosition;
 			}
 			positionsCaptured = true;
+			capturedCamera = __instance;
 		}
 		currentScrollY = 0f;
 		targetScrollY = 0f;
@@ -61,25 +74,22 @@ internal class ContainerScrollPatcher
 	[HarmonyPostfix]
 	private static void Update_Postfix(PlayerCamera __instance)
 	{
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
-		if (!__instance.containerMenu.activeSelf || (Object)(object)__instance.currentContainer == (Object)null)
+		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
+		if ((Object)(object)__instance == (Object)null || (Object)(object)__instance.containerMenu == (Object)null || !__instance.containerMenu.activeSelf || (Object)(object)__instance.currentContainer == (Object)null)
 		{
 			return;
 		}
-		UIScrollInputRouter.ResetFrame();
 		if (Input.mousePosition.x > (float)Screen.width * 0.5f)
 		{
 			float num = Input.mouseScrollDelta.y * -1f;
-			if (Mathf.Abs(num) > 0.01f && !UIScrollInputRouter.IsConsumed() && UIScrollInputRouter.TryConsume())
+			if (Mathf.Abs(num) > 0.01f && UIScrollInputRouter.TryConsume())
 			{
 				targetScrollY += num * 64f;
 			}
 		}
-		int itemCount = __instance.currentContainer.itemCount;
-		int num2 = Mathf.CeilToInt((float)itemCount / 2f);
-		float num3 = Mathf.Max(0f, (float)(num2 - 5) * 64f);
-		targetScrollY = Mathf.Clamp(targetScrollY, 0f, num3);
+		float maxScroll = GetMaxScroll(__instance);
+		targetScrollY = Mathf.Clamp(targetScrollY, 0f, maxScroll);
 		if (Mathf.Abs(currentScrollY - targetScrollY) > 0.01f)
 		{
 			currentScrollY = Mathf.Lerp(currentScrollY, targetScrollY, Time.unscaledDeltaTime * 20f);
@@ -89,12 +99,19 @@ internal class ContainerScrollPatcher
 
 	private static void ApplyScroll(PlayerCamera cam)
 	{
-		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
 		if (positionsCaptured)
 		{
-			cam.contPopulate.GetComponent<RectTransform>().anchoredPosition = populateOrigPos + new Vector2(0f, Mathf.Round(currentScrollY));
+			if ((Object)(object)cam != (Object)(object)capturedCamera || (Object)(object)populateRect == (Object)null)
+			{
+				positionsCaptured = false;
+			}
+			else
+			{
+				populateRect.anchoredPosition = populateOrigPos + new Vector2(0f, Mathf.Round(currentScrollY));
+			}
 		}
 	}
 
@@ -104,13 +121,22 @@ internal class ContainerScrollPatcher
 	{
 		if (!((Object)(object)__instance.currentContainer == (Object)null))
 		{
-			int num = Mathf.CeilToInt((float)__instance.currentContainer.itemCount / 2f);
-			float num2 = Mathf.Max(0f, (float)(num - 5) * 64f);
-			if (targetScrollY > num2)
+			float maxScroll = GetMaxScroll(__instance);
+			if (targetScrollY > maxScroll)
 			{
-				targetScrollY = num2;
+				targetScrollY = maxScroll;
 			}
 			ApplyScroll(__instance);
 		}
+	}
+
+	private static float GetMaxScroll(PlayerCamera camera)
+	{
+		if (ContainerStackingPatcher.TryGetMaxScroll(camera, out var maxScroll))
+		{
+			return maxScroll;
+		}
+		int num = Mathf.CeilToInt((float)camera.currentContainer.itemCount / 2f);
+		return Mathf.Max(0f, (float)(num - 5) * 64f);
 	}
 }

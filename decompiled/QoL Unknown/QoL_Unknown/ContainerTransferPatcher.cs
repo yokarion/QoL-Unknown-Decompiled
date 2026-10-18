@@ -23,9 +23,9 @@ internal class ContainerTransferPatcher
 	[HarmonyPrefix]
 	private static bool TryPerformInventoryAction_Prefix(PlayerCamera __instance, RaycastResult hit, List<RaycastResult> uiCasts, ref bool __result)
 	{
-		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Expected O, but got Unknown
-		if (!Input.GetKey((KeyCode)304) && !Input.GetKey((KeyCode)303))
+		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c5: Expected O, but got Unknown
+		if (!ModKeybinds.VanillaBindHeld("expanddesc"))
 		{
 			return true;
 		}

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using UnityEngine;
 
@@ -5,19 +6,31 @@ namespace QoL_Unknown;
 
 public static class SeedManager
 {
+	public const int LegacySeedFormatVersion = 1;
+
+	public const int CurrentSeedFormatVersion = 2;
+
 	public static string InputString = "";
 
 	public static int CurrentSeed = 0;
 
 	public static bool IsSeeded = false;
 
+	public static int SeedFormatVersion = 2;
+
 	public static bool EnsureNonZeroSeedForLoadedRun()
 	{
+		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0036: Invalid comparison between Unknown and I4
 		if (!SaveSystem.loadedRun)
 		{
 			return false;
 		}
-		if (IsSeeded && CurrentSeed != 0)
+		if (IsSeeded)
+		{
+			return false;
+		}
+		if ((Object)(object)WorldGeneration.world != (Object)null && (int)WorldGeneration.world.biomeOverride == 2)
 		{
 			return false;
 		}
@@ -28,6 +41,7 @@ public static class SeedManager
 		}
 		CurrentSeed = num;
 		IsSeeded = true;
+		SeedFormatVersion = 1;
 		if (string.IsNullOrWhiteSpace(InputString))
 		{
 			InputString = num.ToString();
@@ -73,28 +87,39 @@ public static class SeedManager
 
 	public static void SetSeed(string input)
 	{
-		InputString = input;
-		if (string.IsNullOrWhiteSpace(input))
+		string text = (InputString = input?.Trim() ?? "");
+		if (text.Length == 0)
 		{
 			IsSeeded = false;
 			CurrentSeed = 0;
+			SeedFormatVersion = 2;
 			return;
 		}
 		IsSeeded = true;
-		if (int.TryParse(input, out var result))
+		SeedFormatVersion = 2;
+		if (int.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result))
 		{
 			CurrentSeed = result;
 		}
 		else
 		{
-			CurrentSeed = GetStableHash(input);
+			CurrentSeed = GetStableHash(text);
 		}
 	}
 
 	public static void SetNetworkSeed(int seed, string input)
 	{
 		CurrentSeed = seed;
-		InputString = input ?? "";
+		InputString = input?.Trim() ?? "";
 		IsSeeded = true;
+		SeedFormatVersion = 2;
+	}
+
+	public static void RestorePersistedSeed(int seed, string input, int formatVersion)
+	{
+		CurrentSeed = seed;
+		InputString = input?.Trim() ?? "";
+		IsSeeded = true;
+		SeedFormatVersion = ((formatVersion <= 0) ? 1 : formatVersion);
 	}
 }

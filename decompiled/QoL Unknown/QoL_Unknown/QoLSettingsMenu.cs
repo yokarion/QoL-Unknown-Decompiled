@@ -28,6 +28,11 @@ internal class QoLSettingsMenu
 
 		internal void _003CBuildSettingsUI_003Eb__12_0()
 		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogInfo((object)"Button clicked!");
+			}
 			EnhancedMenuController.Instance.OpenMenu();
 		}
 
@@ -72,7 +77,6 @@ internal class QoLSettingsMenu
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.settingsmenu");
 		val.PatchAll(typeof(QoLSettingsMenu));
-		Logger.LogInfo((object)"QoLSettingsMenu initialized");
 	}
 
 	[HarmonyPatch(typeof(PreRunScript), "Start")]
@@ -113,44 +117,84 @@ internal class QoLSettingsMenu
 
 	private static void BuildSettingsUI()
 	{
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00af: Expected O, but got Unknown
-		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d5: Expected O, but got Unknown
-		GameObject val = GameObject.Find("Main Camera/Canvas/GammaPanel/Button");
-		if ((Object)(object)val == (Object)null || (Object)(object)val.transform.parent == (Object)null || (Object)(object)GameObject.Find("EnhancedSettingsButton") != (Object)null)
+		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0107: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0133: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0149: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0168: Expected O, but got Unknown
+		//IL_0184: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0189: Unknown result type (might be due to invalid IL or missing references)
+		//IL_018f: Expected O, but got Unknown
+		if ((Object)(object)PreRunScript.instance == (Object)null || (Object)(object)PreRunScript.instance.mainCanvas == (Object)null)
 		{
-			return;
-		}
-		GameObject val2 = Object.Instantiate<GameObject>(val, val.transform.parent);
-		((Object)val2).name = "EnhancedSettingsButton";
-		RectTransform component = val2.GetComponent<RectTransform>();
-		Vector2 anchoredPosition = component.anchoredPosition;
-		Rect rect = component.rect;
-		component.anchoredPosition = anchoredPosition + new Vector2(0f, ((Rect)(ref rect)).height + 10f);
-		Button component2 = val2.GetComponent<Button>();
-		component2.onClick = new ButtonClickedEvent();
-		ButtonClickedEvent onClick = component2.onClick;
-		object obj = _003C_003Ec._003C_003E9__12_0;
-		if (obj == null)
-		{
-			UnityAction val3 = delegate
+			ManualLogSource logger = Logger;
+			if (logger != null)
 			{
-				EnhancedMenuController.Instance.OpenMenu();
-			};
-			_003C_003Ec._003C_003E9__12_0 = val3;
-			obj = (object)val3;
+				logger.LogInfo((object)"BuildSettingsUI: PreRunScript or mainCanvas not ready");
+			}
 		}
-		((UnityEvent)onClick).AddListener((UnityAction)obj);
-		TextMeshProUGUI componentInChildren = val2.GetComponentInChildren<TextMeshProUGUI>(true);
-		Object.Destroy((Object)(object)((Component)componentInChildren).GetComponent("UILocalizer"));
-		((TMP_Text)componentInChildren).text = "OPTION\nMENU";
+		else
+		{
+			if ((Object)(object)GameObject.Find("EnhancedSettingsButton") != (Object)null)
+			{
+				return;
+			}
+			Canvas mainCanvas = PreRunScript.instance.mainCanvas;
+			Button componentInChildren = ((Component)mainCanvas).GetComponentInChildren<Button>(true);
+			if ((Object)(object)componentInChildren == (Object)null)
+			{
+				ManualLogSource logger2 = Logger;
+				if (logger2 != null)
+				{
+					logger2.LogWarning((object)"BuildSettingsUI: No button found on canvas to clone");
+				}
+				return;
+			}
+			ManualLogSource logger3 = Logger;
+			if (logger3 != null)
+			{
+				logger3.LogInfo((object)("BuildSettingsUI: Cloning button from " + ((Object)((Component)componentInChildren).gameObject).name));
+			}
+			GameObject val = Object.Instantiate<GameObject>(((Component)componentInChildren).gameObject, ((Component)mainCanvas).transform);
+			((Object)val).name = "EnhancedSettingsButton";
+			RectTransform component = val.GetComponent<RectTransform>();
+			component.anchorMin = new Vector2(0f, 1f);
+			component.anchorMax = new Vector2(0f, 1f);
+			component.pivot = new Vector2(0.5f, 1f);
+			component.anchoredPosition = new Vector2(150f, -100f);
+			component.sizeDelta = new Vector2(200f, 60f);
+			Button component2 = val.GetComponent<Button>();
+			component2.onClick = new ButtonClickedEvent();
+			ButtonClickedEvent onClick = component2.onClick;
+			object obj = _003C_003Ec._003C_003E9__12_0;
+			if (obj == null)
+			{
+				UnityAction val2 = delegate
+				{
+					ManualLogSource logger4 = Logger;
+					if (logger4 != null)
+					{
+						logger4.LogInfo((object)"Button clicked!");
+					}
+					EnhancedMenuController.Instance.OpenMenu();
+				};
+				_003C_003Ec._003C_003E9__12_0 = val2;
+				obj = (object)val2;
+			}
+			((UnityEvent)onClick).AddListener((UnityAction)obj);
+			TextMeshProUGUI componentInChildren2 = val.GetComponentInChildren<TextMeshProUGUI>(true);
+			if ((Object)(object)componentInChildren2 != (Object)null)
+			{
+				Component component3 = ((Component)componentInChildren2).GetComponent("UILocalizer");
+				if ((Object)(object)component3 != (Object)null)
+				{
+					Object.Destroy((Object)(object)component3);
+				}
+				((TMP_Text)componentInChildren2).text = "OPTION\nMENU";
+			}
+		}
 	}
 
 	private static IEnumerator SetupCustomMenu()

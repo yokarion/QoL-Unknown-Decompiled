@@ -42,11 +42,11 @@ internal static class MultiplayerSaveLoadPatcher
 		{
 			return false;
 		}
-		if (KrokoshaMpCompat.IsNetworkRunning && KrokoshaMpCompat.IsClient && !SaveSystem.loadedRun)
+		if (MultiplayerCompat.IsNetworkRunning && MultiplayerCompat.IsClient && !SaveSystem.loadedRun)
 		{
 			return false;
 		}
-		return SaveSystem.loadedRun || KrokoshaMpCompat.IsServer;
+		return SaveSystem.loadedRun || MultiplayerCompat.IsServer;
 	}
 
 	private static Item GetItemUnlessNull(GameObject gameObject)

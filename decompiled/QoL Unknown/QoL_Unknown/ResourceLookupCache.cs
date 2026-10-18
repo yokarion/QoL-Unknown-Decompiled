@@ -19,6 +19,12 @@ internal static class ResourceLookupCache
 
 	private static bool fontsLoaded;
 
+	private static float nextSpriteRescanTime;
+
+	private static float nextFontRescanTime;
+
+	private const float MissingResourceRescanInterval = 2f;
+
 	public static Sprite FindSprite(string name)
 	{
 		if (string.IsNullOrEmpty(name))
@@ -26,7 +32,11 @@ internal static class ResourceLookupCache
 			return null;
 		}
 		EnsureSpritesLoaded();
-		SpritesByName.TryGetValue(name, out var value);
+		if (!SpritesByName.TryGetValue(name, out var value) || (Object)(object)value == (Object)null)
+		{
+			TryRescanSprites();
+			SpritesByName.TryGetValue(name, out value);
+		}
 		return value;
 	}
 
@@ -37,7 +47,7 @@ internal static class ResourceLookupCache
 			return null;
 		}
 		EnsureSpritesLoaded();
-		if (SpriteContainsCache.TryGetValue(fragment, out var value))
+		if (SpriteContainsCache.TryGetValue(fragment, out var value) && (Object)(object)value != (Object)null)
 		{
 			return value;
 		}
@@ -49,7 +59,18 @@ internal static class ResourceLookupCache
 				return item.Value;
 			}
 		}
-		SpriteContainsCache[fragment] = null;
+		if (!TryRescanSprites())
+		{
+			return null;
+		}
+		foreach (KeyValuePair<string, Sprite> item2 in SpritesByName)
+		{
+			if ((Object)(object)item2.Value != (Object)null && item2.Key.IndexOf(fragment, StringComparison.OrdinalIgnoreCase) >= 0)
+			{
+				SpriteContainsCache[fragment] = item2.Value;
+				return item2.Value;
+			}
+		}
 		return null;
 	}
 
@@ -60,7 +81,7 @@ internal static class ResourceLookupCache
 			return null;
 		}
 		EnsureFontsLoaded();
-		if (FontContainsCache.TryGetValue(fragment, out var value))
+		if (FontContainsCache.TryGetValue(fragment, out var value) && (Object)(object)value != (Object)null)
 		{
 			return value;
 		}
@@ -72,41 +93,88 @@ internal static class ResourceLookupCache
 				return item.Value;
 			}
 		}
-		FontContainsCache[fragment] = null;
+		if (!TryRescanFonts())
+		{
+			return null;
+		}
+		foreach (KeyValuePair<string, TMP_FontAsset> item2 in FontsByName)
+		{
+			if ((Object)(object)item2.Value != (Object)null && item2.Key.IndexOf(fragment, StringComparison.OrdinalIgnoreCase) >= 0)
+			{
+				FontContainsCache[fragment] = item2.Value;
+				return item2.Value;
+			}
+		}
 		return null;
 	}
 
 	private static void EnsureSpritesLoaded()
 	{
-		if (spritesLoaded)
+		if (!spritesLoaded)
 		{
-			return;
+			spritesLoaded = true;
+			ScanSprites();
+			nextSpriteRescanTime = Time.realtimeSinceStartup + 2f;
 		}
-		spritesLoaded = true;
+	}
+
+	private static void ScanSprites()
+	{
+		SpriteContainsCache.Clear();
 		Sprite[] array = Resources.FindObjectsOfTypeAll<Sprite>();
 		foreach (Sprite val in array)
 		{
-			if (!((Object)(object)val == (Object)null) && !string.IsNullOrEmpty(((Object)val).name) && !SpritesByName.ContainsKey(((Object)val).name))
+			if (!((Object)(object)val == (Object)null) && !string.IsNullOrEmpty(((Object)val).name))
 			{
-				SpritesByName.Add(((Object)val).name, val);
+				SpritesByName[((Object)val).name] = val;
 			}
 		}
 	}
 
 	private static void EnsureFontsLoaded()
 	{
-		if (fontsLoaded)
+		if (!fontsLoaded)
 		{
-			return;
+			fontsLoaded = true;
+			ScanFonts();
+			nextFontRescanTime = Time.realtimeSinceStartup + 2f;
 		}
-		fontsLoaded = true;
+	}
+
+	private static bool TryRescanSprites()
+	{
+		float realtimeSinceStartup = Time.realtimeSinceStartup;
+		if (realtimeSinceStartup < nextSpriteRescanTime)
+		{
+			return false;
+		}
+		nextSpriteRescanTime = realtimeSinceStartup + 2f;
+		ScanSprites();
+		return true;
+	}
+
+	private static void ScanFonts()
+	{
+		FontContainsCache.Clear();
 		TMP_FontAsset[] array = Resources.FindObjectsOfTypeAll<TMP_FontAsset>();
 		foreach (TMP_FontAsset val in array)
 		{
-			if (!((Object)(object)val == (Object)null) && !string.IsNullOrEmpty(((Object)val).name) && !FontsByName.ContainsKey(((Object)val).name))
+			if (!((Object)(object)val == (Object)null) && !string.IsNullOrEmpty(((Object)val).name))
 			{
-				FontsByName.Add(((Object)val).name, val);
+				FontsByName[((Object)val).name] = val;
 			}
 		}
+	}
+
+	private static bool TryRescanFonts()
+	{
+		float realtimeSinceStartup = Time.realtimeSinceStartup;
+		if (realtimeSinceStartup < nextFontRescanTime)
+		{
+			return false;
+		}
+		nextFontRescanTime = realtimeSinceStartup + 2f;
+		ScanFonts();
+		return true;
 	}
 }

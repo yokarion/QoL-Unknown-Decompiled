@@ -10,245 +10,625 @@ namespace QoL_Unknown;
 
 internal class InventorySortPatcher
 {
-	private static ManualLogSource Logger;
+	private sealed class InventoryModel
+	{
+		private sealed class Placement
+		{
+			public Item Item;
+
+			public Container SourceContainer;
+
+			public int SourceSlot = -1;
+
+			public Container TargetContainer;
+
+			public int TargetSlot = -1;
+
+			public bool Assigned;
+
+			public float Weight => ((Object)(object)Item != (Object)null) ? Item.totalWeight : 0f;
+		}
+
+		private sealed class ContainerInfo
+		{
+			private float plannedDelta;
+
+			public Container Container { get; }
+
+			public int Index { get; }
+
+			public float Mult => Container.encumberanceMult;
+
+			public bool IsSpecialized => Container.tagRestriction != null && Container.tagRestriction.Length != 0;
+
+			public float RemainingWeight => Container.maxWeight - ProjectedWeight;
+
+			private float ProjectedWeight => Container.GetHoldingWeight() + plannedDelta;
+
+			public ContainerInfo(Container container, int index)
+			{
+				Container = container;
+				Index = index;
+			}
+
+			public bool CanFit(Item item)
+			{
+				if ((Object)(object)item == (Object)null)
+				{
+					return false;
+				}
+				float totalWeight = item.totalWeight;
+				return totalWeight <= Container.maxWeightPerItem && ProjectedWeight + totalWeight <= Container.maxWeight && IsAllowedByTags(item);
+			}
+
+			public void Reserve(Item item)
+			{
+				plannedDelta += item.totalWeight;
+			}
+
+			public void Release(Item item)
+			{
+				plannedDelta -= item.totalWeight;
+			}
+
+			private bool IsAllowedByTags(Item item)
+			{
+				if (!IsSpecialized)
+				{
+					return true;
+				}
+				IEnumerable<string> tags = item.Stats.GetTags();
+				return tags != null && Container.tagRestriction.Intersect(tags).Any();
+			}
+		}
+
+		private sealed class ContainerOption
+		{
+			public Placement Placement { get; }
+
+			public ContainerInfo Info { get; }
+
+			public float Gain { get; }
+
+			public ContainerOption(Placement placement, ContainerInfo info, float gain)
+			{
+				Placement = placement;
+				Info = info;
+				Gain = gain;
+			}
+		}
+
+		private readonly Body body;
+
+		private readonly bool includeHandsAndMouth;
+
+		private readonly List<Placement> placements = new List<Placement>();
+
+		private readonly Placement[] slotOwner;
+
+		public List<Item> AllItems { get; } = new List<Item>();
+
+		private List<ContainerInfo> Containers { get; } = new List<ContainerInfo>();
+
+		public InventoryModel(Body body, bool includeHandsAndMouth)
+		{
+			this.body = body;
+			this.includeHandsAndMouth = includeHandsAndMouth;
+			slotOwner = new Placement[body.slots.Length];
+			HashSet<Item> hashSet = new HashSet<Item>();
+			foreach (Item item in body.GetAllItemsThorough())
+			{
+				if ((Object)(object)item != (Object)null && hashSet.Add(item))
+				{
+					AllItems.Add(item);
+				}
+			}
+			Container val = default(Container);
+			foreach (Item allItem in AllItems)
+			{
+				Container component = ((Component)allItem).GetComponent<Container>();
+				if (!((Object)(object)component == (Object)null) && !allItem.TryGetParentContainer(ref val))
+				{
+					Containers.Add(new ContainerInfo(component, Containers.Count));
+				}
+			}
+			HashSet<Item> hashSet2 = new HashSet<Item>(from item in body.GetAllWearables()
+				where (Object)(object)item != (Object)null
+				select item);
+			Container val2 = default(Container);
+			foreach (Item allItem2 in AllItems)
+			{
+				allItem2.TryGetParentContainer(ref val2);
+				int slotIndex = GetSlotIndex(body, allItem2);
+				if (!((Object)(object)((Component)allItem2).GetComponent<Container>() != (Object)null) && !hashSet2.Contains(allItem2) && !allItem2.favourited && (!((Object)(object)val2 != (Object)null) || InfoFor(val2) != null) && (slotIndex < 0 || body.slots[slotIndex].canPickUp))
+				{
+					Placement placement = new Placement
+					{
+						Item = allItem2,
+						SourceContainer = val2,
+						SourceSlot = slotIndex,
+						TargetContainer = val2,
+						TargetSlot = slotIndex
+					};
+					placements.Add(placement);
+					if (slotIndex >= 0)
+					{
+						slotOwner[slotIndex] = placement;
+					}
+				}
+			}
+		}
+
+		public List<Container> TrackedContainers()
+		{
+			return Containers.Select((ContainerInfo info) => info.Container).ToList();
+		}
+
+		public void BuildPlan()
+		{
+			if (PrefersItemCapacity())
+			{
+				PlanForItemCapacity();
+			}
+			else
+			{
+				PlanForWeightReduction();
+			}
+		}
+
+		public int Execute()
+		{
+			List<Placement> list = placements.Where((Placement placement) => (Object)(object)placement.TargetContainer != (Object)(object)placement.SourceContainer || placement.TargetSlot != placement.SourceSlot).ToList();
+			if (list.Count == 0)
+			{
+				return 0;
+			}
+			List<Placement> list2 = new List<Placement>();
+			int num = 0;
+			try
+			{
+				foreach (Placement item in list)
+				{
+					if (Detach(item))
+					{
+						list2.Add(item);
+					}
+				}
+				bool flag = true;
+				while (list2.Count > 0 && flag)
+				{
+					flag = false;
+					int num2 = 0;
+					while (num2 < list2.Count)
+					{
+						if (PlaceAtTarget(list2[num2]))
+						{
+							num++;
+							list2.RemoveAt(num2);
+							flag = true;
+						}
+						else
+						{
+							num2++;
+						}
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				ManualLogSource logger = Logger;
+				if (logger != null)
+				{
+					logger.LogWarning((object)("Inventory sort stopped early: " + ex.Message));
+				}
+			}
+			finally
+			{
+				foreach (Placement item2 in list2)
+				{
+					ReturnToSource(item2);
+				}
+			}
+			return num;
+		}
+
+		private bool PrefersItemCapacity()
+		{
+			int num = 6 + Containers.Count * 3;
+			return AllItems.Count < num && body.GetTotalEncumberance() < 10f;
+		}
+
+		private void PlanForItemCapacity()
+		{
+			foreach (Placement item in from item in placements
+				where (Object)(object)item.SourceContainer != (Object)null || !IsSlotBlocked(item.SourceSlot)
+				orderby item.Weight
+				select item)
+			{
+				ContainerInfo containerInfo = FindContainerHome(item);
+				if (containerInfo != null)
+				{
+					Assign(item, containerInfo, -1);
+				}
+			}
+		}
+
+		private void PlanForWeightReduction()
+		{
+			List<Placement> list = placements.Where((Placement placement2) => (Object)(object)placement2.SourceContainer != (Object)null || !IsSlotBlocked(placement2.SourceSlot)).ToList();
+			foreach (Placement item in list)
+			{
+				ContainerInfo containerInfo = InfoFor(item.SourceContainer);
+				if (containerInfo != null && containerInfo.IsSpecialized)
+				{
+					item.Assigned = true;
+				}
+			}
+			for (int num = 0; num < 2; num++)
+			{
+				bool wantSpecialized = num == 0;
+				List<ContainerOption> list2 = new List<ContainerOption>();
+				foreach (Placement placement in list.Where((Placement item) => !item.Assigned))
+				{
+					ContainerInfo containerInfo2 = InfoFor(placement.SourceContainer);
+					foreach (ContainerInfo item2 in Containers.Where((ContainerInfo candidate) => candidate.IsSpecialized == wantSpecialized && candidate.CanFit(placement.Item)))
+					{
+						float num2 = placement.Weight * (CurrentFactor(placement) - item2.Mult);
+						bool flag = wantSpecialized && containerInfo2 != null && !containerInfo2.IsSpecialized;
+						if (num2 > 0.0001f || flag)
+						{
+							list2.Add(new ContainerOption(placement, item2, num2));
+						}
+					}
+				}
+				foreach (ContainerOption item3 in from candidate in list2
+					orderby candidate.Gain descending, candidate.Placement.Weight descending, candidate.Info.Mult, candidate.Info.Index
+					select candidate)
+				{
+					if (!item3.Placement.Assigned && item3.Info.CanFit(item3.Placement.Item))
+					{
+						Assign(item3.Placement, item3.Info, -1);
+					}
+				}
+			}
+		}
+
+		private float CurrentFactor(Placement placement)
+		{
+			return InfoFor(placement.SourceContainer)?.Mult ?? 1f;
+		}
+
+		private ContainerInfo FindContainerHome(Placement placement)
+		{
+			if ((Object)(object)placement.SourceContainer != (Object)null)
+			{
+				ContainerInfo containerInfo = InfoFor(placement.SourceContainer);
+				if (containerInfo != null)
+				{
+					return containerInfo;
+				}
+			}
+			return (from info in Containers
+				where info.CanFit(placement.Item)
+				orderby info.RemainingWeight - placement.Item.totalWeight descending, info.Index
+				select info).FirstOrDefault();
+		}
+
+		private void Assign(Placement placement, ContainerInfo target, int targetSlot)
+		{
+			if ((target == null && targetSlot == placement.SourceSlot) || (target != null && (Object)(object)target.Container == (Object)(object)placement.SourceContainer))
+			{
+				placement.TargetContainer = placement.SourceContainer;
+				placement.TargetSlot = placement.SourceSlot;
+				placement.Assigned = true;
+				return;
+			}
+			InfoFor(placement.SourceContainer)?.Release(placement.Item);
+			if (placement.SourceSlot >= 0 && slotOwner[placement.SourceSlot] == placement)
+			{
+				slotOwner[placement.SourceSlot] = null;
+			}
+			target?.Reserve(placement.Item);
+			placement.TargetContainer = target?.Container;
+			placement.TargetSlot = targetSlot;
+			placement.Assigned = true;
+			if (targetSlot >= 0)
+			{
+				slotOwner[targetSlot] = placement;
+			}
+		}
+
+		private bool IsSlotBlocked(int slotIndex)
+		{
+			return !includeHandsAndMouth && IsHandOrHeadSlot(slotIndex);
+		}
+
+		private bool IsHandOrHeadSlot(int slotIndex)
+		{
+			if (slotIndex < 0 || slotIndex >= body.slots.Length)
+			{
+				return false;
+			}
+			InventorySlot val = body.slots[slotIndex];
+			return (Object)(object)val != (Object)null && (val.isHand || IsHeadSlot(slotIndex));
+		}
+
+		private bool IsHeadSlot(int slotIndex)
+		{
+			if (slotIndex < 0 || slotIndex >= body.slots.Length)
+			{
+				return false;
+			}
+			InventorySlot val = body.slots[slotIndex];
+			return (Object)(object)val != (Object)null && (Object)(object)val.limb != (Object)null && val.limb.isHead;
+		}
+
+		private ContainerInfo InfoFor(Container container)
+		{
+			if ((Object)(object)container == (Object)null)
+			{
+				return null;
+			}
+			return Containers.FirstOrDefault((ContainerInfo info) => (Object)(object)info.Container == (Object)(object)container);
+		}
+
+		private bool Detach(Placement placement)
+		{
+			Item item = placement.Item;
+			if ((Object)(object)item == (Object)null)
+			{
+				return false;
+			}
+			Container val = default(Container);
+			if (item.TryGetParentContainer(ref val))
+			{
+				val.UnloadItem(item, (Body)null);
+			}
+			else if (body.HoldingItem(item))
+			{
+				body.DropItem(item);
+			}
+			else if ((Object)(object)((Component)item).transform.parent != (Object)null)
+			{
+				((Component)item).transform.SetParent((Transform)null);
+			}
+			if ((Object)(object)((Component)item).transform.parent != (Object)null)
+			{
+				return false;
+			}
+			PrepareDetachedItem(item);
+			return true;
+		}
+
+		private bool PlaceAtTarget(Placement placement)
+		{
+			//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
+			Item item = placement.Item;
+			if (placement.TargetSlot >= 0)
+			{
+				if (!CanUseSlot(body, placement.TargetSlot, item) || body.HoldingItem(placement.TargetSlot))
+				{
+					return false;
+				}
+				body.PickUpItem(item, placement.TargetSlot, true);
+				return (Object)(object)body.GetItem(placement.TargetSlot) == (Object)(object)item;
+			}
+			Container targetContainer = placement.TargetContainer;
+			if ((Object)(object)targetContainer == (Object)null || !targetContainer.CanHoldItem(item))
+			{
+				return false;
+			}
+			((Component)item).transform.position = ((Component)targetContainer).transform.position;
+			targetContainer.LoadItem(item);
+			Container val = default(Container);
+			return item.TryGetParentContainer(ref val) && (Object)(object)val == (Object)(object)targetContainer;
+		}
+
+		private void ReturnToSource(Placement placement)
+		{
+			//IL_0116: Unknown result type (might be due to invalid IL or missing references)
+			Item item = placement.Item;
+			if ((Object)(object)item == (Object)null || (Object)(object)((Component)item).transform.parent != (Object)null || TryPlaceInContainer(item, placement.SourceContainer) || TryPlaceInSlot(item, placement.SourceSlot))
+			{
+				return;
+			}
+			foreach (ContainerInfo container in Containers)
+			{
+				if (TryPlaceInContainer(item, container.Container))
+				{
+					return;
+				}
+			}
+			for (int i = 0; i < body.slots.Length; i++)
+			{
+				if (TryPlaceInSlot(item, i))
+				{
+					return;
+				}
+			}
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)("Inventory sort found no legal home for " + item.id + ", it was left at the player's feet."));
+			}
+			((Component)item).transform.position = ((Component)body).transform.position;
+			if ((Object)(object)item.rb != (Object)null)
+			{
+				item.rb.simulated = true;
+			}
+		}
+
+		private bool TryPlaceInContainer(Item item, Container container)
+		{
+			//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+			if ((Object)(object)container == (Object)null || !container.CanHoldItem(item))
+			{
+				return false;
+			}
+			PrepareDetachedItem(item);
+			((Component)item).transform.position = ((Component)container).transform.position;
+			container.LoadItem(item);
+			Container val = default(Container);
+			return item.TryGetParentContainer(ref val) && (Object)(object)val == (Object)(object)container;
+		}
+
+		private bool TryPlaceInSlot(Item item, int slotIndex)
+		{
+			if (!CanUseSlot(body, slotIndex, item) || body.HoldingItem(slotIndex))
+			{
+				return false;
+			}
+			PrepareDetachedItem(item);
+			body.PickUpItem(item, slotIndex, true);
+			return (Object)(object)body.GetItem(slotIndex) == (Object)(object)item;
+		}
+
+		private void PrepareDetachedItem(Item item)
+		{
+			//IL_0031: Unknown result type (might be due to invalid IL or missing references)
+			if ((Object)(object)item.rb != (Object)null)
+			{
+				item.rb.simulated = false;
+			}
+			((Component)item).transform.position = ((Component)body).transform.position;
+		}
+
+		private static int GetSlotIndex(Body body, Item item)
+		{
+			for (int i = 0; i < body.slots.Length; i++)
+			{
+				if ((Object)(object)body.GetItem(i) == (Object)(object)item)
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
+
+		private static bool CanUseSlot(Body body, int slotIndex, Item item)
+		{
+			if ((Object)(object)body == (Object)null || (Object)(object)item == (Object)null || slotIndex < 0 || slotIndex >= body.slots.Length)
+			{
+				return false;
+			}
+			InventorySlot val = body.slots[slotIndex];
+			return (Object)(object)val != (Object)null && val.canPickUp && (!item.Stats.onlyHoldInHands || val.isHand);
+		}
+	}
+
+	private const int EarlyGameItemBudget = 6;
+
+	private const int ItemBudgetPerContainer = 3;
+
+	private const float EarlyGameEncumberanceCeiling = 10f;
 
 	private const float WeightEpsilon = 0.0001f;
 
+	private static ManualLogSource Logger;
+
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.inventorysort");
-		val.PatchAll(typeof(InventorySortPatcher));
-		Logger.LogInfo((object)"InventorySortPatcher initialized");
 	}
 
-	[HarmonyPatch(typeof(ConsoleScript), "RegisterAllCommands")]
-	[HarmonyPostfix]
-	private static void RegisterCommands_Postfix()
+	public static void RunSort(bool includeHandsAndMouth = false)
 	{
-	}
-
-	public static void RunSort(bool safeMode)
-	{
-		//IL_0213: Unknown result type (might be due to invalid IL or missing references)
-		Body body = PlayerCamera.main.body;
-		if ((Object)(object)body == (Object)null)
+		PlayerCamera main = PlayerCamera.main;
+		Body val = (((Object)(object)main != (Object)null) ? main.body : null);
+		if ((Object)(object)val == (Object)null || val.slots == null)
 		{
 			return;
 		}
-		List<Item> list = body.GetAllItemsThorough().ToList();
-		List<Item> list2 = new List<Item>();
-		List<Container> list3 = new List<Container>();
-		if (KrokoshaMpCompat.IsActive && list.Any((Item val3) => (Object)(object)val3 != (Object)null && !KrokoshaMpCompat.CanMoveItemNow(val3)))
+		InventoryModel inventoryModel = new InventoryModel(val, includeHandsAndMouth);
+		if (MultiplayerCompat.IsActive && inventoryModel.AllItems.Any((Item item) => (Object)(object)item != (Object)null && !MultiplayerCompat.CanMoveItemNow(item)))
 		{
-			PlayerCamera.main.PlayUISound((UISoundType)6, 1f);
+			main.PlayUISound((UISoundType)6, 1f);
 			return;
 		}
-		using (KrokoshaMpCompat.BeginInventoryMutation(body))
+		inventoryModel.BuildPlan();
+		int num;
+		using (MultiplayerCompat.BeginInventoryMutation(val))
 		{
-			HashSet<Item> hashSet = new HashSet<Item>();
-			if (safeMode)
+			num = inventoryModel.Execute();
+		}
+		if (num == 0)
+		{
+			main.PlayUISound((UISoundType)6, 1f);
+			return;
+		}
+		foreach (Item allItem in inventoryModel.AllItems)
+		{
+			MultiplayerCompat.MarkItemMoved(allItem, containerChanged: true);
+		}
+		ReorderContainerContentsByCraftingPriority(inventoryModel.TrackedContainers());
+		RefreshInventoryUi(main);
+	}
+
+	private static void RefreshInventoryUi(PlayerCamera camera)
+	{
+		if (!((Object)(object)camera == (Object)null))
+		{
+			camera.UpdateWearables();
+			if (camera.radialOpen)
 			{
-				for (int num = 0; num < 3; num++)
-				{
-					Item item = body.GetItem(num);
-					if ((Object)(object)item != (Object)null)
-					{
-						hashSet.Add(item);
-					}
-				}
-			}
-			foreach (Item item2 in list)
-			{
-				if ((Object)(object)item2 == (Object)null)
-				{
-					continue;
-				}
-				Container component = ((Component)item2).GetComponent<Container>();
-				if ((Object)(object)component != (Object)null)
-				{
-					if ((!((Object)(object)((Component)item2).transform.parent != (Object)null) || !((Object)(object)((Component)((Component)item2).transform.parent).GetComponent<Container>() != (Object)null)) && KrokoshaMpCompat.CanMoveItemNow(item2))
-					{
-						list3.Add(component);
-					}
-				}
-				else
-				{
-					if (hashSet.Contains(item2) || body.GetAllWearables().Contains(item2) || item2.favourited)
-					{
-						continue;
-					}
-					if ((Object)(object)((Component)item2).transform.parent != (Object)null)
-					{
-						Container component2 = ((Component)((Component)item2).transform.parent).GetComponent<Container>();
-						if ((Object)(object)component2 != (Object)null)
-						{
-							component2.UnloadItem(item2, (Body)null);
-						}
-					}
-					if (body.HoldingItem(item2))
-					{
-						body.DropItem(item2);
-					}
-					item2.rb.simulated = false;
-					((Component)item2).transform.position = ((Component)body).transform.position;
-					list2.Add(item2);
-				}
-			}
-			float num2 = list2.Sum((Item i) => i.totalWeight);
-			bool flag = num2 < 6f;
-			list2 = ((!flag) ? list2.OrderByDescending((Item i) => i.totalWeight).ToList() : list2.OrderBy((Item i) => i.totalWeight).ToList());
-			foreach (Item it in list2.ToList())
-			{
-				Container component3 = ((Component)it).GetComponent<Container>();
-				bool flag2 = (Object)(object)component3 != (Object)null && ((Component)component3).transform.childCount == 0;
-				List<Container> list4 = list3.Where((Container c) => c.CanHoldItem(it) && KrokoshaMpCompat.CanMoveItemNow(((Component)c).GetComponent<Item>()) && CanContainerTakeWeight(c, it)).ToList();
-				if ((Object)(object)component3 != (Object)null && !flag2)
-				{
-					list4.Clear();
-				}
-				if (list4.Count > 0)
-				{
-					Container val = ((!flag) ? list4.OrderByDescending(IsMaterialPouch).ThenBy((Container c) => c.encumberanceMult).ThenBy((Container c) => c.maxWeightPerItem)
-						.First() : list4.OrderByDescending(IsMaterialPouch).ThenByDescending((Container c) => c.maxWeight - c.GetHoldingWeight()).ThenBy((Container c) => c.encumberanceMult)
-						.ThenBy((Container c) => c.maxWeightPerItem)
-						.First());
-					val.LoadItem(it);
-					list2.Remove(it);
-					if (flag2)
-					{
-						list3.Remove(component3);
-					}
-				}
-			}
-			for (int num3 = 0; num3 < body.slots.Length; num3++)
-			{
-				if (list2.Count == 0)
-				{
-					break;
-				}
-				if (!body.slots[num3].canPickUp || body.HoldingItem(num3))
-				{
-					continue;
-				}
-				Item val2 = null;
-				foreach (Item item3 in list2)
-				{
-					if ((!item3.Stats.onlyHoldInHands || body.slots[num3].isHand) && !item3.Stats.wearable)
-					{
-						val2 = item3;
-						break;
-					}
-				}
-				if ((Object)(object)val2 != (Object)null)
-				{
-					body.PickUpItem(val2, num3, true);
-					list2.Remove(val2);
-				}
-			}
-			foreach (Item item4 in list2.ToList())
-			{
-				if (item4.Stats.wearable && (Object)(object)body.GetWearableBySlotID(item4.Stats.wearSlotId) == (Object)null)
-				{
-					body.WearWearable(item4);
-					list2.Remove(item4);
-				}
-			}
-			foreach (Item item5 in list2)
-			{
-				item5.rb.simulated = true;
-				((Component)item5).transform.parent = null;
-			}
-			ReorderContainerContentsByCraftingPriority(body);
-			foreach (Item item6 in list)
-			{
-				KrokoshaMpCompat.MarkItemMoved(item6, containerChanged: true);
-			}
-			PlayerCamera.main.UpdateWearables();
-			if (PlayerCamera.main.radialOpen)
-			{
-				PlayerCamera.main.RepopulateContainer();
+				camera.RepopulateContainer();
 			}
 		}
 	}
 
-	private static bool IsMaterialPouch(Container container)
+	private static void ReorderContainerContentsByCraftingPriority(List<Container> containers)
 	{
-		Item val = (((Object)(object)container != (Object)null) ? ((Component)container).GetComponent<Item>() : null);
-		return (Object)(object)val != (Object)null && string.Equals(val.id, "materialpouch", StringComparison.OrdinalIgnoreCase);
-	}
-
-	private static bool CanContainerTakeWeight(Container container, Item item)
-	{
-		if ((Object)(object)container == (Object)null || (Object)(object)item == (Object)null)
+		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006c: Expected O, but got Unknown
+		foreach (Container container in containers)
 		{
-			return false;
-		}
-		float totalWeight = item.totalWeight;
-		if (totalWeight > container.maxWeightPerItem + 0.0001f)
-		{
-			return false;
-		}
-		float num = container.GetHoldingWeight() + totalWeight;
-		return num <= container.maxWeight + 0.0001f;
-	}
-
-	private static void ReorderContainerContentsByCraftingPriority(Body body)
-	{
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0063: Expected O, but got Unknown
-		Container val = default(Container);
-		foreach (Item item in body.GetAllItemsThorough())
-		{
-			if ((Object)(object)item == (Object)null || !((Component)item).TryGetComponent<Container>(ref val))
+			if ((Object)(object)container == (Object)null || ((Component)container).transform.childCount < 2)
 			{
 				continue;
 			}
-			List<Item> list = new List<Item>();
-			foreach (Transform item2 in ((Component)val).transform)
+			List<Item> currentOrder = new List<Item>();
+			foreach (Transform item in ((Component)container).transform)
 			{
-				Transform val2 = item2;
-				Item component = ((Component)val2).GetComponent<Item>();
-				if (!((Object)(object)component == (Object)null) && !component.favourited)
+				Transform val = item;
+				Item component = ((Component)val).GetComponent<Item>();
+				if ((Object)(object)component != (Object)null)
 				{
-					list.Add(component);
+					currentOrder.Add(component);
 				}
 			}
+			List<Item> list = (from item in currentOrder
+				where !item.favourited
+				orderby GetCraftingQualityScore(item, "cutting") descending, GetCraftingQualityScore(item, "hammering") descending, item.totalWeight descending, currentOrder.IndexOf(item)
+				select item).ToList();
 			if (list.Count < 2)
 			{
 				continue;
 			}
-			List<Item> list2 = (from i in list
-				orderby GetCraftingQualityScore(i, "cutting") descending, GetCraftingQualityScore(i, "hammering") descending, i.totalWeight descending
-				select i).ToList();
-			bool flag = true;
-			for (int num = 0; num < list.Count; num++)
+			List<Item> list2 = new List<Item>(currentOrder);
+			int num = 0;
+			for (int num2 = 0; num2 < list2.Count; num2++)
 			{
-				if ((Object)(object)list[num] != (Object)(object)list2[num])
+				if (!list2[num2].favourited)
 				{
-					flag = false;
-					break;
+					list2[num2] = list[num++];
 				}
 			}
-			if (flag)
+			ApplySiblingOrder(container, list2);
+		}
+	}
+
+	private static void ApplySiblingOrder(Container container, IList<Item> desiredOrder)
+	{
+		if ((Object)(object)container == (Object)null || desiredOrder == null)
+		{
+			return;
+		}
+		for (int i = 0; i < desiredOrder.Count; i++)
+		{
+			Item val = desiredOrder[i];
+			if ((Object)(object)val != (Object)null && (Object)(object)((Component)val).transform.parent == (Object)(object)((Component)container).transform)
 			{
-				continue;
-			}
-			foreach (Item item3 in list)
-			{
-				val.UnloadItem(item3, (Body)null);
-			}
-			foreach (Item item4 in list2)
-			{
-				if (CanContainerTakeWeight(val, item4))
-				{
-					val.LoadItem(item4);
-					continue;
-				}
-				item4.rb.simulated = true;
-				((Component)item4).transform.parent = null;
+				((Component)val).transform.SetSiblingIndex(i);
 			}
 		}
 	}

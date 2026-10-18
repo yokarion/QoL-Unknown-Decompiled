@@ -19,16 +19,16 @@ internal class LayerTransitionPatcher
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.layertransition");
 		val.PatchAll(typeof(LayerTransitionPatcher));
-		Logger.LogInfo((object)"LayerTransitionPatcher initialized");
+		CuCoreLibTransitionCompat.Initialize(val, logger);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "RegenerateWorld")]
 	[HarmonyPrefix]
 	private static bool RegenerateWorld_Prefix(WorldGeneration __instance, bool twice)
 	{
-		//IL_015d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0162: Unknown result type (might be due to invalid IL or missing references)
-		if (KrokoshaMpCompat.ShouldBlockQoLLoads)
+		//IL_019d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a2: Unknown result type (might be due to invalid IL or missing references)
+		if (MultiplayerCompat.ShouldBlockQoLLoads)
 		{
 			return true;
 		}
@@ -38,77 +38,86 @@ internal class LayerTransitionPatcher
 		{
 			__instance.IncreaseDepthByLayer();
 		}
-		if (__instance.biomeDepth < 4)
-		{
-			__instance.biomeDepth += ((!twice) ? 1 : 2);
-		}
-		else
-		{
-			__instance.biomeDepth = 1;
-		}
+		int num = __instance.biomeDepth + ((!twice) ? 1 : 2);
+		__instance.biomeDepth = ((num >= __instance.amountOfLayers) ? 1 : num);
 		__instance.lootRarityMultiplier *= WorldGeneration.GetRunSettingFloat("lootmultiplier");
 		__instance.trapRarityMultiplier += WorldGeneration.GetRunSettingFloat("trapincrease");
 		try
 		{
 			SaveSystem.SaveGame();
-			string text = Path.Combine(Application.persistentDataPath, "save.sv");
-			string destFileName = Path.Combine(Application.persistentDataPath, "autosave.sv");
-			if (File.Exists(text))
+			if (!SaveSystemPatcher.LastSaveRedirectSucceeded)
 			{
-				File.Copy(text, destFileName, overwrite: true);
-				if (SaveManager.CurrentSaveFile == "autosave.sv")
+				throw new IOException("The transition save was not committed.");
+			}
+			string sourcePath = Path.Combine(Application.persistentDataPath, "save.sv");
+			string destinationPath = Path.Combine(Application.persistentDataPath, "autosave.sv");
+			if (!SaveFileStore.TryCopyAtomic(sourcePath, destinationPath, Logger, "synchronize autosave after layer transition"))
+			{
+				throw new IOException("The transition autosave was not committed.");
+			}
+			if (SaveManager.CurrentSaveFile == "autosave.sv" && !UpdateMetadata(__instance, "autosave.sv"))
+			{
+				ManualLogSource logger = Logger;
+				if (logger != null)
 				{
-					UpdateMetadata(__instance, "autosave.sv");
+					logger.LogWarning((object)"Layer transition completed, but autosave metadata could not be updated.");
 				}
 			}
+			if (SaveManager.CurrentSaveFile != "autosave.sv" && !UpdateMetadata(__instance, SaveManager.CurrentSaveFile))
+			{
+				ManualLogSource logger2 = Logger;
+				if (logger2 != null)
+				{
+					logger2.LogWarning((object)("Layer transition completed, but metadata for '" + SaveManager.CurrentSaveFile + "' could not be updated."));
+				}
+			}
+			SaveSystem.loadedRun = true;
+			SaveSystemPatcher.PendingLoadPosition = null;
+			SaveSystemPatcher.PendingRadLineY = null;
+			CuCoreLibTransitionCompat.SkipWorldRestore = true;
+			Scene activeScene = SceneManager.GetActiveScene();
+			SceneManager.LoadScene(((Scene)(ref activeScene)).name);
 		}
-		catch (Exception ex)
+		catch (Exception)
 		{
-			Logger.LogError((object)("Error saving transition: " + ex));
+			SaveSystem.loadedRun = false;
+			CuCoreLibTransitionCompat.SkipWorldRestore = false;
+			if (Object.op_Implicit((Object)(object)PlayerCamera.main))
+			{
+				PlayerCamera.main.DoAlert("Could not save the layer transition. Reload was cancelled to protect your save.", false);
+			}
 		}
-		if (SaveManager.CurrentSaveFile != "autosave.sv")
-		{
-			UpdateMetadata(__instance, SaveManager.CurrentSaveFile);
-		}
-		SaveSystem.loadedRun = true;
-		SaveSystemPatcher.PendingLoadPosition = null;
-		SaveSystemPatcher.PendingRadLineY = null;
-		Scene activeScene = SceneManager.GetActiveScene();
-		SceneManager.LoadScene(((Scene)(ref activeScene)).name);
 		return false;
 	}
 
-	private static void UpdateMetadata(WorldGeneration world, string filename)
+	private static bool UpdateMetadata(WorldGeneration world, string filename)
 	{
-		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		string path = Path.Combine(Application.persistentDataPath, filename + ".meta");
-		float radLinePosY = 0f;
-		bool radLineActive = false;
-		if ((Object)(object)RadiationLine.line != (Object)null)
+		if (!SaveFileStore.TryGetSavePath(Application.persistentDataPath, filename, out var path))
 		{
-			radLinePosY = ((Component)RadiationLine.line).transform.position.y;
-			radLineActive = RadiationLine.line.active;
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)("Refusing to update metadata for invalid save file name '" + filename + "'."));
+			}
+			return false;
 		}
-		SaveMetadata saveMetadata = new SaveMetadata
-		{
-			SeedInput = SeedManager.InputString,
-			SeedValue = SeedManager.CurrentSeed,
-			PlayerPosition = new SerialVec3(((Component)PlayerCamera.main.body).transform.position),
-			LocationName = world.TotalDepthString() + " Deep",
-			Timestamp = DateTime.Now.ToString("g"),
-			BiomeIndex = world.biomeDepth,
-			RadLinePosY = radLinePosY,
-			RadLineActive = radLineActive
-		};
 		try
 		{
+			SaveMetadata saveMetadata = MultiplayerSaveBundle.BuildBaseMetadata();
+			saveMetadata.SaveKind = "Singleplayer";
+			saveMetadata.SavedDuringMultiplayer = false;
+			saveMetadata.UseVanillaLayerSpawn = true;
 			string contents = JsonConvert.SerializeObject((object)saveMetadata, (Formatting)1);
-			File.WriteAllText(path, contents);
+			return SaveFileStore.TryWriteAllTextAtomic(path + ".meta", contents, Logger, "update metadata for '" + filename + "' during transition");
 		}
 		catch (Exception arg)
 		{
-			Logger.LogError((object)$"Failed to update metadata during transition: {arg}");
+			ManualLogSource logger2 = Logger;
+			if (logger2 != null)
+			{
+				logger2.LogError((object)$"Failed to update metadata during transition: {arg}");
+			}
+			return false;
 		}
 	}
 }

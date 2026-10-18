@@ -4,8 +4,8 @@ Generated automatically by [dotnet-autodecompiler](https://github.com/Yokarion/d
 
 This is a reconstruction produced by a decompiler, not the author's original source. Local variable names and compiler-generated members will not match what was written.
 
-- Upstream release: `v1.0.4.8`
-- Source: https://github.com/jimmyking9999999/QoL-Unknown/releases/tag/v1.0.4.8
+- Upstream release: `v1.0.5.1`
+- Source: https://github.com/jimmyking9999999/QoL-Unknown/releases/tag/v1.0.5.1
 - Decompiler: ICSharpCode.Decompiler 10.1.1.8388
 - Language version: C# 10.0
 - Embedded resources: none
@@ -14,7 +14,7 @@ This is a reconstruction produced by a decompiler, not the author's original sou
 
 | Assembly | Version | Target framework | Source files | Folder |
 | --- | --- | --- | ---: | --- |
-| QoL Unknown | 1.0.4.8 | .NET Framework 4.8 | 122 | [`QoL Unknown/`](QoL%20Unknown/) |
+| QoL Unknown | 1.0.5.1 | .NET Framework 4.8 | 136 | [`QoL Unknown/`](QoL%20Unknown/) |
 
 ## Third-party dependencies
 
@@ -35,6 +35,7 @@ Referenced by the code below but not part of this mirror. They belong to the gam
 | UnityEngine.IMGUIModule | 0.0.0.0 | QoL Unknown | no |
 | UnityEngine.ImageConversionModule | 0.0.0.0 | QoL Unknown | no |
 | UnityEngine.InputLegacyModule | 0.0.0.0 | QoL Unknown | no |
+| UnityEngine.ParticleSystemModule | 0.0.0.0 | QoL Unknown | no |
 | UnityEngine.Physics2DModule | 0.0.0.0 | QoL Unknown | no |
 | UnityEngine.TextRenderingModule | 0.0.0.0 | QoL Unknown | no |
 | UnityEngine.TilemapModule | 0.0.0.0 | QoL Unknown | no |

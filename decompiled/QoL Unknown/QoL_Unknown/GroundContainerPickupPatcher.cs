@@ -12,15 +12,10 @@ internal class GroundContainerPickupPatcher
 
 	public static void Initialize(ManualLogSource pluginLogger)
 	{
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Expected O, but got Unknown
 		logger = pluginLogger;
-		if (!initialized)
+		if (!initialized && RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.groundcontainerpickup", typeof(GroundContainerPickupPatcher), logger))
 		{
 			initialized = true;
-			Harmony val = new Harmony("org.bepinex.plugins.qol.groundcontainerpickup");
-			val.PatchAll(typeof(GroundContainerPickupPatcher));
-			logger.LogInfo((object)"GroundContainerPickupPatcher initialized");
 		}
 	}
 
@@ -28,46 +23,33 @@ internal class GroundContainerPickupPatcher
 	[HarmonyPrefix]
 	private static bool DoPickupCheck_Prefix(Body __instance, Item item, bool noAlerts, ref bool __result)
 	{
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0104: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0109: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0146: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0147: Unknown result type (might be due to invalid IL or missing references)
 		if (!TryGetOpenedGroundContainerItem(__instance, item, out var containerItem))
 		{
 			return true;
 		}
-		Vector2 val;
-		if (!Object.op_Implicit((Object)(object)((Component)containerItem).transform.parent))
-		{
-			Bounds bounds = ((Component)containerItem).GetComponent<Collider2D>().bounds;
-			val = Vector2.op_Implicit(((Bounds)(ref bounds)).center);
-		}
-		else
-		{
-			val = Vector2.op_Implicit(((Component)containerItem).transform.position);
-		}
-		Vector2 val2 = val;
-		bool flag = RaycastHit2D.op_Implicit(Physics2D.Linecast(Vector2.op_Implicit(((Component)__instance).transform.position), val2, LayerMask.GetMask(new string[1] { "Ground" })));
+		Vector2 val = (Object.op_Implicit((Object)(object)((Component)containerItem).transform.parent) ? Vector2.op_Implicit(((Component)containerItem).transform.position) : GetPickupTarget(containerItem));
+		bool flag = RaycastHit2D.op_Implicit(Physics2D.Linecast(Vector2.op_Implicit(((Component)__instance).transform.position), val, LayerMask.GetMask(new string[1] { "Ground" })));
 		bool flag2 = Vector2.Distance(Vector2.op_Implicit(((Component)containerItem).transform.position), Vector2.op_Implicit(((Component)__instance).transform.position)) < 10f;
-		if (flag && Object.op_Implicit((Object)(object)Physics2D.OverlapPoint(val2, LayerMask.GetMask(new string[1] { "Ground" }))))
+		if (flag && Object.op_Implicit((Object)(object)Physics2D.OverlapPoint(val, LayerMask.GetMask(new string[1] { "Ground" }))))
 		{
 			flag = false;
 		}
@@ -75,15 +57,30 @@ internal class GroundContainerPickupPatcher
 		{
 			if (flag)
 			{
-				GameObject val3 = Object.Instantiate<GameObject>(Resources.Load<GameObject>("Special/PickupLine"), Vector2.op_Implicit(Vector2.zero), Quaternion.identity);
-				val3.GetComponent<LineRenderer>().SetPosition(0, ((Component)__instance).transform.position);
-				val3.GetComponent<LineRenderer>().SetPosition(1, Vector2.op_Implicit(val2));
-				PlayerCamera.main.DoAlert(Locale.GetOther("alertitemblocked"), false);
-				Object.Destroy((Object)(object)val3, 0.5f);
+				GameObject val2 = Object.Instantiate<GameObject>(Resources.Load<GameObject>("Special/PickupLine"), Vector2.op_Implicit(Vector2.zero), Quaternion.identity);
+				LineRenderer val3 = (((Object)(object)val2 != (Object)null) ? val2.GetComponent<LineRenderer>() : null);
+				if ((Object)(object)val3 != (Object)null)
+				{
+					val3.SetPosition(0, ((Component)__instance).transform.position);
+					val3.SetPosition(1, Vector2.op_Implicit(val));
+				}
+				PlayerCamera main = PlayerCamera.main;
+				if (main != null)
+				{
+					main.DoAlert(Locale.GetOther("alertitemblocked"), false);
+				}
+				if ((Object)(object)val2 != (Object)null)
+				{
+					Object.Destroy((Object)(object)val2, 0.5f);
+				}
 			}
 			else if (!flag2)
 			{
-				PlayerCamera.main.DoAlert(Locale.GetOther("alertitemfar"), false);
+				PlayerCamera main2 = PlayerCamera.main;
+				if (main2 != null)
+				{
+					main2.DoAlert(Locale.GetOther("alertitemfar"), false);
+				}
 			}
 		}
 		__result = !flag && flag2;
@@ -112,5 +109,29 @@ internal class GroundContainerPickupPatcher
 			return false;
 		}
 		return true;
+	}
+
+	private static Vector2 GetPickupTarget(Item item)
+	{
+		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0035: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
+		Collider2D val = (((Object)(object)item != (Object)null) ? ((Component)item).GetComponent<Collider2D>() : null);
+		Vector2 result;
+		if (!((Object)(object)val != (Object)null))
+		{
+			result = Vector2.op_Implicit(((Component)item).transform.position);
+		}
+		else
+		{
+			Bounds bounds = val.bounds;
+			result = Vector2.op_Implicit(((Bounds)(ref bounds)).center);
+		}
+		return result;
 	}
 }
