@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace QoL_Unknown;
@@ -32,7 +33,19 @@ public static class StructureSpawnManager
 				return multiplier.Value;
 			}
 		}
-		return 1f;
+		string text2 = "StructMult_" + text;
+		if (!PlayerPrefs.HasKey(text2))
+		{
+			return 1f;
+		}
+		float num = NormalizeMultiplier(PlayerPrefs.GetFloat(text2));
+		Multipliers[text] = num;
+		return num;
+	}
+
+	public static List<string> GetAllStructures()
+	{
+		return KnownStructures.Concat(CuCoreLibSpawnCompat.GetStructureIds()).ToList();
 	}
 
 	public static void SetMultiplier(string name, float val)
@@ -48,9 +61,9 @@ public static class StructureSpawnManager
 	public static void ResetMultipliers()
 	{
 		Multipliers.Clear();
-		foreach (string knownStructure in KnownStructures)
+		foreach (string allStructure in GetAllStructures())
 		{
-			PlayerPrefs.DeleteKey("StructMult_" + knownStructure);
+			PlayerPrefs.DeleteKey("StructMult_" + allStructure);
 		}
 	}
 
@@ -68,6 +81,6 @@ public static class StructureSpawnManager
 
 	private static float NormalizeMultiplier(float value)
 	{
-		return (float.IsNaN(value) || float.IsInfinity(value)) ? 1f : Mathf.Clamp01(value);
+		return (float.IsNaN(value) || float.IsInfinity(value)) ? 1f : Mathf.Clamp(value, 0f, 3f);
 	}
 }

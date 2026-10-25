@@ -1,14 +1,13 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
-using System.Text.RegularExpressions;
 using BepInEx.Logging;
 using HarmonyLib;
 using Newtonsoft.Json;
 using QoL_Unknown.Images;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -22,11 +21,13 @@ internal class SaveSaveMenuPatcher
 
 	private static GameObject savePanelObj;
 
-	private static Transform slotContainer;
+	private static SaveSlotListView slotList;
 
 	private static PauseHandler pauseHandlerRef;
 
-	public static Sprite[] layerBackgrounds;
+	internal static readonly Dictionary<int, Sprite> layerBackgrounds = new Dictionary<int, Sprite>();
+
+	internal static readonly Dictionary<int, Sprite> layerIcons = new Dictionary<int, Sprite>();
 
 	private static bool wasPausedByMenu = false;
 
@@ -34,25 +35,24 @@ internal class SaveSaveMenuPatcher
 
 	private static bool initialized;
 
-	private const int SLOT_COUNT = 3;
-
 	private const float PANEL_WIDTH = 560f;
 
 	private const float PANEL_HEIGHT = 360f;
 
 	private const float PANEL_PAUSE_MENU_GAP = 24f;
 
-	private const int LAYER_BACKGROUND_COUNT = 7;
+	private const int LAYER_BACKGROUND_COUNT = 5;
 
 	private static string SaveFolder => Application.persistentDataPath;
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Expected O, but got Unknown
+		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003d: Expected O, but got Unknown
 		if (!initialized && QoLModuleManager.IsEnabled("qol_save_menu"))
 		{
 			Logger = logger;
+			SaveSlotRegistry.Logger = logger;
 			LoadLayerImages();
 			Harmony val = new Harmony("org.bepinex.plugins.qol.savesavemenu");
 			val.PatchAll(typeof(SaveSaveMenuPatcher));
@@ -61,7 +61,7 @@ internal class SaveSaveMenuPatcher
 			{
 				pauseMenuRef = null;
 				savePanelObj = null;
-				slotContainer = null;
+				slotList = null;
 				pauseHandlerRef = null;
 				wasPausedByMenu = false;
 				Time.timeScale = 1f;
@@ -71,10 +71,13 @@ internal class SaveSaveMenuPatcher
 
 	private static void LoadLayerImages()
 	{
-		layerBackgrounds = (Sprite[])(object)new Sprite[7];
-		for (int i = 0; i < 7; i++)
+		for (int i = 0; i < 5; i++)
 		{
-			layerBackgrounds[i] = Helper.LoadEmbeddedSprite($"layer{i}");
+			Sprite val = Helper.LoadEmbeddedSprite($"layer{i}");
+			if ((Object)(object)val != (Object)null && !layerBackgrounds.ContainsKey(i))
+			{
+				layerBackgrounds[i] = val;
+			}
 		}
 	}
 
@@ -168,9 +171,9 @@ internal class SaveSaveMenuPatcher
 		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0161: Unknown result type (might be due to invalid IL or missing references)
 		//IL_016b: Expected O, but got Unknown
-		//IL_01df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e6: Expected O, but got Unknown
-		//IL_0242: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d7: Expected O, but got Unknown
+		//IL_0238: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)savePanelObj != (Object)null)
 		{
 			return;
@@ -201,7 +204,6 @@ internal class SaveSaveMenuPatcher
 			((HorizontalOrVerticalLayoutGroup)val).childControlWidth = true;
 			((HorizontalOrVerticalLayoutGroup)val).childForceExpandHeight = false;
 			((HorizontalOrVerticalLayoutGroup)val).childForceExpandWidth = true;
-			slotContainer = savePanelObj.transform;
 			TMP_FontAsset saveMenuFont = GetSaveMenuFont();
 			Sprite uiSprite = ResourceLookupCache.FindSpriteContains("uiBlockNano");
 			GameObject val2 = new GameObject("Header", new Type[2]
@@ -209,7 +211,7 @@ internal class SaveSaveMenuPatcher
 				typeof(RectTransform),
 				typeof(TextMeshProUGUI)
 			});
-			val2.transform.SetParent(slotContainer, false);
+			val2.transform.SetParent(savePanelObj.transform, false);
 			TextMeshProUGUI component3 = val2.GetComponent<TextMeshProUGUI>();
 			((TMP_Text)component3).text = "SAVE SLOTS";
 			if (Object.op_Implicit((Object)(object)saveMenuFont))
@@ -222,10 +224,26 @@ internal class SaveSaveMenuPatcher
 			LayoutElement val3 = val2.AddComponent<LayoutElement>();
 			val3.minHeight = 38f;
 			val3.preferredHeight = 38f;
-			for (int i = 1; i <= 3; i++)
+			slotList = new SaveSlotListView(savePanelObj.transform, saveMenuFont, uiSprite, delegate(int slot)
 			{
-				CreateSlot(i, saveMenuFont, uiSprite);
-			}
+				DoSave(SaveSlotRegistry.FileName(slot), slot);
+			}, delegate(int slot)
+			{
+				DoLoad(SaveSlotRegistry.FileName(slot), slot);
+			}, delegate(int slot)
+			{
+				DoDelete(SaveSlotRegistry.FileName(slot), slot);
+			});
+			slotList.AddAutosaveRow("autosave.sv", delegate(int slot)
+			{
+				DoSave("autosave.sv", slot);
+			}, delegate(int slot)
+			{
+				DoLoad("autosave.sv", slot);
+			}, delegate(int slot)
+			{
+				DoDelete("autosave.sv", slot);
+			});
 			savePanelObj.SetActive(pauseMenuRef.activeInHierarchy);
 		}
 		catch (Exception arg)
@@ -320,191 +338,6 @@ internal class SaveSaveMenuPatcher
 			}
 		}
 		return ResourceLookupCache.FindFontContains("Retro GamingPix") ?? ResourceLookupCache.FindFontContains("Retro Gaming") ?? FontPatcher.GetRetroPixelExtendedFont();
-	}
-
-	private static void CreateSlot(int index, TMP_FontAsset font, Sprite uiSprite)
-	{
-		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0069: Expected O, but got Unknown
-		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fd: Expected O, but got Unknown
-		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0129: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d0: Expected O, but got Unknown
-		//IL_01ef: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01fc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0209: Unknown result type (might be due to invalid IL or missing references)
-		//IL_022f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0252: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0259: Expected O, but got Unknown
-		//IL_0278: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0285: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0292: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02ad: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02b7: Expected O, but got Unknown
-		//IL_0317: Unknown result type (might be due to invalid IL or missing references)
-		//IL_031e: Expected O, but got Unknown
-		//IL_0360: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03db: Expected O, but got Unknown
-		//IL_0465: Unknown result type (might be due to invalid IL or missing references)
-		//IL_046f: Expected O, but got Unknown
-		//IL_0488: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0492: Expected O, but got Unknown
-		//IL_04ab: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04b5: Expected O, but got Unknown
-		string text = $"slot_{index}.sv";
-		string fName = text;
-		int i = index;
-		GameObject val = new GameObject($"Slot_{index}", new Type[3]
-		{
-			typeof(RectTransform),
-			typeof(Image),
-			typeof(RectMask2D)
-		});
-		val.transform.SetParent(slotContainer, false);
-		Image component = val.GetComponent<Image>();
-		((Graphic)component).color = new Color(0f, 0f, 0f, 0f);
-		LayoutElement val2 = val.AddComponent<LayoutElement>();
-		val2.minHeight = 80f;
-		val2.preferredHeight = 80f;
-		GameObject val3 = new GameObject("Background", new Type[3]
-		{
-			typeof(RectTransform),
-			typeof(Image),
-			typeof(AspectRatioFitter)
-		});
-		val3.transform.SetParent(val.transform, false);
-		RectTransform component2 = val3.GetComponent<RectTransform>();
-		component2.anchorMin = Vector2.zero;
-		component2.anchorMax = Vector2.one;
-		component2.sizeDelta = Vector2.zero;
-		Image component3 = val3.GetComponent<Image>();
-		if (Object.op_Implicit((Object)(object)uiSprite))
-		{
-			component3.sprite = uiSprite;
-		}
-		component3.type = (Type)1;
-		((Graphic)component3).color = new Color(0f, 0f, 0f, 0.5f);
-		AspectRatioFitter component4 = val3.GetComponent<AspectRatioFitter>();
-		component4.aspectMode = (AspectMode)4;
-		((Behaviour)component4).enabled = false;
-		GameObject val4 = new GameObject("Dimmer", new Type[2]
-		{
-			typeof(RectTransform),
-			typeof(Image)
-		});
-		val4.transform.SetParent(val.transform, false);
-		RectTransform component5 = val4.GetComponent<RectTransform>();
-		component5.anchorMin = Vector2.zero;
-		component5.anchorMax = Vector2.one;
-		component5.sizeDelta = Vector2.zero;
-		((Graphic)val4.GetComponent<Image>()).color = new Color(0f, 0f, 0f, 0.6f);
-		GameObject val5 = new GameObject("Content", new Type[1] { typeof(RectTransform) });
-		val5.transform.SetParent(val.transform, false);
-		RectTransform component6 = val5.GetComponent<RectTransform>();
-		component6.anchorMin = Vector2.zero;
-		component6.anchorMax = Vector2.one;
-		component6.sizeDelta = Vector2.zero;
-		HorizontalLayoutGroup val6 = val5.AddComponent<HorizontalLayoutGroup>();
-		((LayoutGroup)val6).padding = new RectOffset(10, 5, 5, 5);
-		((HorizontalOrVerticalLayoutGroup)val6).spacing = 10f;
-		((HorizontalOrVerticalLayoutGroup)val6).childControlWidth = true;
-		((HorizontalOrVerticalLayoutGroup)val6).childForceExpandWidth = false;
-		((HorizontalOrVerticalLayoutGroup)val6).childControlHeight = true;
-		((HorizontalOrVerticalLayoutGroup)val6).childForceExpandHeight = false;
-		((LayoutGroup)val6).childAlignment = (TextAnchor)3;
-		GameObject val7 = new GameObject("Info", new Type[2]
-		{
-			typeof(RectTransform),
-			typeof(TextMeshProUGUI)
-		});
-		val7.transform.SetParent(val5.transform, false);
-		TextMeshProUGUI component7 = val7.GetComponent<TextMeshProUGUI>();
-		if (Object.op_Implicit((Object)(object)font))
-		{
-			((TMP_Text)component7).font = font;
-		}
-		((TMP_Text)component7).fontSize = 18f;
-		((Graphic)component7).color = Color.white;
-		((TMP_Text)component7).alignment = (TextAlignmentOptions)4097;
-		((TMP_Text)component7).richText = true;
-		((TMP_Text)component7).text = $"Slot {index}";
-		LayoutElement val8 = val7.AddComponent<LayoutElement>();
-		val8.minWidth = 320f;
-		val8.flexibleWidth = 1f;
-		GameObject val9 = new GameObject("Buttons", new Type[1] { typeof(RectTransform) });
-		val9.transform.SetParent(val5.transform, false);
-		HorizontalLayoutGroup val10 = val9.AddComponent<HorizontalLayoutGroup>();
-		((HorizontalOrVerticalLayoutGroup)val10).spacing = 5f;
-		((LayoutGroup)val10).childAlignment = (TextAnchor)5;
-		((HorizontalOrVerticalLayoutGroup)val10).childForceExpandWidth = false;
-		((HorizontalOrVerticalLayoutGroup)val10).childControlWidth = false;
-		((HorizontalOrVerticalLayoutGroup)val10).childControlHeight = false;
-		LayoutElement val11 = val9.AddComponent<LayoutElement>();
-		val11.minWidth = 118f;
-		val11.preferredWidth = 118f;
-		CreateIconButton(val9.transform, "save", "Save", (UnityAction)delegate
-		{
-			DoSave(fName, i);
-		});
-		CreateIconButton(val9.transform, "load", "Load", (UnityAction)delegate
-		{
-			DoLoad(fName, i);
-		});
-		CreateIconButton(val9.transform, "delete", "Delete", (UnityAction)delegate
-		{
-			DoDelete(fName, i);
-		});
-	}
-
-	private static void CreateIconButton(Transform parent, string spriteName, string tipName, UnityAction action)
-	{
-		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003f: Expected O, but got Unknown
-		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ef: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0110: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012a: Unknown result type (might be due to invalid IL or missing references)
-		GameObject val = new GameObject("Btn_" + spriteName, new Type[3]
-		{
-			typeof(RectTransform),
-			typeof(Image),
-			typeof(Button)
-		});
-		val.transform.SetParent(parent, false);
-		float num = 36f;
-		RectTransform component = val.GetComponent<RectTransform>();
-		component.sizeDelta = new Vector2(num, num);
-		LayoutElement val2 = val.AddComponent<LayoutElement>();
-		val2.minWidth = num;
-		val2.minHeight = num;
-		val2.preferredWidth = num;
-		val2.preferredHeight = num;
-		Image component2 = val.GetComponent<Image>();
-		component2.sprite = Helper.LoadEmbeddedSprite(spriteName);
-		component2.preserveAspect = true;
-		((Graphic)component2).color = Color.white;
-		Button component3 = val.GetComponent<Button>();
-		ColorBlock colors = ((Selectable)component3).colors;
-		((ColorBlock)(ref colors)).normalColor = Color.white;
-		((ColorBlock)(ref colors)).highlightedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
-		((ColorBlock)(ref colors)).pressedColor = new Color(0.6f, 0.6f, 0.6f, 1f);
-		((ColorBlock)(ref colors)).colorMultiplier = 1f;
-		((Selectable)component3).colors = colors;
-		((UnityEvent)component3.onClick).AddListener(action);
-		UITooltip val3 = val.AddComponent<UITooltip>();
-		val3.skipLocale = true;
-		val3.tipName = tipName;
-		val3.tipDesc = string.Empty;
 	}
 
 	private static void DoSave(string filename, int index)
@@ -767,81 +600,46 @@ internal class SaveSaveMenuPatcher
 
 	private static void BeginHostMultiplayerLoad(string filename, SaveMetadata meta, bool restoreHostBundle)
 	{
-		bool flag = MultiplayerCompat.IsNetworkRunning && MultiplayerCompat.IsServer;
-		int num = (flag ? MultiplayerCompat.PrepareClientsForHostSaveLoad() : 0);
-		if (num > 0)
+		if (!(restoreHostBundle ? MultiplayerSaveBundle.RestoreHostBundleToMultiplayerSave(SaveFolder, filename) : MultiplayerSaveBundle.StageSingleplayerSlotAsHostBundle(SaveFolder, filename, meta)))
 		{
 			PlayerCamera main = PlayerCamera.main;
 			if (main != null)
 			{
-				main.DoAlert(string.Format("Returning {0} client{1} to the main menu before host save load.", num, (num == 1) ? "" : "s"), false);
+				main.DoAlert(restoreHostBundle ? "MP save bundle is missing or corrupt." : "Could not stage QoL save for multiplayer host.", false);
 			}
 		}
-		if (flag)
+		else
 		{
-			MultiplayerCompat.BeginConnectedHostSaveLoad();
+			SharedCoroutineStarter.StartCoroutine(HostMultiplayerLoadThroughMainMenu(meta));
 		}
-		SharedCoroutineStarter.StartCoroutine(CompleteHostMultiplayerLoadAfterClientReturn(filename, meta, restoreHostBundle, num > 0, flag));
 	}
 
-	private static IEnumerator CompleteHostMultiplayerLoadAfterClientReturn(string filename, SaveMetadata meta, bool restoreHostBundle, bool waitForClients, bool keepClientsConnected)
+	private static IEnumerator HostMultiplayerLoadThroughMainMenu(SaveMetadata meta)
 	{
-		if (waitForClients)
+		if ((Object)(object)WorldGeneration.world != (Object)null && (Object)(object)PlayerCamera.main != (Object)null)
 		{
-			yield return (object)new WaitForSecondsRealtime(0.75f);
+			Time.timeScale = 1f;
+			PlayerCamera.main.ToMainMenu();
+			yield return (object)new WaitUntil((Func<bool>)(() => (Object)(object)PreRunScript.instance != (Object)null && (Object)(object)WorldGeneration.world == (Object)null));
+			yield return (object)new WaitForSecondsRealtime(1f);
 		}
-		if (restoreHostBundle)
+		if (meta != null)
 		{
-			if (!MultiplayerSaveBundle.RestoreHostBundleToMultiplayerSave(SaveFolder, filename))
-			{
-				MultiplayerCompat.CancelConnectedHostSaveLoad();
-				PlayerCamera main = PlayerCamera.main;
-				if (main != null)
-				{
-					main.DoAlert("MP save bundle is missing or corrupt.", false);
-				}
-				yield break;
-			}
 			MultiplayerSaveBundle.ApplyMetadataForLoad(meta);
 		}
 		else
 		{
-			if (!MultiplayerSaveBundle.StageSingleplayerSlotAsHostBundle(SaveFolder, filename, meta))
-			{
-				MultiplayerCompat.CancelConnectedHostSaveLoad();
-				PlayerCamera main2 = PlayerCamera.main;
-				if (main2 != null)
-				{
-					main2.DoAlert("Could not stage QoL save for multiplayer host.", false);
-				}
-				yield break;
-			}
-			if (meta != null)
-			{
-				MultiplayerSaveBundle.ApplyMetadataForLoad(meta);
-			}
-			else
-			{
-				SeedManager.SetSeed("");
-				SaveSystemPatcher.PendingLoadPosition = null;
-			}
+			SeedManager.SetSeed("");
+			SaveSystemPatcher.PendingLoadPosition = null;
 		}
 		MultiplayerSaveLoadPatcher.MarkMultiplayerSlotLoad();
-		if (keepClientsConnected)
-		{
-			MultiplayerCompat.PreparePostWorldgenClientInventoryRestores();
-		}
-		SaveSystem.loadedRun = true;
 		Time.timeScale = 1f;
-		if (keepClientsConnected)
-		{
-			MultiplayerCompat.AnnounceHostSaveLoadRestart();
-		}
-		SceneManager.LoadScene("SampleScene");
+		PreRunScript.instance.LoadRun();
 	}
 
 	private static void DoDelete(string filename, int index)
 	{
+		bool flag = !File.Exists(Path.Combine(SaveFolder, filename));
 		SaveManager.DeleteSave(filename);
 		try
 		{
@@ -855,180 +653,15 @@ internal class SaveSaveMenuPatcher
 				logger.LogWarning((object)$"Deleted slot {index}, but could not remove all multiplayer extras: {ex.Message}");
 			}
 		}
+		if (flag && index > 0)
+		{
+			SaveSlotRegistry.TryRemoveEmptySlot(index);
+		}
 		RefreshSlots();
 	}
 
 	private static void RefreshSlots()
 	{
-		//IL_03d3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_040b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0410: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0432: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0437: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0447: Unknown result type (might be due to invalid IL or missing references)
-		//IL_044c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0515: Unknown result type (might be due to invalid IL or missing references)
-		if ((Object)(object)slotContainer == (Object)null)
-		{
-			return;
-		}
-		Sprite val = ResourceLookupCache.FindSpriteContains("uiBlockNano");
-		for (int i = 1; i < slotContainer.childCount; i++)
-		{
-			Transform child = slotContainer.GetChild(i);
-			Transform val2 = child.Find("Background");
-			Image val3 = (((Object)(object)val2 != (Object)null) ? ((Component)val2).GetComponent<Image>() : ((Component)child).GetComponent<Image>());
-			AspectRatioFitter val4 = (((Object)(object)val2 != (Object)null) ? ((Component)val2).GetComponent<AspectRatioFitter>() : null);
-			Transform val5 = child.Find("Content");
-			if ((Object)(object)val5 == (Object)null)
-			{
-				continue;
-			}
-			Transform val6 = val5.Find("Info");
-			if ((Object)(object)val6 == (Object)null)
-			{
-				continue;
-			}
-			TextMeshProUGUI component = ((Component)val6).GetComponent<TextMeshProUGUI>();
-			if ((Object)(object)component == (Object)null)
-			{
-				continue;
-			}
-			string text = $"slot_{i}.sv";
-			string text2 = Path.Combine(SaveFolder, text);
-			string path = Path.Combine(SaveFolder, text + ".meta");
-			if (File.Exists(text2))
-			{
-				string text3 = "Unknown";
-				string text4 = "";
-				string text5 = "";
-				string text6 = "";
-				int num = -1;
-				string text7 = string.Empty;
-				try
-				{
-					byte[] array = File.ReadAllBytes(text2);
-					if (array.Length != 0)
-					{
-						string input = SaveSystem.Unzip(array);
-						Match match = Regex.Match(input, "\"runTime\":\\s*([0-9.]+)");
-						if (match.Success && float.TryParse(match.Groups[1].Value, out var result))
-						{
-							TimeSpan timeSpan = TimeSpan.FromSeconds(result);
-							text6 = $"{timeSpan:hh\\:mm\\:ss}";
-						}
-					}
-				}
-				catch
-				{
-				}
-				if (File.Exists(path))
-				{
-					try
-					{
-						SaveMetadata saveMetadata = JsonConvert.DeserializeObject<SaveMetadata>(File.ReadAllText(path));
-						text3 = saveMetadata.LocationName;
-						text5 = saveMetadata.Timestamp;
-						num = saveMetadata.BiomeIndex;
-						bool loadedFromMenu = saveMetadata.LoadedFromMenu;
-						if (!string.IsNullOrWhiteSpace(saveMetadata.SeedInput))
-						{
-							text4 = "<color=yellow>[ID: " + saveMetadata.SeedInput.Trim() + "]</color> ";
-						}
-						else if (saveMetadata.SeedValue != 0)
-						{
-							text4 = $"<color=yellow>[ID: {saveMetadata.SeedValue}]</color> ";
-						}
-						if (saveMetadata.SaveKind == "MultiplayerHostBundle")
-						{
-							text4 += "<color=#66ccff>[MP Host]</color> ";
-						}
-						else if (saveMetadata.SaveKind == "MultiplayerClientInventory")
-						{
-							text4 += "<color=#66ccff>[MP Client]</color> ";
-						}
-						else if (saveMetadata.SavedDuringMultiplayer)
-						{
-							text4 += "<color=#66ccff>[MP]</color> ";
-						}
-						text7 = (loadedFromMenu ? "*" : string.Empty);
-					}
-					catch
-					{
-					}
-				}
-				else
-				{
-					try
-					{
-						byte[] array2 = File.ReadAllBytes(text2);
-						if (array2.Length != 0)
-						{
-							string input2 = SaveSystem.Unzip(array2);
-							Match match2 = Regex.Match(input2, "\"totalTraveled\":\\s*(\\d+)");
-							if (match2.Success)
-							{
-								text3 = match2.Groups[1].Value + "m deep";
-							}
-						}
-						text5 = new FileInfo(text2).LastWriteTime.ToString("g");
-					}
-					catch
-					{
-						text3 = "Corrupt";
-					}
-				}
-				bool flag = false;
-				if (num >= 0 && layerBackgrounds != null && num < layerBackgrounds.Length && (Object)(object)layerBackgrounds[num] != (Object)null)
-				{
-					val3.sprite = layerBackgrounds[num];
-					val3.type = (Type)0;
-					((Graphic)val3).color = Color.white;
-					if (Object.op_Implicit((Object)(object)val4))
-					{
-						((Behaviour)val4).enabled = true;
-						if ((Object)(object)val3.sprite != (Object)null)
-						{
-							Rect rect = val3.sprite.rect;
-							if (((Rect)(ref rect)).height > 0f)
-							{
-								rect = val3.sprite.rect;
-								float width = ((Rect)(ref rect)).width;
-								rect = val3.sprite.rect;
-								val4.aspectRatio = width / ((Rect)(ref rect)).height;
-							}
-						}
-					}
-					flag = true;
-				}
-				if (!flag)
-				{
-					if (Object.op_Implicit((Object)(object)val))
-					{
-						val3.sprite = val;
-					}
-					val3.type = (Type)1;
-					if (Object.op_Implicit((Object)(object)val4))
-					{
-						((Behaviour)val4).enabled = false;
-					}
-				}
-				((TMP_Text)component).text = $"<b>Slot {i}{text7}</b> {text4}<size=70%>\n{text3} | {text6} run time</size>\n<size=60%><color=grey>{text5}</color></size>";
-			}
-			else
-			{
-				if (Object.op_Implicit((Object)(object)val))
-				{
-					val3.sprite = val;
-				}
-				val3.type = (Type)1;
-				((Graphic)val3).color = new Color(0f, 0f, 0f, 0.5f);
-				if (Object.op_Implicit((Object)(object)val4))
-				{
-					((Behaviour)val4).enabled = false;
-				}
-				((TMP_Text)component).text = $"<b>Slot {i}</b>\n<size=70%><color=grey>Empty</color></size>";
-			}
-		}
+		slotList?.Refresh();
 	}
 }

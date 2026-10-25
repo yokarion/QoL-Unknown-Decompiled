@@ -12,16 +12,9 @@ internal static class CraftPlanner
 
 	private const string NoAutoCraftTag = "noautocraft";
 
-	private static readonly Dictionary<string, Recipe> RecipeByResultId = new Dictionary<string, Recipe>(StringComparer.OrdinalIgnoreCase);
+	private static readonly Dictionary<string, List<Recipe>> RecipesByResultId = new Dictionary<string, List<Recipe>>(StringComparer.OrdinalIgnoreCase);
 
-	private static readonly HashSet<string> AutoCraftableResults = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-	{
-		"woodscraps", "woodcube", "flexiglass", "casing", "flammablepowder", "woodpanel", "canvas", "rope", "stick", "string",
-		"scrapcube", "scrappanel", "scraptube", "nails", "processedcopper", "bundleofwires", "titaniumslab", "titaniumsheet", "titaniumrod", "plasticchunk",
-		"biochem", "opium", "fat", "magazinebase", "largecarcass", "autoinjector", "lcdscreen", "circuitboard", "makeshiftwrench", "crudecleaver",
-		"machete", "flimsyknife", "makeshiftdiggingtool", "pickaxe", "makeshifthelmet", "bikehelmet", "smallbattery", "mediumbattery", "canteen", "belt",
-		"foliagebag", "lightbulb", "flashlight", "alienblood"
-	};
+	private static readonly HashSet<string> NonAutoCraftableResults = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 	private static readonly Dictionary<int, bool> CraftableByRecipe = new Dictionary<int, bool>();
 
@@ -130,8 +123,7 @@ internal static class CraftPlanner
 		{
 			return CraftIngredientStatus.Missing;
 		}
-		Recipe val = RecipeFor(text);
-		if (val == null || !TryPlanOne(val, working, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { text }, 1, null, null) || !working.TryConsume(ingredient))
+		if (!TryPlanSource(ingredient, text, working, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { text }, 1, null, null))
 		{
 			return CraftIngredientStatus.AutoCraftableButBlocked;
 		}
@@ -146,7 +138,7 @@ internal static class CraftPlanner
 			return null;
 		}
 		string text = (ingredient.specific ? ingredient.specificId : ingredient.quality?.id);
-		if (string.IsNullOrEmpty(text) || !AutoCraftableResults.Contains(text))
+		if (string.IsNullOrEmpty(text) || NonAutoCraftableResults.Contains(text))
 		{
 			return null;
 		}
@@ -209,7 +201,7 @@ internal static class CraftPlanner
 		for (int i = 0; i < recipe.items.Count; i++)
 		{
 			RecipeItem val = recipe.items[i];
-			if (!working.TryConsume(val) && (!working.TryRepairInto(val, combines) || !working.TryConsume(val)) && (!TryAutoCraft(val, working, chain, depth, steps, combines) || !working.TryConsume(val)))
+			if (!working.TryConsume(val) && (!working.TryRepairInto(val, combines) || !working.TryConsume(val)) && !TryAutoCraft(val, working, chain, depth, steps, combines))
 			{
 				return false;
 			}
@@ -225,23 +217,62 @@ internal static class CraftPlanner
 		{
 			return false;
 		}
-		Recipe val = RecipeFor(text);
-		if (val == null)
-		{
-			return false;
-		}
 		chain.Add(text);
-		bool flag = TryPlanOne(val, working, chain, depth + 1, steps, combines);
+		bool result = TryPlanSource(missingIngredient, text, working, chain, depth + 1, steps, combines);
 		chain.Remove(text);
-		if (!flag)
+		return result;
+	}
+
+	private static bool TryPlanSource(RecipeItem ingredient, string resultId, CraftInventory working, HashSet<string> chain, int depth, List<CraftStep> steps, List<CraftCombine> combines)
+	{
+		if (Recipes.recipes == null)
 		{
 			return false;
 		}
-		if (steps != null)
+		RebuildRecipeIndexIfNeeded();
+		if (!RecipesByResultId.TryGetValue(resultId, out var value))
 		{
-			AddStep(steps, val, 1);
+			return false;
 		}
-		return true;
+		int num = value.Count - 1;
+		while (num >= 0 && !value[num].visible)
+		{
+			num--;
+		}
+		for (int i = 0; i <= num; i++)
+		{
+			Recipe val = value[i];
+			if (!val.visible)
+			{
+				continue;
+			}
+			bool flag = i == num;
+			CraftInventory craftInventory = (flag ? working : working.Clone());
+			List<CraftStep> list = ((flag || steps == null) ? steps : new List<CraftStep>());
+			List<CraftCombine> list2 = ((flag || combines == null) ? combines : new List<CraftCombine>());
+			if (!TryPlanOne(val, craftInventory, chain, depth, list, list2) || !craftInventory.TryConsume(ingredient))
+			{
+				continue;
+			}
+			if (!flag)
+			{
+				working.AdoptFrom(craftInventory);
+				if (list != null)
+				{
+					for (int j = 0; j < list.Count; j++)
+					{
+						AddStep(steps, list[j].Recipe, list[j].Count);
+					}
+				}
+				combines?.AddRange(list2);
+			}
+			if (steps != null)
+			{
+				AddStep(steps, val, 1);
+			}
+			return true;
+		}
+		return false;
 	}
 
 	private static void AddStep(List<CraftStep> steps, Recipe recipe, int count)
@@ -270,17 +301,6 @@ internal static class CraftPlanner
 		return value.HasTag("noautocraft");
 	}
 
-	private static Recipe RecipeFor(string resultId)
-	{
-		if (Recipes.recipes == null)
-		{
-			return null;
-		}
-		RebuildRecipeIndexIfNeeded();
-		Recipe value;
-		return (RecipeByResultId.TryGetValue(resultId, out value) && value.visible) ? value : null;
-	}
-
 	private static void RebuildRecipeIndexIfNeeded()
 	{
 		int num = Recipes.recipes?.Count ?? 0;
@@ -288,7 +308,7 @@ internal static class CraftPlanner
 		{
 			return;
 		}
-		RecipeByResultId.Clear();
+		RecipesByResultId.Clear();
 		recipeIndexCacheCount = num;
 		if (Recipes.recipes == null)
 		{
@@ -297,9 +317,14 @@ internal static class CraftPlanner
 		for (int i = 0; i < Recipes.recipes.Count; i++)
 		{
 			Recipe val = Recipes.recipes[i];
-			if (val?.result != null && !string.IsNullOrEmpty(val.result.id) && !RecipeByResultId.ContainsKey(val.result.id))
+			if (val?.result != null && !string.IsNullOrEmpty(val.result.id))
 			{
-				RecipeByResultId.Add(val.result.id, val);
+				if (!RecipesByResultId.TryGetValue(val.result.id, out var value))
+				{
+					value = new List<Recipe>();
+					RecipesByResultId.Add(val.result.id, value);
+				}
+				value.Add(val);
 			}
 		}
 	}

@@ -72,17 +72,17 @@ internal static class AnimalAttackAssistPatcher
 		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0113: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0100: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0105: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0129: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0149: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0123: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0127: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0110: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0131: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0133: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0134: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0154: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0156: Unknown result type (might be due to invalid IL or missing references)
 		targetPosition = default(Vector2);
 		Vector2 val = Vector2.op_Implicit(((Component)body.limbs[1]).transform.position);
 		Vector2 val2 = Vector2.op_Implicit(body.targetLookPos) - val;
@@ -98,28 +98,29 @@ internal static class AnimalAttackAssistPatcher
 		float num2 = float.MaxValue;
 		RaycastHit2D[] array2 = array;
 		BuildingEntity val6 = default(BuildingEntity);
+		ElderThornbackBehaviour val7 = default(ElderThornbackBehaviour);
 		for (int i = 0; i < array2.Length; i++)
 		{
 			RaycastHit2D val5 = array2[i];
 			Transform transform = ((RaycastHit2D)(ref val5)).transform;
-			if (((Component)transform).TryGetComponent<BuildingEntity>(ref val6) && val6.animal && !val6.cantHit)
+			if (((Component)transform).TryGetComponent<BuildingEntity>(ref val6) && val6.animal && !val6.cantHit && !((Component)transform).TryGetComponent<ElderThornbackBehaviour>(ref val7))
 			{
-				Vector2 val7;
+				Vector2 val8;
 				if (!Object.op_Implicit((Object)(object)((RaycastHit2D)(ref val5)).collider))
 				{
-					val7 = Vector2.op_Implicit(transform.position);
+					val8 = Vector2.op_Implicit(transform.position);
 				}
 				else
 				{
 					Bounds bounds = ((RaycastHit2D)(ref val5)).collider.bounds;
-					val7 = Vector2.op_Implicit(((Bounds)(ref bounds)).center);
+					val8 = Vector2.op_Implicit(((Bounds)(ref bounds)).center);
 				}
-				Vector2 val8 = val7;
-				float num3 = Vector2.Distance(val, val8);
+				Vector2 val9 = val8;
+				float num3 = Vector2.Distance(val, val9);
 				if (!(num3 >= num2))
 				{
 					num2 = num3;
-					targetPosition = val8;
+					targetPosition = val9;
 				}
 			}
 		}

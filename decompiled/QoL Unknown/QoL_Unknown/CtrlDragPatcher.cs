@@ -178,6 +178,78 @@ internal class CtrlDragPatcher
 		return true;
 	}
 
+	[HarmonyPatch(typeof(PlayerCamera), "TryPerformWorldActions")]
+	[HarmonyPrefix]
+	private static bool WorldActions_Prefix(PlayerCamera __instance)
+	{
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
+		if (!ModKeybinds.GetAction("inventoryinteraction"))
+		{
+			return true;
+		}
+		Item dragItem = __instance.dragItem;
+		if ((Object)(object)dragItem == (Object)null)
+		{
+			return true;
+		}
+		Body body = __instance.body;
+		Camera main = Camera.main;
+		if ((Object)(object)body == (Object)null || (Object)(object)main == (Object)null)
+		{
+			return true;
+		}
+		bool flag = (Object)(object)((Component)dragItem).GetComponent<Container>() != (Object)null || (Object)(object)((Component)dragItem).GetComponent<WaterContainerItem>() != (Object)null;
+		Collider2D val = Physics2D.OverlapPoint(Vector2.op_Implicit(main.ScreenToWorldPoint(Input.mousePosition)), LayerMask.GetMask(new string[1] { "Item" }));
+		Item val2 = (((Object)(object)val != (Object)null) ? ((Component)val).GetComponent<Item>() : null);
+		if ((Object)(object)val2 != (Object)null && (Object)(object)val2 != (Object)(object)dragItem)
+		{
+			bool flag2 = (Object)(object)((Component)val2).GetComponent<Container>() != (Object)null || (Object)(object)((Component)val2).GetComponent<WaterContainerItem>() != (Object)null;
+			Container component = ((Component)val2).GetComponent<Container>();
+			if (flag && flag2)
+			{
+				ItemLocation itemLocation = GetItemLocation(body, dragItem);
+				ItemLocation itemLocation2 = GetItemLocation(body, val2);
+				if (itemLocation.kind != LocationKind.Unknown && itemLocation2.kind != LocationKind.Unknown && CanPlaceAtLocation(dragItem, itemLocation2) && CanPlaceAtLocation(val2, itemLocation))
+				{
+					if (itemLocation.kind == LocationKind.BodySlot && itemLocation2.kind == LocationKind.BodySlot)
+					{
+						body.SwapSlots(itemLocation.slotIndex, itemLocation2.slotIndex);
+					}
+					else
+					{
+						DetachItem(body, dragItem);
+						DetachItem(body, val2);
+						PlaceAtLocation(body, dragItem, itemLocation2);
+						PlaceAtLocation(body, val2, itemLocation);
+					}
+					__instance.PlayBackpackSound();
+					RefreshUI(__instance);
+					return false;
+				}
+			}
+			if ((Object)(object)component != (Object)null && component.CanHoldItem(dragItem))
+			{
+				DetachItem(body, dragItem);
+				component.LoadItem(dragItem);
+				__instance.PlayBackpackSound();
+				RefreshUI(__instance);
+				return false;
+			}
+		}
+		Container currentContainer = __instance.currentContainer;
+		if ((Object)(object)currentContainer != (Object)null && (Object)(object)((Component)currentContainer).gameObject != (Object)(object)((Component)dragItem).gameObject && currentContainer.CanHoldItem(dragItem) && (Object)(object)((Component)dragItem).transform.parent != (Object)(object)((Component)currentContainer).transform)
+		{
+			DetachItem(body, dragItem);
+			currentContainer.LoadItem(dragItem);
+			__instance.PlayBackpackSound();
+			RefreshUI(__instance);
+			return false;
+		}
+		return true;
+	}
+
 	[HarmonyPatch(typeof(PlayerCamera), "TryPerformSpecialUIAction")]
 	[HarmonyPrefix]
 	private static bool TryPerformSpecialUIAction_Prefix(PlayerCamera __instance, RaycastResult hit, ref bool __result)

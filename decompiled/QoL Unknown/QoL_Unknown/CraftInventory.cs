@@ -49,6 +49,18 @@ internal sealed class CraftInventory
 		return craftInventory;
 	}
 
+	public void AdoptFrom(CraftInventory trial)
+	{
+		items.Clear();
+		all.Clear();
+		byItemId.Clear();
+		byQualityId.Clear();
+		for (int i = 0; i < trial.items.Count; i++)
+		{
+			Add(trial.items[i]);
+		}
+	}
+
 	public bool MatchesDirectly(Recipe recipe)
 	{
 		if (recipe?.items == null)

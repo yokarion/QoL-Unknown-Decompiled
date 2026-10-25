@@ -19,7 +19,7 @@ internal class QuickStashPatcher
 
 	private const string LightbulbItemId = "lightbulb";
 
-	private const string BeltItemId = "belt";
+	private static readonly string[] StashPriorityIds = new string[5] { "bandolier", "belt", "traumarig", "medkit", "materialpouch" };
 
 	private const string MultiplayerHarmonyId = "CasualtiesMP";
 
@@ -405,6 +405,7 @@ internal class QuickStashPatcher
 
 	private static bool TryMoveToBestContainer(PlayerCamera cam, Item item)
 	{
+		//IL_0212: Unknown result type (might be due to invalid IL or missing references)
 		Body body = cam.body;
 		List<Container> list = new List<Container>();
 		for (int i = 0; i < body.slots.Length; i++)
@@ -434,7 +435,7 @@ internal class QuickStashPatcher
 		{
 			return false;
 		}
-		Container val = list.OrderByDescending(IsBelt).ThenBy((Container c) => c.encumberanceMult).ThenBy((Container c) => c.maxWeightPerItem)
+		Container val = list.OrderBy(StashPriority).ThenBy((Container c) => c.encumberanceMult).ThenBy((Container c) => c.maxWeightPerItem)
 			.First();
 		if ((Object)(object)((Component)item).transform.parent != (Object)null)
 		{
@@ -452,6 +453,7 @@ internal class QuickStashPatcher
 				body.DropWearable(item);
 			}
 		}
+		((Component)item).transform.position = ((Component)val).transform.position;
 		val.LoadItem(item);
 		MultiplayerCompat.MarkItemMoved(item, containerChanged: true);
 		cam.PlayBackpackSound();
@@ -463,10 +465,11 @@ internal class QuickStashPatcher
 		return true;
 	}
 
-	private static bool IsBelt(Container container)
+	private static int StashPriority(Container container)
 	{
-		Item val = (((Object)(object)container != (Object)null) ? ((Component)container).GetComponent<Item>() : null);
-		return (Object)(object)val != (Object)null && string.Equals(val.id, "belt", StringComparison.OrdinalIgnoreCase);
+		Item component = ((Component)container).GetComponent<Item>();
+		int num = (((Object)(object)component != (Object)null) ? Array.IndexOf(StashPriorityIds, component.id) : (-1));
+		return (num >= 0) ? num : StashPriorityIds.Length;
 	}
 
 	private static bool TryMoveToSlot(PlayerCamera cam, Item item)
@@ -491,7 +494,7 @@ internal class QuickStashPatcher
 	{
 		for (int i = 0; i < body.slots.Length; i++)
 		{
-			if (!ShouldSkipSlotForQuickStash(item, i) && !body.HoldingItem(i) && body.slots[i].canPickUp)
+			if (!ShouldSkipSlotForQuickStash(item, i) && !body.HoldingItem(i) && body.slots[i].canPickUp && (!item.Stats.onlyHoldInHands || body.slots[i].isHand))
 			{
 				return i;
 			}

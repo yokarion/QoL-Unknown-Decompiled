@@ -15,15 +15,11 @@ namespace QoL_Unknown;
 
 internal static class MultiplayerCompat
 {
-	internal sealed class ClientCraftRequest
+	internal enum NativeCraftState
 	{
-		internal Body Body;
-
-		internal Recipe Recipe;
-
-		internal bool Denied;
-
-		internal float ResultCountBefore;
+		Denied,
+		Pending,
+		Accepted
 	}
 
 	private sealed class InventoryMutationScope : IDisposable
@@ -182,8 +178,6 @@ internal static class MultiplayerCompat
 
 	private static Type soundCannonTrackerType;
 
-	private static Type playerCameraTryCraftPatchType;
-
 	private static Type bodyCombineItemsPatchType;
 
 	private static Type scavPlayerType;
@@ -238,27 +232,23 @@ internal static class MultiplayerCompat
 
 	private static FieldInfo itemContainerChangedField;
 
-	private static MethodInfo mpRecipeTryMakeMethod;
+	private static Type craftCommitType;
 
-	private static MethodInfo mpRecipeGetItemsForRecipeMethod;
+	private static MethodInfo craftRequestMethod;
+
+	private static MethodInfo craftTryClickMethod;
+
+	private static FieldInfo craftStepOpenField;
+
+	private static FieldInfo craftStepPendingField;
+
+	private static FieldInfo craftStepAcceptedField;
 
 	private static FieldInfo mpClientPingField;
 
-	private static MethodInfo mpParseTaggedStringMethod;
+	private static int handledCraftFrame = -1;
 
-	private static ClientCraftRequest pendingClientCraft;
-
-	private static MethodInfo mpTryCraftPrefixMethod;
-
-	private static int handledClientCraftFrame = -1;
-
-	private static bool bypassCraftGuard;
-
-	private static bool craftTryMakeGuardPatched;
-
-	private static int lastExplicitCraftFrame = -1;
-
-	private static int lastExplicitCraftRecipeIndex = -1;
+	private static bool craftClickGuardPatched;
 
 	private static MethodInfo mpLiquidCombineAnnounceMethod;
 
@@ -377,6 +367,8 @@ internal static class MultiplayerCompat
 	private static bool clientPrepareReconnectForHostLoadRegistered;
 
 	private static bool runtimeHooksInstalled;
+
+	private static bool runtimeHooksAttempted;
 
 	private static bool seedAnnouncementHooksPatched;
 
@@ -510,7 +502,37 @@ internal static class MultiplayerCompat
 
 	public static bool CanImportSingleplayerSlotAsHostStart => IsNetworkRunning && IsServer && !IsWorldGenerated;
 
-	internal static float ClientCraftWaitSeconds
+	internal static bool NativeCraftAvailable
+	{
+		get
+		{
+			EnsureResolved();
+			return craftRequestMethod != null && craftStepPendingField != null && craftStepAcceptedField != null;
+		}
+	}
+
+	internal static bool NativeCraftOutstanding
+	{
+		get
+		{
+			EnsureResolved();
+			object obj = craftStepOpenField?.GetValue(null);
+			bool flag = default(bool);
+			int num;
+			if (obj is bool)
+			{
+				flag = (bool)obj;
+				num = 1;
+			}
+			else
+			{
+				num = 0;
+			}
+			return (byte)((uint)num & (flag ? 1u : 0u)) != 0;
+		}
+	}
+
+	internal static float CraftWaitSeconds
 	{
 		get
 		{
@@ -1002,128 +1024,68 @@ internal static class MultiplayerCompat
 		}
 	}
 
-	public static bool CraftStepAsHost(Body crafter, Recipe recipe)
+	internal static void MarkCraftHandled()
 	{
-		if (!IsActive || (Object)(object)crafter == (Object)null || recipe == null)
-		{
-			return false;
-		}
-		EnsureResolved();
-		return mpRecipeTryMakeMethod != null && mpRecipeGetItemsForRecipeMethod != null && TryExecuteMpRecipeAndAnnounce(PlayerCamera.main, crafter, recipe);
+		handledCraftFrame = Time.frameCount;
 	}
 
-	internal static void MarkClientCraftHandled()
+	internal static NativeCraftState RequestNativeCraft(PlayerCamera camera, Recipe recipe)
 	{
-		handledClientCraftFrame = Time.frameCount;
-	}
-
-	internal static bool HasPendingClientCraft(Body body)
-	{
-		if (pendingClientCraft != null && ((Object)(object)pendingClientCraft.Body != (Object)(object)body || !IsActive || !IsClient || pendingClientCraft.Denied))
+		if ((Object)(object)camera == (Object)null || recipe == null || !NativeCraftAvailable)
 		{
-			pendingClientCraft = null;
+			return NativeCraftState.Denied;
 		}
-		return pendingClientCraft != null;
-	}
-
-	internal static void ClearClientCraft(ClientCraftRequest request)
-	{
-		if (request != null && pendingClientCraft == request)
-		{
-			pendingClientCraft = null;
-		}
-	}
-
-	internal static void ObserveClientCraftAlert(string text)
-	{
-		if (pendingClientCraft != null && IsActive && IsClient && !(mpParseTaggedStringMethod == null))
-		{
-			string b = mpParseTaggedStringMethod.Invoke(null, new object[1] { "<key:serverdeny_craft>" }) as string;
-			if (string.Equals(text, b, StringComparison.Ordinal))
-			{
-				pendingClientCraft.Denied = true;
-			}
-		}
-	}
-
-	internal static bool TryRequestClientCraft(PlayerCamera camera, Recipe recipe, out ClientCraftRequest request)
-	{
-		request = null;
-		EnsureResolved();
-		if ((Object)(object)camera?.body == (Object)null || recipe == null || !IsActive || !IsClient)
-		{
-			return false;
-		}
-		if (HasPendingClientCraft(camera.body))
-		{
-			return false;
-		}
-		if (mpTryCraftPrefixMethod == null || mpRecipeGetItemsForRecipeMethod == null)
-		{
-			throw new InvalidOperationException("Together's client craft API is unavailable.");
-		}
-		float resultCountBefore = CraftRunner.CountRecipeResult(camera.body, recipe);
-		if (!CanCraftNatively(camera.body, recipe))
-		{
-			return false;
-		}
-		ClientCraftRequest clientCraftRequest = new ClientCraftRequest
-		{
-			Body = camera.body,
-			Recipe = recipe,
-			ResultCountBefore = resultCountBefore
-		};
 		int selectedRecipe = camera.selectedRecipe;
 		try
 		{
-			camera.selectedRecipe = recipe.index;
-			pendingClientCraft = clientCraftRequest;
-			request = clientCraftRequest;
-			bypassCraftGuard = true;
-			bool flag;
-			try
+			object obj = craftRequestMethod.Invoke(null, new object[2] { camera, recipe });
+			if (obj == null)
 			{
-				flag = !(mpTryCraftPrefixMethod.Invoke(null, new object[1] { camera }) is bool flag2) || !flag2;
+				return NativeCraftState.Denied;
 			}
-			finally
+			object value = craftStepPendingField.GetValue(obj);
+			bool flag = default(bool);
+			int num;
+			if (value is bool)
 			{
-				bypassCraftGuard = false;
+				flag = (bool)value;
+				num = 1;
 			}
-			if (!flag)
+			else
 			{
-				pendingClientCraft = null;
-				request = null;
-				return false;
+				num = 0;
 			}
-			return true;
+			if (((uint)num & (flag ? 1u : 0u)) != 0)
+			{
+				return NativeCraftState.Pending;
+			}
+			value = craftStepAcceptedField.GetValue(obj);
+			bool flag2 = default(bool);
+			int num2;
+			if (value is bool)
+			{
+				flag2 = (bool)value;
+				num2 = 1;
+			}
+			else
+			{
+				num2 = 0;
+			}
+			return (((uint)num2 & (flag2 ? 1u : 0u)) != 0) ? NativeCraftState.Accepted : NativeCraftState.Denied;
 		}
-		catch
+		catch (Exception ex)
 		{
-			pendingClientCraft = null;
-			throw;
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)$"[Crafting] Together craft request failed for recipe {recipe.index}: {ex.GetBaseException().Message}");
+			}
+			return NativeCraftState.Denied;
 		}
 		finally
 		{
 			camera.selectedRecipe = selectedRecipe;
 		}
-	}
-
-	internal static bool CanCraftNatively(Body crafter, Recipe recipe)
-	{
-		try
-		{
-			return mpRecipeGetItemsForRecipeMethod.Invoke(null, new object[2] { crafter, recipe }) is IEnumerable source && source.Cast<object>().Any();
-		}
-		catch
-		{
-			return false;
-		}
-	}
-
-	public static bool CraftStepAsClient(PlayerCamera camera, Recipe recipe)
-	{
-		ClientCraftRequest request;
-		return TryRequestClientCraft(camera, recipe, out request);
 	}
 
 	public static bool TryAnnounceLiquidTransfer(Body body, Item targetItem, Item sourceItem, float ml)
@@ -1206,7 +1168,6 @@ internal static class MultiplayerCompat
 			saveSystemPatchType = FindType(assemblies, "Together.SavesystemPatch");
 			saveGamePatchType = FindType(assemblies, "Together.SaveSystem_SaveGame_MultiplayerPatch");
 			soundCannonTrackerType = FindType(assemblies, "Together.TrackerSoundCannon");
-			playerCameraTryCraftPatchType = FindType(assemblies, "Together.PlayerCamera_TryCraft_MultiplayerPatch");
 			bodyCombineItemsPatchType = FindType(assemblies, "Together.Body_CombineItems_MultiplayerPatch");
 			scavPlayerType = FindType(assemblies, "Together.ScavPlayer");
 			netBodyType = FindType(assemblies, "Together.NetBody");
@@ -1219,7 +1180,7 @@ internal static class MultiplayerCompat
 			transportSteamworksType = FindType(assemblies, "Together.TransportSteamworks");
 			kSteamType = FindType(assemblies, "Together.KSteam");
 			worldgenPatchType = FindType(assemblies, "Together.WorldGeneration_GenerateWorld_MultiplayerPatch");
-			worldgenPatchesType = FindType(assemblies, "Together.WorldgenPatches");
+			worldgenPatchesType = FindType(assemblies, "Together.WorldMP");
 			lastBeforeGenerationStateType = FindType(assemblies, "Together.LastBeforeGenerationState");
 			netExtensionsType = FindType(assemblies, "Together.MyLiteNetLibExtensions");
 			netClientIdType = FindType(assemblies, "Together.knetid");
@@ -1253,11 +1214,17 @@ internal static class MultiplayerCompat
 			itemContainerChangedField = itemSyncType?.GetField("ItemContainerChanged", BindingFlags.Static | BindingFlags.Public);
 			itemRecordInventoryStateMethod = itemSyncType?.GetMethod("RecordInvState", BindingFlags.Static | BindingFlags.Public);
 			itemLastInventoryStateField = itemSyncType?.GetField("Client_last_inventory_state", BindingFlags.Static | BindingFlags.NonPublic);
-			mpRecipeTryMakeMethod = playerCameraTryCraftPatchType?.GetMethod("Recipe_TryMake", BindingFlags.Static | BindingFlags.Public);
-			mpRecipeGetItemsForRecipeMethod = playerCameraTryCraftPatchType?.GetMethod("Recipe_GetItemsForRecipe", BindingFlags.Static | BindingFlags.Public);
-			mpTryCraftPrefixMethod = playerCameraTryCraftPatchType?.GetMethod("Prefix", BindingFlags.Static | BindingFlags.NonPublic);
+			craftCommitType = FindType(assemblies, "Together.CraftCommit");
+			craftRequestMethod = craftCommitType?.GetMethod("Request", BindingFlags.Static | BindingFlags.Public, null, new Type[2]
+			{
+				typeof(PlayerCamera),
+				typeof(Recipe)
+			}, null);
+			craftTryClickMethod = craftCommitType?.GetMethod("TryClick", BindingFlags.Static | BindingFlags.NonPublic, null, new Type[1] { typeof(PlayerCamera) }, null);
+			craftStepOpenField = craftCommitType?.GetField("_stepOpen", BindingFlags.Static | BindingFlags.NonPublic);
+			craftStepPendingField = craftRequestMethod?.ReturnType.GetField("Pending", BindingFlags.Instance | BindingFlags.Public);
+			craftStepAcceptedField = craftRequestMethod?.ReturnType.GetField("Accepted", BindingFlags.Instance | BindingFlags.Public);
 			mpClientPingField = clientMainType?.GetField("LOCAL_PING", BindingFlags.Static | BindingFlags.Public);
-			mpParseTaggedStringMethod = FindType(assemblies, "Together.Lang")?.GetMethod("ParseTaggedString", new Type[1] { typeof(string) });
 			mpLiquidCombineAnnounceMethod = bodyCombineItemsPatchType?.GetMethod("DoTheCombineAnnouncement", BindingFlags.Static | BindingFlags.Public);
 			netPlayerLookupMethod = scavPlayerType?.GetMethod("TryGetPlayerAndBodyFromClientId", BindingFlags.Static | BindingFlags.Public);
 			netServerKickMethod = netType?.GetMethod("Server_Kick", BindingFlags.Static | BindingFlags.Public);
@@ -1575,7 +1542,6 @@ internal static class MultiplayerCompat
 			cachedNetworkRunning = ReadStaticBool(netType, "IsRunning");
 			if (!cachedNetworkRunning)
 			{
-				pendingClientCraft = null;
 				cachedIsClient = false;
 				cachedIsServer = false;
 				cachedWorldGenerated = false;
@@ -1594,7 +1560,7 @@ internal static class MultiplayerCompat
 
 	private static void EnsureRuntimeHooksInstalled()
 	{
-		if (!pluginPresent || runtimeHooksInstalled)
+		if (!pluginPresent || runtimeHooksAttempted)
 		{
 			return;
 		}
@@ -1603,6 +1569,7 @@ internal static class MultiplayerCompat
 			AttachToMultiplayerInitialization();
 			return;
 		}
+		runtimeHooksAttempted = true;
 		RegisterSeedSyncReceiver();
 		RegisterSeedRequestReceiver();
 		RegisterClientInventoryRestoreRequestReceiver();
@@ -1615,7 +1582,7 @@ internal static class MultiplayerCompat
 		PatchSeedAnnouncementHooks();
 		PatchHostSaveLoadHooks();
 		PatchPingSuppressionHooks();
-		PatchCraftTryMakeGuard();
+		PatchCraftClickGuard();
 		runtimeHooksInstalled = seedSyncRegistered && seedRequestRegistered && clientInventoryRestoreRequestRegistered && clientInventoryRestoreResultRegistered && clientSpawnRequestRegistered && clientSpawnResultRegistered && clientHealRequestRegistered && clientHealResultRegistered && clientPrepareReconnectForHostLoadRegistered && seedAnnouncementHooksPatched && hostSaveLoadHooksPatched && pingSuppressionHooksPatched;
 		if (!runtimeHooksInstalled)
 		{
@@ -1623,6 +1590,11 @@ internal static class MultiplayerCompat
 			if (logger != null)
 			{
 				logger.LogWarning((object)"[Together] One or more QoL named-message routes could not be registered; affected multiplayer features will fail closed.");
+			}
+			ManualLogSource logger2 = Logger;
+			if (logger2 != null)
+			{
+				logger2.LogDebug((object)($"[Together] Hook status: seedSync={seedSyncRegistered} seedReq={seedRequestRegistered} " + $"invRestoreReq={clientInventoryRestoreRequestRegistered} invRestoreRes={clientInventoryRestoreResultRegistered} " + $"spawnReq={clientSpawnRequestRegistered} spawnRes={clientSpawnResultRegistered} " + $"healReq={clientHealRequestRegistered} healRes={clientHealResultRegistered} " + $"prepReconn={clientPrepareReconnectForHostLoadRegistered} seedAnnounce={seedAnnouncementHooksPatched} " + $"hostSaveLoad={hostSaveLoadHooksPatched} pingSuppress={pingSuppressionHooksPatched}"));
 			}
 		}
 	}
@@ -2184,67 +2156,37 @@ internal static class MultiplayerCompat
 		}
 	}
 
-	private static void PatchCraftTryMakeGuard()
+	private static void PatchCraftClickGuard()
 	{
 		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0064: Expected O, but got Unknown
-		if (craftTryMakeGuardPatched || !pluginPresent || mpRecipeTryMakeMethod == null)
+		if (craftClickGuardPatched || !pluginPresent || craftTryClickMethod == null)
 		{
 			return;
 		}
-		MethodInfo method = typeof(MultiplayerCompat).GetMethod("MpRecipeTryMakeGuardPrefix", BindingFlags.Static | BindingFlags.NonPublic);
+		MethodInfo method = typeof(MultiplayerCompat).GetMethod("CraftTryClickGuardPrefix", BindingFlags.Static | BindingFlags.NonPublic);
 		if (method == null)
 		{
 			return;
 		}
 		try
 		{
-			harmony.Patch((MethodBase)mpRecipeTryMakeMethod, new HarmonyMethod(method), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
-			craftTryMakeGuardPatched = true;
+			harmony.Patch((MethodBase)craftTryClickMethod, new HarmonyMethod(method), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
+			craftClickGuardPatched = true;
 		}
 		catch (Exception ex)
 		{
 			ManualLogSource logger = Logger;
 			if (logger != null)
 			{
-				logger.LogWarning((object)("Failed to install the client crafting guard: " + ex.Message));
+				logger.LogWarning((object)("Failed to install the crafting click guard: " + ex.Message));
 			}
 		}
 	}
 
-	private static bool MpRecipeTryMakeGuardPrefix(Body crafter, Recipe craftingtable, ref List<Item> items_to_craft_with, ref bool __result)
+	private static bool CraftTryClickGuardPrefix()
 	{
-		if ((Object)(object)crafter == (Object)null || craftingtable == null)
-		{
-			__result = false;
-			return false;
-		}
-		if (bypassCraftGuard)
-		{
-			return true;
-		}
-		if (items_to_craft_with == null && (((CraftRunner.IsClientCraftRunning || Time.frameCount == handledClientCraftFrame) && (Object)(object)crafter == (Object)(object)PlayerCamera.main?.body) || (craftingtable.index == lastExplicitCraftRecipeIndex && Time.frameCount == lastExplicitCraftFrame)))
-		{
-			__result = false;
-			return false;
-		}
-		if (items_to_craft_with == null)
-		{
-			try
-			{
-				items_to_craft_with = mpRecipeGetItemsForRecipeMethod?.Invoke(null, new object[2] { crafter, craftingtable }) as List<Item>;
-			}
-			catch
-			{
-				items_to_craft_with = null;
-			}
-		}
-		if (items_to_craft_with == null || items_to_craft_with.Any((Item item) => (Object)(object)item == (Object)null))
-		{
-			__result = false;
-			return false;
-		}
-		return true;
+		return handledCraftFrame != Time.frameCount;
 	}
 
 	private static bool PointFingerAtSuppressionPrefix(object __instance)
@@ -3587,103 +3529,6 @@ internal static class MultiplayerCompat
 		}
 		position = new Vector2(result, result2);
 		return true;
-	}
-
-	private static bool TryExecuteMpRecipe(Body crafter, Recipe recipe)
-	{
-		if ((Object)(object)crafter == (Object)null || recipe == null || mpRecipeTryMakeMethod == null || mpRecipeGetItemsForRecipeMethod == null)
-		{
-			return false;
-		}
-		try
-		{
-			object obj = mpRecipeGetItemsForRecipeMethod.Invoke(null, new object[2] { crafter, recipe });
-			if (obj == null)
-			{
-				return false;
-			}
-			object obj2 = mpRecipeTryMakeMethod.Invoke(null, new object[3] { crafter, recipe, obj });
-			bool flag = default(bool);
-			int num;
-			if (obj2 is bool)
-			{
-				flag = (bool)obj2;
-				num = 1;
-			}
-			else
-			{
-				num = 0;
-			}
-			bool flag2 = (byte)((uint)num & (flag ? 1u : 0u)) != 0;
-			if (flag2)
-			{
-				recipe.hasMadeBefore = true;
-				lastExplicitCraftFrame = Time.frameCount;
-				lastExplicitCraftRecipeIndex = recipe.index;
-			}
-			return flag2;
-		}
-		catch (Exception ex)
-		{
-			ManualLogSource logger = Logger;
-			if (logger != null)
-			{
-				logger.LogWarning((object)$"[Crafting] Together recipe execution failed for recipe {recipe.index}: {ex.GetBaseException()}");
-			}
-			return false;
-		}
-	}
-
-	private static bool TryExecuteMpRecipeAndAnnounce(PlayerCamera camera, Body crafter, Recipe recipe)
-	{
-		if ((Object)(object)camera == (Object)null || (Object)(object)crafter == (Object)null || recipe == null)
-		{
-			return false;
-		}
-		int selectedRecipe = camera.selectedRecipe;
-		try
-		{
-			camera.selectedRecipe = recipe.index;
-			if (!TryExecuteMpRecipe(crafter, recipe))
-			{
-				return false;
-			}
-			if (IsServer)
-			{
-				AnnounceCraftSound(crafter, 0u);
-			}
-			return true;
-		}
-		finally
-		{
-			camera.selectedRecipe = selectedRecipe;
-		}
-	}
-
-	private static void AnnounceCraftSound(Body crafter, uint senderClientId)
-	{
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
-		EnsureResolved();
-		if (serverMainType == null || (Object)(object)crafter == (Object)null)
-		{
-			return;
-		}
-		try
-		{
-			object obj = CoerceClientIdObject(senderClientId);
-			MethodInfo methodInfo = FindStaticMethod(serverMainType, "GetListOfClientIdsExceptThis", new Type[1] { netClientIdType });
-			MethodInfo methodInfo2 = serverMainType.GetMethods(BindingFlags.Static | BindingFlags.Public).FirstOrDefault((MethodInfo method) => method.Name == "Server_AnnounceSound" && method.GetParameters().Length == 3);
-			object obj2 = methodInfo?.Invoke(null, new object[1] { obj });
-			methodInfo2?.Invoke(null, new object[3]
-			{
-				((Component)crafter).transform.position,
-				"combine",
-				obj2
-			});
-		}
-		catch
-		{
-		}
 	}
 
 	private static bool SendNamedStringToClients(string messageName, string payload)

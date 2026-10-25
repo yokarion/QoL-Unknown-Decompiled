@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace QoL_Unknown;
 
@@ -50,4 +51,6 @@ public class SaveMetadata
 	public string KrokoshaGameVersion;
 
 	public string LocalPersistentPlayerId;
+
+	public List<SerialMod> Mods;
 }

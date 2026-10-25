@@ -139,6 +139,16 @@ internal static class QoLModSettings
 			PlayerPrefs.SetInt("Setting_BestToolByEfficiency", value ? 1 : 0);
 			PlayerPrefs.Save();
 		}));
+		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.game.additionalrecipes", "Additional Recipe Options", "Shows the bookmark and uncrafted recipe buttons in the crafting menu.", (SettingCategory)2, defaultValue: true, delegate(bool value)
+		{
+			PlayerPrefs.SetInt("qol_craft_uncrafted", value ? 1 : 0);
+			PlayerPrefs.Save();
+		}));
+		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.game.containerscroll", "Container Scroll", "Adds scroll wheel support to containers.", (SettingCategory)2, defaultValue: true, delegate(bool value)
+		{
+			PlayerPrefs.SetInt("qol_ui_scroll", value ? 1 : 0);
+			PlayerPrefs.Save();
+		}));
 		RegisterStartingStat("qol.game.skillallocation.str", "Starting STR", "StartSTR", 9);
 		RegisterStartingStat("qol.game.skillallocation.res", "Starting RES", "StartRES", 8);
 		RegisterStartingStat("qol.game.skillallocation.int", "Starting INT", "StartINT", 7);
@@ -372,7 +382,7 @@ internal static class QoLModSettings
 
 	private static void BindEntityDensityRow(GameObject row)
 	{
-		BindDensityRow(row, EntitySpawnManager.KnownEntities, "SelectedEntityDensityTarget", (string entity) => entity, (string entity) => EntitySpawnManager.GetMultiplier(entity), delegate(string entity, float value)
+		BindDensityRow(row, EntitySpawnManager.GetAllEntities(), "SelectedEntityDensityTarget", (string entity) => entity, (string entity) => EntitySpawnManager.GetMultiplier(entity), delegate(string entity, float value)
 		{
 			EntitySpawnManager.SetMultiplier(entity, value);
 		}, 0f, 5f, FormatPercentExtended);
@@ -380,7 +390,7 @@ internal static class QoLModSettings
 
 	private static void BindStructureDensityRow(GameObject row)
 	{
-		BindDensityRow(row, StructureSpawnManager.KnownStructures, "SelectedStructureDensityTarget", (string structure) => Path.GetFileName(structure), (string structure) => StructureSpawnManager.GetMultiplier(structure), delegate(string structure, float value)
+		BindDensityRow(row, StructureSpawnManager.GetAllStructures(), "SelectedStructureDensityTarget", (string structure) => structure.Substring(structure.LastIndexOf('/') + 1), (string structure) => StructureSpawnManager.GetMultiplier(structure), delegate(string structure, float value)
 		{
 			StructureSpawnManager.SetMultiplier(structure, value);
 		}, 0f, 3f, (float value) => FormatPercentExtended(value, 3f));
@@ -477,13 +487,13 @@ internal static class QoLModSettings
 
 	private static void BindSoundOverrideRow(GameObject row)
 	{
-		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0132: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01bb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c5: Expected O, but got Unknown
-		//IL_015d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0167: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01cc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d6: Expected O, but got Unknown
+		//IL_016e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0178: Unknown result type (might be due to invalid IL or missing references)
+		//IL_018f: Unknown result type (might be due to invalid IL or missing references)
 		Slider slider = ((Component)row.transform.GetChild(1)).GetComponent<Slider>();
 		if ((Object)(object)slider == (Object)null)
 		{
@@ -491,10 +501,11 @@ internal static class QoLModSettings
 		}
 		PrepareInlineSelectorRow(row);
 		SoundLibrary.Load();
+		List<string> clipNames = SoundLibrary.AllClipNames.ToList();
 		TMP_Dropdown val = CreateInlineDropdown(row.transform);
 		val.ClearOptions();
 		List<string> list = new List<string> { "Select..." };
-		list.AddRange(SoundLibrary.AllClipNames);
+		list.AddRange(clipNames);
 		val.AddOptions(list);
 		slider.minValue = 0f;
 		slider.maxValue = 1.2f;
@@ -520,13 +531,13 @@ internal static class QoLModSettings
 		((UnityEventBase)playButton.onClick).RemoveAllListeners();
 		((UnityEvent)playButton.onClick).AddListener((UnityAction)delegate
 		{
-			//IL_0054: Unknown result type (might be due to invalid IL or missing references)
+			//IL_002c: Unknown result type (might be due to invalid IL or missing references)
 			if (!string.IsNullOrEmpty(currentSoundOriginal))
 			{
-				AudioClip val2 = Resources.Load<AudioClip>("Sounds/" + currentSoundOriginal) ?? Resources.Load<AudioClip>("Sounds/" + currentSoundOriginal.ToLowerInvariant());
-				if ((Object)(object)val2 != (Object)null)
+				AudioClip previewClip = SoundLibrary.GetPreviewClip(currentSoundOriginal);
+				if ((Object)(object)previewClip != (Object)null)
 				{
-					Sound.Play(val2, Vector2.zero, true, false, (Transform)null, 1f, 1f, true, false);
+					Sound.Play(previewClip, Vector2.zero, true, false, (Transform)null, 1f, 1f, true, false);
 				}
 			}
 		});
@@ -534,7 +545,7 @@ internal static class QoLModSettings
 		((UnityEvent<int>)(object)val.onValueChanged).AddListener((UnityAction<int>)delegate(int index)
 		{
 			((UnityEventBase)slider.onValueChanged).RemoveAllListeners();
-			if (index <= 0 || index - 1 >= SoundLibrary.AllClipNames.Count)
+			if (index <= 0 || index - 1 >= clipNames.Count)
 			{
 				currentSound = null;
 				currentSoundOriginal = null;
@@ -548,7 +559,7 @@ internal static class QoLModSettings
 			}
 			else
 			{
-				currentSoundOriginal = SoundLibrary.AllClipNames[index - 1];
+				currentSoundOriginal = clipNames[index - 1];
 				currentSound = currentSoundOriginal.ToLowerInvariant();
 				float num = AudioSafetyPatcher.GetOverride(currentSound);
 				((Selectable)slider).interactable = true;

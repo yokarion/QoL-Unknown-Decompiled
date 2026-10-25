@@ -19,7 +19,9 @@ public static class QoLModuleManager
 		Register("qol_vis_los", "Line of Sight Fix", "Adjusts the LOS shader to not outline blocks in the dark", defaultOn: true);
 		Register("qol_craft_bulk", "Bulk Crafting", "Adds craft amounts and auto-crafts.", CraftingModule.Initialize, defaultOn: true);
 		Register("qol_ui_preview", "Crafting Preview", "Enhances the preview of items in the crafting menu.", CraftingPreviewPatcher.Initialize, defaultOn: true);
+		Register("qol_craft_uncrafted", "Additional Recipe Options", "Shows the bookmark and uncrafted recipe buttons in the crafting menu.", UncraftedCraftFilter.Initialize, defaultOn: true);
 		Register("qol_ui_scroll", "Container Scroll", "Adds scroll wheel support to containers.", ContainerScrollPatcher.Initialize, defaultOn: true);
+		Register("qol_ui_ctrlitemlabels", "Ctrl Item Labels", "Keeps the Ctrl-held item labels steady and shows up to 64 nearby items instead of 16.", CtrlItemLabelPatcher.Initialize, defaultOn: true);
 		Register("qol_inv_stacking", "Container Stacking", "Groups duplicate items in containers. Hover to see each item and its condition.", ContainerStackingPatcher.Initialize, defaultOn: true);
 		Register("qol_inv_sortbtn", "Sort Button", "Adds a UI button for sorting.", InventorySortButtonPatcher.Initialize, defaultOn: true);
 		Register("qol_inv_quickstash", "Quick Stash", "Use the Quick Stash keybind to insta-pickup items.", QuickStashPatcher.Initialize, defaultOn: true);

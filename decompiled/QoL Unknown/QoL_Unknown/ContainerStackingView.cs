@@ -13,6 +13,8 @@ internal sealed class ContainerStackingView : MonoBehaviour
 	{
 		internal string Id;
 
+		internal string BaseId;
+
 		internal readonly List<Slot> Slots = new List<Slot>();
 
 		internal bool Expanded;
@@ -84,14 +86,14 @@ internal sealed class ContainerStackingView : MonoBehaviour
 
 	internal void Rebuild(PlayerCamera owner)
 	{
-		//IL_0233: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0238: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0240: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0245: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0272: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0277: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02b8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0270: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0275: Unknown result type (might be due to invalid IL or missing references)
+		//IL_027d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0282: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02af: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02b4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02f0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02f5: Unknown result type (might be due to invalid IL or missing references)
 		bool flag = (Object)(object)container != (Object)null && (Object)(object)container == (Object)(object)owner.currentContainer;
 		Dictionary<string, StackGroup> dictionary = new Dictionary<string, StackGroup>(groupsById, StringComparer.Ordinal);
 		Dictionary<Item, Slot> dictionary2 = new Dictionary<Item, Slot>(slotsByItem);
@@ -126,11 +128,17 @@ internal sealed class ContainerStackingView : MonoBehaviour
 				continue;
 			}
 			string text = refItem.id ?? string.Empty;
+			string baseId = text;
+			if ((Object)(object)((Component)refItem).GetComponent<WaterContainerItem>() != (Object)null)
+			{
+				text = text + "#" + ((Object)refItem).GetInstanceID();
+			}
 			if (!groupsById.TryGetValue(text, out var value))
 			{
 				value = new StackGroup
 				{
-					Id = text
+					Id = text,
+					BaseId = baseId
 				};
 				if (flag && dictionary.TryGetValue(text, out var value2))
 				{
@@ -352,7 +360,7 @@ internal sealed class ContainerStackingView : MonoBehaviour
 		{
 			foreach (Slot slot in group.Slots)
 			{
-				if ((Object)(object)slot.Item == (Object)null || (Object)(object)slot.Button == (Object)null || (slot.Item.id ?? string.Empty) != group.Id)
+				if ((Object)(object)slot.Item == (Object)null || (Object)(object)slot.Button == (Object)null || (slot.Item.id ?? string.Empty) != group.BaseId)
 				{
 					return true;
 				}

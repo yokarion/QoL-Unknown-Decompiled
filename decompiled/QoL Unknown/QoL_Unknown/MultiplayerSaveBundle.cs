@@ -285,7 +285,8 @@ internal static class MultiplayerSaveBundle
 			RTASeconds = (float)TimerMenuPatcher.GetRTA().TotalSeconds,
 			LoadedFromMenu = SaveSystemPatcher.LoadedFromMenu,
 			SavedDuringMultiplayer = MultiplayerCompat.IsNetworkRunning,
-			SaveKind = "Singleplayer"
+			SaveKind = "Singleplayer",
+			Mods = ModManagementSettings.CaptureLoadedMods()
 		};
 	}
 

@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Reflection;
-using System.Reflection.Emit;
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
@@ -16,6 +13,8 @@ internal class EntitySpawnPatcher
 		EntitySpawnManager.LoadMultipliers();
 		Harmony val = new Harmony("org.bepinex.plugins.qol.entityspawn");
 		val.PatchAll(typeof(EntitySpawnPatcher));
+		val.PatchAll(typeof(ElderThornbackSpawnPatcher));
+		CuCoreLibSpawnCompat.Initialize(val, logger);
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "DistributeEntities")]
@@ -31,39 +30,5 @@ internal class EntitySpawnPatcher
 				maxPerChunk *= multiplier;
 			}
 		}
-	}
-
-	[HarmonyPatch(typeof(WorldGeneration), "WorldPlaceEntities")]
-	[HarmonyTranspiler]
-	private static IEnumerable<CodeInstruction> WorldPlaceEntities_Transpiler(IEnumerable<CodeInstruction> instructions)
-	{
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0096: Expected O, but got Unknown
-		List<CodeInstruction> list = new List<CodeInstruction>(instructions);
-		for (int i = 0; i < list.Count; i++)
-		{
-			if (!(list[i].opcode == OpCodes.Ldstr) || !(list[i].operand as string == "thornbackelder"))
-			{
-				continue;
-			}
-			int num = i - 1;
-			while (num >= 0 && num > i - 30)
-			{
-				if (list[num].opcode == OpCodes.Ldc_I4_3)
-				{
-					list[num] = new CodeInstruction(OpCodes.Call, (object)typeof(EntitySpawnPatcher).GetMethod("GetElderThornbackCount", BindingFlags.Static | BindingFlags.NonPublic));
-					break;
-				}
-				num--;
-			}
-			break;
-		}
-		return list;
-	}
-
-	private static int GetElderThornbackCount()
-	{
-		float multiplier = EntitySpawnManager.GetMultiplier("thornbackelder");
-		return Mathf.Max(0, Mathf.RoundToInt(3f * multiplier));
 	}
 }

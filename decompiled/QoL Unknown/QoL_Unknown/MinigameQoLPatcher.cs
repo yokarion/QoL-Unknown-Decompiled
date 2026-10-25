@@ -174,6 +174,39 @@ internal class MinigameQoLPatcher
 		return false;
 	}
 
+	[HarmonyPatch(typeof(MinigameBase), "StartMinigame")]
+	[HarmonyPriority(800)]
+	[HarmonyBefore(new string[] { "CasualtiesMP" })]
+	[HarmonyPrefix]
+	private static void MinigameBase_StartMinigame_Prefix(MinigameBase __instance, Minigame minigame, ref Item item)
+	{
+		if ((Object)(object)item != (Object)null || (Object)(object)__instance == (Object)null || (Object)(object)__instance.body == (Object)null)
+		{
+			return;
+		}
+		ShrapnelMinigame val = (ShrapnelMinigame)(object)((minigame is ShrapnelMinigame) ? minigame : null);
+		if (val != null && !val.hasTweezers)
+		{
+			Item val2 = FindByIdEverywhere(__instance.body, "tweezers");
+			if ((Object)(object)val2 != (Object)null)
+			{
+				val.hasTweezers = true;
+				item = val2;
+			}
+			return;
+		}
+		DislocationMinigame val3 = (DislocationMinigame)(object)((minigame is DislocationMinigame) ? minigame : null);
+		if (val3 != null && !val3.hasWrench)
+		{
+			Item val4 = FindByIdEverywhere(__instance.body, "wrench");
+			if ((Object)(object)val4 != (Object)null)
+			{
+				val3.hasWrench = true;
+				item = val4;
+			}
+		}
+	}
+
 	private static Item FindByIdEverywhere(Body body, string id)
 	{
 		for (int i = 0; i < body.slots.Length; i++)

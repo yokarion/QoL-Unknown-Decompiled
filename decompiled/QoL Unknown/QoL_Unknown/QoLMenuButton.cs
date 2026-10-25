@@ -21,9 +21,9 @@ public class QoLMenuButton : MonoBehaviour
 	{
 		get
 		{
-			if ((Object)(object)PreRunScript.instance != (Object)null && !PreRunScript.instance.runSettingsScreen.activeSelf && !PreRunScript.instance.contentWarning.activeSelf)
+			if ((Object)(object)PreRunScript.instance != (Object)null && !PreRunScript.instance.runSettingsScreen.activeSelf && !PreRunScript.instance.contentWarning.activeSelf && !PreRunScript.instance.tutorialWarning.activeSelf && !ScrollableText.textExists && !Object.op_Implicit((Object)(object)SettingsMenu.instance))
 			{
-				return ScrollableText.textExists;
+				return PreRunScript.instance.creditsScreen.activeSelf;
 			}
 			return true;
 		}

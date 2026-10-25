@@ -53,6 +53,10 @@ internal static class CraftingModule
 
 	private static PlayerCamera refreshScheduledFor;
 
+	private static readonly Color FavouriteBorderDim = new Color(0.45f, 0.42f, 0.2f);
+
+	private static readonly Color FavouriteBorderBright = CraftFavourites.BookmarkColor;
+
 	public static void Initialize(ManualLogSource logger)
 	{
 		Logger = logger;
@@ -117,10 +121,10 @@ internal static class CraftingModule
 
 	[HarmonyPatch(typeof(Recipe), "GetItemsForRecipe")]
 	[HarmonyPrefix]
-	private static bool GetItemsForRecipe_Prefix(Recipe __instance, ref List<Item> __result)
+	private static bool GetItemsForRecipe_Prefix(Recipe __instance, ref List<Item> __result, bool __runOriginal)
 	{
 		Body val = PlayerCamera.main?.body;
-		if (__instance?.items != null && !((Object)(object)val == (Object)null))
+		if (__runOriginal && __instance?.items != null && !((Object)(object)val == (Object)null))
 		{
 			RecipeResult result = __instance.result;
 			if (result == null || !result.isLiquid)
@@ -129,15 +133,15 @@ internal static class CraftingModule
 				return false;
 			}
 		}
-		return true;
+		return __runOriginal;
 	}
 
 	[HarmonyPatch(typeof(Recipe), "GetItemsForRecipeThorough")]
 	[HarmonyPrefix]
-	private static bool GetItemsForRecipeThorough_Prefix(Recipe __instance, ref List<Item> __result)
+	private static bool GetItemsForRecipeThorough_Prefix(Recipe __instance, ref List<Item> __result, bool __runOriginal)
 	{
 		Body val = PlayerCamera.main?.body;
-		if (__instance?.items != null && !((Object)(object)val == (Object)null))
+		if (__runOriginal && __instance?.items != null && !((Object)(object)val == (Object)null))
 		{
 			RecipeResult result = __instance.result;
 			if (result == null || !result.isLiquid)
@@ -146,7 +150,7 @@ internal static class CraftingModule
 				return false;
 			}
 		}
-		return true;
+		return __runOriginal;
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "TryCraft")]
@@ -155,31 +159,30 @@ internal static class CraftingModule
 	[HarmonyPriority(800)]
 	private static bool TryCraft_Prefix(PlayerCamera __instance)
 	{
+		bool flag = HandleCraftClick(__instance);
+		if (!flag)
+		{
+			MultiplayerCompat.MarkCraftHandled();
+		}
+		return flag;
+	}
+
+	private static bool HandleCraftClick(PlayerCamera __instance)
+	{
 		if ((Object)(object)__instance == (Object)null || !IsRecipeSelected(__instance))
 		{
 			return false;
 		}
-		bool flag = MultiplayerCompat.IsActive && MultiplayerCompat.IsClient;
-		if (flag)
+		bool isActive = MultiplayerCompat.IsActive;
+		if (isActive && CraftRunner.IsMultiplayerCraftRunning)
 		{
-			if (CraftRunner.IsClientCraftRunning)
-			{
-				CraftRunner.CancelClientCraft();
-				if ((Object)(object)__instance != (Object)null)
-				{
-					__instance.DoAlert("Autocraft cancelled. An already-sent craft may still finish.", false);
-				}
-				return false;
-			}
-			if ((Object)(object)__instance != (Object)null && MultiplayerCompat.HasPendingClientCraft(__instance.body))
-			{
-				__instance.DoAlert("Still waiting for the previous craft from the host; no new request sent.", false);
-				return false;
-			}
+			CraftRunner.CancelMultiplayerCraft();
+			__instance.DoAlert("Autocraft cancelled. An already-sent craft may still finish.", false);
+			return false;
 		}
 		Recipe val = Recipes.recipes[__instance.selectedRecipe];
 		EnsureAmountBelongsToRecipe(__instance.selectedRecipe);
-		if (flag && selectedAmount == 1)
+		if (isActive && selectedAmount == 1)
 		{
 			RecipeResult result = val.result;
 			if (result != null && result.isLiquid)
@@ -190,13 +193,9 @@ internal static class CraftingModule
 		CraftInventory inventory = LiveInventory(__instance.body);
 		CraftPlan craftPlan = CraftPlanner.Build(val, selectedAmount, inventory);
 		selectedAmount = Mathf.Max(1, craftPlan.RequestedAmount);
-		if (flag && craftPlan.TotalSteps <= 1 && !craftPlan.HasPreparations)
+		if (isActive && craftPlan.TotalSteps <= 1 && !craftPlan.HasPreparations)
 		{
 			return true;
-		}
-		if (flag)
-		{
-			MultiplayerCompat.MarkClientCraftHandled();
 		}
 		if (!CraftRunner.Run(__instance, craftPlan))
 		{
@@ -204,16 +203,6 @@ internal static class CraftingModule
 			__instance.RefreshRecipeList();
 		}
 		return false;
-	}
-
-	[HarmonyPatch(typeof(PlayerCamera), "DoAlert")]
-	[HarmonyPostfix]
-	private static void DoAlert_Postfix(PlayerCamera __instance, string text)
-	{
-		if ((Object)(object)__instance == (Object)(object)PlayerCamera.main)
-		{
-			MultiplayerCompat.ObserveClientCraftAlert(text);
-		}
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "RefreshRecipeList")]
@@ -278,9 +267,9 @@ internal static class CraftingModule
 		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00ff: Unknown result type (might be due to invalid IL or missing references)
 		//IL_010b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0240: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0242: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0285: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02af: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02b1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02f4: Unknown result type (might be due to invalid IL or missing references)
 		if (RecipeObjectsField?.GetValue(camera) is List<GameObject> list)
 		{
 			foreach (GameObject item in list)
@@ -309,42 +298,61 @@ internal static class CraftingModule
 		}
 		List<Recipe> list3 = new List<Recipe>();
 		List<Recipe> list4 = new List<Recipe>();
+		List<Recipe> list5 = new List<Recipe>();
+		List<Recipe> list6 = new List<Recipe>();
 		foreach (Recipe item2 in enumerable)
 		{
-			if (CraftPlanner.IsCraftable(item2, inventory))
+			bool flag = CraftPlanner.IsCraftable(item2, inventory);
+			bool flag2 = CraftFavourites.IsFavourited(item2);
+			if (flag2 && flag)
 			{
 				list3.Add(item2);
 			}
-			else
+			else if (flag2)
 			{
 				list4.Add(item2);
 			}
+			else if (flag)
+			{
+				list5.Add(item2);
+			}
+			else
+			{
+				list6.Add(item2);
+			}
 		}
-		list3.AddRange(list4);
-		for (int num = 0; num < list3.Count; num++)
+		List<Recipe> list7 = new List<Recipe>();
+		list7.AddRange(list3);
+		list7.AddRange(list4);
+		list7.AddRange(list5);
+		list7.AddRange(list6);
+		for (int num = 0; num < list7.Count; num++)
 		{
-			list2.Add(CreateRecipeRow(camera, list3[num], num, availableColor, unavailableColor));
+			list2.Add(CreateRecipeRow(camera, list7[num], num, availableColor, unavailableColor));
 		}
-		camera.recipeListContent.sizeDelta = new Vector2(1f, (float)list3.Count * 64f);
+		camera.recipeListContent.sizeDelta = new Vector2(1f, (float)list7.Count * 64f);
 		RecipeItemFilterField?.SetValue(camera, null);
 		camera.RefreshCurrentlySelectedRecipe();
 	}
 
 	private static GameObject CreateRecipeRow(PlayerCamera camera, Recipe recipe, int row, Color availableColor, Color unavailableColor)
 	{
-		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0130: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0155: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015f: Expected O, but got Unknown
+		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0102: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0173: Unknown result type (might be due to invalid IL or missing references)
+		//IL_017d: Expected O, but got Unknown
 		bool flag = CraftPlanner.IsCraftable(recipe, LiveInventory(camera.body));
+		bool flag2 = CraftFavourites.IsFavourited(recipe);
 		GameObject val = Utils.Create("Special/RecipeBox", (Transform)(object)camera.recipeListContent);
 		val.GetComponent<RectTransform>().anchoredPosition = new Vector2(-9f, (float)(-row * 64));
 		TextMeshProUGUI component = ((Component)val.transform.GetChild(0)).GetComponent<TextMeshProUGUI>();
@@ -360,7 +368,7 @@ internal static class CraftingModule
 		component3.sprite = item;
 		((Graphic)component3).color = item2;
 		((Component)component3).GetComponent<RectTransform>().sizeDelta = PlayerCamera.ImageSizeDelta((Texture)(object)item.texture, 3f, 42f);
-		((Graphic)val.GetComponent<Image>()).color = (flag ? availableColor : unavailableColor);
+		((Graphic)val.GetComponent<Image>()).color = ((!flag2) ? (flag ? availableColor : unavailableColor) : (flag ? FavouriteBorderBright : FavouriteBorderDim));
 		int recipeIndex = recipe.index;
 		((UnityEvent)val.GetComponent<Button>().onClick).AddListener((UnityAction)delegate
 		{

@@ -123,29 +123,35 @@ internal static class ModManagementSettings
 
 		public static Func<ModEntry, ModPresetEntry> _003C_003E9__38_1;
 
-		public static UnityAction _003C_003E9__41_0;
+		public static Func<KeyValuePair<string, PluginInfo>, string> _003C_003E9__40_0;
 
-		public static UnityAction _003C_003E9__42_0;
+		public static Func<SerialMod, bool> _003C_003E9__41_0;
 
-		public static Func<KeyValuePair<string, PluginInfo>, string> _003C_003E9__57_1;
+		public static Func<SerialMod, string> _003C_003E9__41_1;
 
-		public static Comparison<ModEntry> _003C_003E9__57_0;
+		public static UnityAction _003C_003E9__47_0;
 
-		public static Func<string, string> _003C_003E9__63_0;
+		public static UnityAction _003C_003E9__48_0;
 
-		public static Func<ModEntry, bool> _003C_003E9__74_0;
+		public static Func<KeyValuePair<string, PluginInfo>, string> _003C_003E9__63_1;
 
-		public static Func<Button, bool> _003C_003E9__77_0;
+		public static Comparison<ModEntry> _003C_003E9__63_0;
 
-		public static Func<CachedVersionEntry, bool> _003C_003E9__88_0;
+		public static Func<string, string> _003C_003E9__69_0;
 
-		public static Func<CachedVersionEntry, string> _003C_003E9__88_1;
+		public static Func<ModEntry, bool> _003C_003E9__80_0;
 
-		public static Func<IGrouping<string, CachedVersionEntry>, CachedVersionEntry> _003C_003E9__88_2;
+		public static Func<Button, bool> _003C_003E9__83_0;
 
-		public static Func<CachedVersionEntry, string> _003C_003E9__88_3;
+		public static Func<CachedVersionEntry, bool> _003C_003E9__94_0;
 
-		public static Func<char, char> _003C_003E9__89_0;
+		public static Func<CachedVersionEntry, string> _003C_003E9__94_1;
+
+		public static Func<IGrouping<string, CachedVersionEntry>, CachedVersionEntry> _003C_003E9__94_2;
+
+		public static Func<CachedVersionEntry, string> _003C_003E9__94_3;
+
+		public static Func<char, char> _003C_003E9__95_0;
 
 		internal bool _003CRefreshPresetButtons_003Eb__31_1(ModPresetEntry entry)
 		{
@@ -182,62 +188,77 @@ internal static class ModManagementSettings
 			};
 		}
 
-		internal void _003CPrepareSpawnedRow_003Eb__41_0()
-		{
-			Application.OpenURL("https://www.nexusmods.com/scavprototype/mods");
-		}
-
-		internal void _003CEnsureOpenNexusButton_003Eb__42_0()
-		{
-			Application.OpenURL("https://www.nexusmods.com/scavprototype/mods");
-		}
-
-		internal string _003CRebuildCache_003Eb__57_1(KeyValuePair<string, PluginInfo> pair)
+		internal string _003CCaptureLoadedMods_003Eb__40_0(KeyValuePair<string, PluginInfo> pair)
 		{
 			return pair.Value.Metadata.Name;
 		}
 
-		internal int _003CRebuildCache_003Eb__57_0(ModEntry a, ModEntry b)
+		internal bool _003CDescribeMods_003Eb__41_0(SerialMod mod)
+		{
+			return mod != null;
+		}
+
+		internal string _003CDescribeMods_003Eb__41_1(SerialMod mod)
+		{
+			return mod.Name;
+		}
+
+		internal void _003CPrepareSpawnedRow_003Eb__47_0()
+		{
+			Application.OpenURL("https://www.nexusmods.com/scavprototype/mods");
+		}
+
+		internal void _003CEnsureOpenNexusButton_003Eb__48_0()
+		{
+			Application.OpenURL("https://www.nexusmods.com/scavprototype/mods");
+		}
+
+		internal string _003CRebuildCache_003Eb__63_1(KeyValuePair<string, PluginInfo> pair)
+		{
+			return pair.Value.Metadata.Name;
+		}
+
+		internal int _003CRebuildCache_003Eb__63_0(ModEntry a, ModEntry b)
 		{
 			return string.Compare(a?.Name, b?.Name, StringComparison.OrdinalIgnoreCase);
 		}
 
-		internal string _003CGetNexusAutofillEntries_003Eb__63_0(string value)
+		internal string _003CGetNexusAutofillEntries_003Eb__69_0(string value)
 		{
 			return value;
 		}
 
-		internal bool _003CHasVisibleEntries_003Eb__74_0(ModEntry entry)
+		internal bool _003CHasVisibleEntries_003Eb__80_0(ModEntry entry)
 		{
 			return entry != null && !entry.IsSelf && !entry.IsCore;
 		}
 
-		internal bool _003CFindResetButton_003Eb__77_0(Button button)
+		internal bool _003CFindResetButton_003Eb__83_0(Button button)
 		{
 			return (Object)(object)button != (Object)null && string.Equals(((Object)button).name, "Reset", StringComparison.Ordinal);
 		}
 
-		internal bool _003CSaveVersionCache_003Eb__88_0(CachedVersionEntry entry)
+		internal bool _003CSaveVersionCache_003Eb__94_0(CachedVersionEntry entry)
 		{
 			return entry != null && !string.IsNullOrWhiteSpace(entry.Version);
 		}
 
-		internal string _003CSaveVersionCache_003Eb__88_1(CachedVersionEntry entry)
+		internal string _003CSaveVersionCache_003Eb__94_1(CachedVersionEntry entry)
 		{
 			return entry.PluginPath ?? string.Empty;
 		}
 
-		internal CachedVersionEntry _003CSaveVersionCache_003Eb__88_2(IGrouping<string, CachedVersionEntry> group)
+		internal CachedVersionEntry _003CSaveVersionCache_003Eb__94_2(IGrouping<string, CachedVersionEntry> group)
 		{
 			return group.First();
 		}
 
-		internal string _003CSaveVersionCache_003Eb__88_3(CachedVersionEntry entry)
+		internal string _003CSaveVersionCache_003Eb__94_3(CachedVersionEntry entry)
 		{
 			return entry.DllName;
 		}
 
-		internal char _003CBuildSettingId_003Eb__89_0(char ch)
+		internal char _003CBuildSettingId_003Eb__95_0(char ch)
 		{
 			return (char.IsLetterOrDigit(ch) || ch == '.') ? char.ToLowerInvariant(ch) : '_';
 		}
@@ -771,6 +792,78 @@ internal static class ModManagementSettings
 		SettingsMenuCategoryExtender.RefreshLiveMenu();
 	}
 
+	internal static List<SerialMod> CaptureLoadedMods()
+	{
+		List<SerialMod> list = new List<SerialMod>();
+		foreach (KeyValuePair<string, PluginInfo> item in Chainloader.PluginInfos.OrderBy<KeyValuePair<string, PluginInfo>, string>((KeyValuePair<string, PluginInfo> pair) => pair.Value.Metadata.Name, StringComparer.OrdinalIgnoreCase))
+		{
+			list.Add(new SerialMod
+			{
+				Guid = item.Key,
+				Name = (SafeReadMetadataName(item.Value) ?? item.Key)
+			});
+		}
+		return list;
+	}
+
+	internal static string DescribeMods(List<SerialMod> mods)
+	{
+		if (mods == null || mods.Count == 0)
+		{
+			return "Mods: none";
+		}
+		return "Mods: " + string.Join(", ", from mod in mods
+			where mod != null
+			select mod.Name);
+	}
+
+	internal static void StageModsForSave(List<SerialMod> mods)
+	{
+		RebuildCache();
+		foreach (ModEntry entry in CachedEntries)
+		{
+			if (entry != null && entry.CanToggle)
+			{
+				bool enabled = mods?.Any((SerialMod saved) => MatchesSavedMod(saved, entry)) ?? false;
+				SetEntryDesiredState(entry, enabled, refresh: false);
+			}
+		}
+		SettingsMenuCategoryExtender.RefreshLiveMenu();
+	}
+
+	internal static void OpenModsTab()
+	{
+		int categoryIndex = GetCategoryIndex();
+		Transform val = (((Object)(object)PreRunScript.instance != (Object)null) ? ((Component)PreRunScript.instance.mainCanvas).transform : null);
+		SettingsMenu.OpenMenu(val);
+		if (!((Object)(object)SettingsMenu.instance == (Object)null) && categoryIndex >= 0)
+		{
+			SharedCoroutineStarter.StartCoroutine(SelectTabWhenStarted(categoryIndex));
+		}
+	}
+
+	private static IEnumerator SelectTabWhenStarted(int categoryIndex)
+	{
+		yield return null;
+		if ((Object)(object)SettingsMenu.instance != (Object)null)
+		{
+			SettingsMenu.instance.SelectTab(categoryIndex);
+		}
+	}
+
+	private static bool MatchesSavedMod(SerialMod saved, ModEntry entry)
+	{
+		if (saved == null || entry == null)
+		{
+			return false;
+		}
+		if (!string.IsNullOrWhiteSpace(saved.Guid) && string.Equals(saved.Guid, entry.Guid, StringComparison.OrdinalIgnoreCase))
+		{
+			return true;
+		}
+		return !string.IsNullOrWhiteSpace(saved.Name) && string.Equals(saved.Name, entry.Name, StringComparison.OrdinalIgnoreCase);
+	}
+
 	private static bool MatchesPresetEntry(ModPresetEntry candidate, ModEntry entry)
 	{
 		if (candidate == null)
@@ -802,7 +895,7 @@ internal static class ModManagementSettings
 			string text = (flag ? "Enabled" : "Disabled");
 			string text2 = (flag ? "#FFEA00" : "#FF5A5A");
 			string text3 = (string.IsNullOrWhiteSpace(entry.Version) ? string.Empty : (" <color=#9a9a9a>(v" + entry.Version + ")</color>"));
-			string text4 = ((entry.HasVersionMismatch && !string.IsNullOrWhiteSpace(entry.LatestVersion)) ? (" <color=#E6A15A>(v" + entry.LatestVersion + " Nexus version)</color>") : string.Empty);
+			string text4 = ((entry.HasUpdate && !string.IsNullOrWhiteSpace(entry.LatestVersion)) ? (" <color=#E6A15A>(v" + entry.LatestVersion + " Nexus version)</color>") : string.Empty);
 			string text5 = (flag2 ? ("  <color=#7CFF7C>Queued: " + (desiredEnabled ? "Enable" : "Disable") + "</color>") : string.Empty);
 			((TMP_Text)component).text = entry.Name + text3 + text4 + "\n<size=80%><color=#b6b6b6>" + entry.Guid + "</color>  <color=" + text2 + ">" + text + "</color>" + text5 + "</size>";
 			Component component2 = ((Component)component).GetComponent("UILocalizer");
@@ -822,14 +915,14 @@ internal static class ModManagementSettings
 		if (((Selectable)val).interactable)
 		{
 			ButtonClickedEvent onClick = val.onClick;
-			object obj = _003C_003Ec._003C_003E9__41_0;
+			object obj = _003C_003Ec._003C_003E9__47_0;
 			if (obj == null)
 			{
 				UnityAction val2 = delegate
 				{
 					Application.OpenURL("https://www.nexusmods.com/scavprototype/mods");
 				};
-				_003C_003Ec._003C_003E9__41_0 = val2;
+				_003C_003Ec._003C_003E9__47_0 = val2;
 				obj = (object)val2;
 			}
 			((UnityEvent)onClick).AddListener((UnityAction)obj);
@@ -935,14 +1028,14 @@ internal static class ModManagementSettings
 		((Selectable)val2).interactable = true;
 		((Component)val2).gameObject.SetActive(true);
 		ButtonClickedEvent onClick = val2.onClick;
-		object obj = _003C_003Ec._003C_003E9__42_0;
+		object obj = _003C_003Ec._003C_003E9__48_0;
 		if (obj == null)
 		{
 			UnityAction val3 = delegate
 			{
 				Application.OpenURL("https://www.nexusmods.com/scavprototype/mods");
 			};
-			_003C_003Ec._003C_003E9__42_0 = val3;
+			_003C_003Ec._003C_003E9__48_0 = val3;
 			obj = (object)val3;
 		}
 		((UnityEvent)onClick).AddListener((UnityAction)obj);
@@ -1518,6 +1611,13 @@ internal static class ModManagementSettings
 			{
 				AddNexusAlias(dictionary, modEntry.Name, "https://www.nexusmods.com/scavprototype/mods");
 				AddNexusAlias(dictionary, modEntry.Guid, "https://www.nexusmods.com/scavprototype/mods");
+			}
+		}
+		lock (VersionsSync)
+		{
+			foreach (string key in LatestVersionByGuid.Keys)
+			{
+				AddNexusAlias(dictionary, key, "https://www.nexusmods.com/scavprototype/mods");
 			}
 		}
 		return dictionary;

@@ -44,6 +44,8 @@ internal class ConsoleScriptPatcher
 
 		public static Action _003C_003E9__16_8;
 
+		public static Action _003C_003E9__16_9;
+
 		internal void _003CInitialize_003Eb__14_0(Scene scene, LoadSceneMode loadMode)
 		{
 			locateAutofillDirty = true;
@@ -95,7 +97,7 @@ internal class ConsoleScriptPatcher
 			}
 			if (!ModManagementSettings.TryGetNexusPageUrl(text, out var nexusPageUrl))
 			{
-				ConsoleHelper.LogToConsole(ConsoleScript.instance, "<color=orange>No installed mod matches \"" + text + "\". Try the mod name or its BepInEx plugin GUID.</color>");
+				ConsoleHelper.LogToConsole(ConsoleScript.instance, "<color=orange>No mod matches \"" + text + "\". Try the mod name or its BepInEx plugin GUID.</color>");
 				return;
 			}
 			Application.OpenURL(nexusPageUrl);
@@ -260,6 +262,25 @@ internal class ConsoleScriptPatcher
 				ConsoleHelper.LogToConsole(ConsoleScript.instance, "Saved start commands: " + text2);
 			}
 		}
+
+		internal void _003CRegisterAllCommands_Postfix_003Eb__16_9(string[] args)
+		{
+			List<string> list = ConsoleScript.instance?.settings?.customCommands;
+			if (list == null || list.Count == 0)
+			{
+				ConsoleHelper.LogToConsole(ConsoleScript.instance, "<color=orange>No custom commands found.</color>");
+				return;
+			}
+			string text = "<color=green>Custom Commands (" + list.Count + "):</color>\n";
+			foreach (string item in list)
+			{
+				string[] array = item.Split(new char[1] { ' ' });
+				string text2 = ((array.Length > 1) ? array[1].Replace('_', ' ') : "");
+				string text3 = ((array.Length > 2) ? array[2].Replace('_', ' ') : "");
+				text = text + "<color=yellow>" + array[0] + "</color> - " + text2 + " <color=#888888>[" + text3 + "]</color>\n";
+			}
+			ConsoleHelper.LogToConsole(ConsoleScript.instance, text.TrimEnd(Array.Empty<char>()));
+		}
 	}
 
 	private static int selectedAutofillIndex = 0;
@@ -361,6 +382,11 @@ internal class ConsoleScriptPatcher
 		//IL_04ee: Unknown result type (might be due to invalid IL or missing references)
 		//IL_04f3: Unknown result type (might be due to invalid IL or missing references)
 		//IL_04f9: Expected O, but got Unknown
+		//IL_0553: Unknown result type (might be due to invalid IL or missing references)
+		//IL_055d: Expected O, but got Unknown
+		//IL_0542: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0547: Unknown result type (might be due to invalid IL or missing references)
+		//IL_054d: Expected O, but got Unknown
 		if (ConsoleScript.SearchExact("worldrates") == null)
 		{
 			List<Command> commands = ConsoleScript.Commands;
@@ -445,7 +471,7 @@ internal class ConsoleScriptPatcher
 						}
 						else if (!ModManagementSettings.TryGetNexusPageUrl(text, out nexusPageUrl))
 						{
-							ConsoleHelper.LogToConsole(ConsoleScript.instance, "<color=orange>No installed mod matches \"" + text + "\". Try the mod name or its BepInEx plugin GUID.</color>");
+							ConsoleHelper.LogToConsole(ConsoleScript.instance, "<color=orange>No mod matches \"" + text + "\". Try the mod name or its BepInEx plugin GUID.</color>");
 						}
 						else
 						{
@@ -457,7 +483,7 @@ internal class ConsoleScriptPatcher
 				_003C_003Ec._003C_003E9__16_4 = val4;
 				obj4 = (object)val4;
 			}
-			commands4.Add(new Command("nexus", "Open the Nexus Mods page for an installed mod. Usage: nexus <name or guid>", (Action)obj4, BuildNexusCommandAutofill(), new(string, string)[1] { ("name or guid", "Installed mod name or BepInEx plugin GUID") }));
+			commands4.Add(new Command("nexus", "Open the Nexus Mods page for an installed mod. Usage: nexus <name or guid>", (Action)obj4, BuildNexusCommandAutofill(), new(string, string)[1] { ("name or guid", "Mod name or BepInEx plugin GUID") }));
 		}
 		ConsoleScript.Commands.RemoveAll((Command cmd) => cmd?.name.Equals("bind", StringComparison.OrdinalIgnoreCase) ?? false);
 		List<Command> commands5 = ConsoleScript.Commands;
@@ -645,41 +671,72 @@ internal class ConsoleScriptPatcher
 			("button", "Button name (A, B, X, Y, DpadUp, etc.)"),
 			("action", "Action to bind (jump, attack, craft, etc.)")
 		}));
-		if (ConsoleScript.SearchExact("runatstart") != null)
+		if (ConsoleScript.SearchExact("runatstart") == null)
 		{
-			return;
-		}
-		List<Command> commands7 = ConsoleScript.Commands;
-		object obj7 = _003C_003Ec._003C_003E9__16_8;
-		if (obj7 == null)
-		{
-			Action val7 = delegate(string[] args)
+			List<Command> commands7 = ConsoleScript.Commands;
+			object obj7 = _003C_003Ec._003C_003E9__16_8;
+			if (obj7 == null)
 			{
-				if (args.Length < 2)
+				Action val7 = delegate(string[] args)
 				{
-					string text = PlayerPrefs.GetString("RunAtStart", "");
-					ConsoleHelper.LogToConsole(ConsoleScript.instance, string.IsNullOrEmpty(text) ? "No start commands set." : ("Current start commands: " + text));
-				}
-				else
-				{
-					string text2 = string.Join(" ", args.Skip(1));
-					if (text2.Equals("clear", StringComparison.OrdinalIgnoreCase))
+					if (args.Length < 2)
 					{
-						PlayerPrefs.DeleteKey("RunAtStart");
-						ConsoleHelper.LogToConsole(ConsoleScript.instance, "Cleared start commands!");
+						string text = PlayerPrefs.GetString("RunAtStart", "");
+						ConsoleHelper.LogToConsole(ConsoleScript.instance, string.IsNullOrEmpty(text) ? "No start commands set." : ("Current start commands: " + text));
 					}
 					else
 					{
-						PlayerPrefs.SetString("RunAtStart", text2);
-						PlayerPrefs.Save();
-						ConsoleHelper.LogToConsole(ConsoleScript.instance, "Saved start commands: " + text2);
+						string text2 = string.Join(" ", args.Skip(1));
+						if (text2.Equals("clear", StringComparison.OrdinalIgnoreCase))
+						{
+							PlayerPrefs.DeleteKey("RunAtStart");
+							ConsoleHelper.LogToConsole(ConsoleScript.instance, "Cleared start commands!");
+						}
+						else
+						{
+							PlayerPrefs.SetString("RunAtStart", text2);
+							PlayerPrefs.Save();
+							ConsoleHelper.LogToConsole(ConsoleScript.instance, "Saved start commands: " + text2);
+						}
 					}
+				};
+				_003C_003Ec._003C_003E9__16_8 = val7;
+				obj7 = (object)val7;
+			}
+			commands7.Add(new Command("runatstart", "Sets commands to execute on a fresh run (split by ;). Usage: runatstart [commands] OR runatstart clear", (Action)obj7, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>()));
+		}
+		if (ConsoleScript.SearchExact("listcustomcommands") != null)
+		{
+			return;
+		}
+		List<Command> commands8 = ConsoleScript.Commands;
+		object obj8 = _003C_003Ec._003C_003E9__16_9;
+		if (obj8 == null)
+		{
+			Action val8 = delegate
+			{
+				List<string> list = ConsoleScript.instance?.settings?.customCommands;
+				if (list == null || list.Count == 0)
+				{
+					ConsoleHelper.LogToConsole(ConsoleScript.instance, "<color=orange>No custom commands found.</color>");
+				}
+				else
+				{
+					string text = "<color=green>Custom Commands (" + list.Count + "):</color>\n";
+					foreach (string item in list)
+					{
+						string[] array = item.Split(new char[1] { ' ' });
+						string text2 = ((array.Length > 1) ? array[1].Replace('_', ' ') : "");
+						string text3 = ((array.Length > 2) ? array[2].Replace('_', ' ') : "");
+						text = text + "<color=yellow>" + array[0] + "</color> - " + text2 + " <color=#888888>[" + text3 + "]</color>\n";
+					}
+					ConsoleHelper.LogToConsole(ConsoleScript.instance, text.TrimEnd(Array.Empty<char>()));
 				}
 			};
-			_003C_003Ec._003C_003E9__16_8 = val7;
-			obj7 = (object)val7;
+			_003C_003Ec._003C_003E9__16_9 = val8;
+			obj8 = (object)val8;
 		}
-		commands7.Add(new Command("runatstart", "Sets commands to execute on a fresh run (split by ;). Usage: runatstart [commands] OR runatstart clear", (Action)obj7, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>()));
+		commands8.Add(new Command("listcustomcommands", "Lists the custom commands you added with addcustomcommand.", (Action)obj8, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>()));
 	}
 
 	[HarmonyPatch(typeof(ConsoleScript), "TryExecuteCommand")]

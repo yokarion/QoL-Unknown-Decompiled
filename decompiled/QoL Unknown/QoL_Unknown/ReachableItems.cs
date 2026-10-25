@@ -19,6 +19,27 @@ internal static class ReachableItems
 
 	private static int itemLayerMask = -1;
 
+	private static bool refreshing;
+
+	private static List<Item> refreshPool;
+
+	private static Body refreshBody;
+
+	public static bool Refreshing => refreshing;
+
+	public static void BeginRefresh()
+	{
+		refreshing = true;
+		refreshPool = null;
+	}
+
+	public static void EndRefresh()
+	{
+		refreshing = false;
+		refreshPool = null;
+		refreshBody = null;
+	}
+
 	public static List<Item> Gather(Body body)
 	{
 		List<Item> list = new List<Item>();
@@ -38,7 +59,7 @@ internal static class ReachableItems
 
 	public static List<Item> MatchIngredients(Recipe recipe, Body body, bool tolerateMissing)
 	{
-		List<Item> list = Gather(body);
+		List<Item> list = (refreshing ? RefreshPool(body) : Gather(body));
 		List<Item> list2 = new List<Item>();
 		List<Item> list3 = new List<Item>();
 		for (int i = 0; i < recipe.items.Count; i++)
@@ -68,6 +89,16 @@ internal static class ReachableItems
 	public static void InvalidateGround()
 	{
 		groundFrame = -1;
+	}
+
+	private static List<Item> RefreshPool(Body body)
+	{
+		if (refreshPool == null || (Object)(object)refreshBody != (Object)(object)body)
+		{
+			refreshPool = Gather(body);
+			refreshBody = body;
+		}
+		return refreshPool;
 	}
 
 	private static void RefreshGround(Body body)

@@ -9,52 +9,47 @@ internal static class CraftRunner
 {
 	internal static ManualLogSource Logger;
 
-	private static PlayerCamera clientCamera;
+	private static PlayerCamera mpCamera;
 
-	private static Body clientBody;
+	private static Body mpBody;
 
-	private static CraftPlan clientPlan;
+	private static CraftPlan mpPlan;
 
-	private static bool clientCancelRequested;
+	private static bool mpCancelRequested;
 
-	internal static bool IsClientCraftRunning => clientPlan != null && (Object)(object)clientCamera != (Object)null && ((Behaviour)clientCamera).isActiveAndEnabled && (Object)(object)clientBody != (Object)null && (Object)(object)clientCamera.body == (Object)(object)clientBody && clientBody.conscious && MultiplayerCompat.IsActive && MultiplayerCompat.IsClient;
+	internal static bool IsMultiplayerCraftRunning => mpPlan != null && (Object)(object)mpCamera != (Object)null && ((Behaviour)mpCamera).isActiveAndEnabled && (Object)(object)mpBody != (Object)null && (Object)(object)mpCamera.body == (Object)(object)mpBody && mpBody.conscious && MultiplayerCompat.IsActive;
 
-	internal static void CancelClientCraft()
+	internal static void CancelMultiplayerCraft()
 	{
-		clientCancelRequested = true;
+		mpCancelRequested = true;
 	}
 
 	public static bool Run(PlayerCamera camera, CraftPlan plan)
 	{
-		if ((Object)(object)camera == (Object)null || (Object)(object)camera.body == (Object)null || plan == null || !plan.CanCraft || IsClientCraftRunning)
+		if ((Object)(object)camera == (Object)null || (Object)(object)camera.body == (Object)null || plan == null || !plan.CanCraft || IsMultiplayerCraftRunning)
 		{
 			return false;
 		}
-		if (MultiplayerCompat.IsActive && MultiplayerCompat.IsClient)
+		if (MultiplayerCompat.IsActive)
 		{
-			if (!((Behaviour)camera).isActiveAndEnabled || !camera.body.conscious)
+			if (!((Behaviour)camera).isActiveAndEnabled || !camera.body.conscious || !MultiplayerCompat.NativeCraftAvailable)
 			{
 				return false;
 			}
-			clientCamera = camera;
-			clientBody = camera.body;
-			clientPlan = plan;
-			clientCancelRequested = false;
-			((MonoBehaviour)camera).StartCoroutine(ExecuteClient(camera, camera.body, plan));
+			mpCamera = camera;
+			mpBody = camera.body;
+			mpPlan = plan;
+			mpCancelRequested = false;
+			((MonoBehaviour)camera).StartCoroutine(ExecuteMultiplayer(camera, camera.body, plan));
 			return true;
 		}
-		CraftBackend backend = CraftBackend.Singleplayer;
-		if (MultiplayerCompat.IsActive)
-		{
-			backend = ((!MultiplayerCompat.IsClient) ? CraftBackend.MultiplayerHost : CraftBackend.MultiplayerClient);
-		}
-		bool result = Execute(camera.body, plan, backend);
+		bool result = Execute(camera.body, plan);
 		CraftingModule.InvalidateInventoryCache();
 		CraftingModule.ScheduleRefresh(camera);
 		return result;
 	}
 
-	internal static bool Execute(Body body, CraftPlan plan, CraftBackend backend)
+	internal static bool Execute(Body body, CraftPlan plan)
 	{
 		if ((Object)(object)body == (Object)null || plan == null || !plan.CanCraft)
 		{
@@ -70,27 +65,36 @@ internal static class CraftRunner
 			for (int j = 0; j < craftStep.Count; j++)
 			{
 				ReachableItems.InvalidateGround();
-				if (!CraftOne(body, craftStep.Recipe, backend))
-				{
-					return false;
-				}
+				craftStep.Recipe.TryMake();
 			}
 		}
 		for (int k = 0; k < plan.RequestedAmount; k++)
 		{
 			ReachableItems.InvalidateGround();
-			if (!CraftOne(body, plan.FinalRecipe, backend))
-			{
-				return false;
-			}
+			plan.FinalRecipe.TryMake();
 		}
 		return true;
 	}
 
-	private static IEnumerator ExecuteClient(PlayerCamera camera, Body body, CraftPlan plan)
+	private static IEnumerator ExecuteMultiplayer(PlayerCamera camera, Body body, CraftPlan plan)
 	{
 		try
 		{
+			float deadline = Time.realtimeSinceStartup + MultiplayerCompat.CraftWaitSeconds;
+			while (MultiplayerCompat.NativeCraftOutstanding)
+			{
+				if (!StillRunning(camera, plan))
+				{
+					yield break;
+				}
+				if (Time.realtimeSinceStartup >= deadline)
+				{
+					camera.DoAlert("Autocraft stopped waiting for the previous craft's answer.", false);
+					yield break;
+				}
+				MultiplayerCompat.RequestNativeCraft(camera, plan.FinalRecipe);
+				yield return null;
+			}
 			if (!ApplyCombines(body, plan.Combines))
 			{
 				camera.PlayUISound((UISoundType)6, 1f);
@@ -109,57 +113,60 @@ internal static class CraftRunner
 				CraftStep step = steps[stepIdx];
 				for (int n = 0; n < step.Count; n++)
 				{
-					if (clientPlan != plan || !IsClientCraftRunning || clientCancelRequested || (Object)(object)camera != (Object)(object)PlayerCamera.main || !MultiplayerCompat.TryRequestClientCraft(camera, step.Recipe, out var request) || request == null)
+					deadline = Time.realtimeSinceStartup + MultiplayerCompat.CraftWaitSeconds;
+					while (true)
 					{
-						yield break;
-					}
-					step.Recipe.hasMadeBefore = true;
-					float resultBefore = request.ResultCountBefore;
-					float waitStart = Time.realtimeSinceStartup;
-					float timeout = waitStart + MultiplayerCompat.ClientCraftWaitSeconds;
-					bool resultReceived = false;
-					while (Time.realtimeSinceStartup < timeout)
-					{
-						if (request.Denied)
+						if (!StillRunning(camera, plan))
 						{
-							MultiplayerCompat.ClearClientCraft(request);
 							yield break;
 						}
-						if (clientPlan != plan || !IsClientCraftRunning || clientCancelRequested || (Object)(object)camera != (Object)(object)PlayerCamera.main)
+						if (step.Recipe.GetItemsForRecipe() != null)
 						{
-							MultiplayerCompat.ClearClientCraft(request);
-							yield break;
-						}
-						ReachableItems.InvalidateGround();
-						float resultNow = CountRecipeResult(body, step.Recipe);
-						if (resultNow > resultBefore + 0.01f)
-						{
-							resultReceived = true;
 							break;
+						}
+						if (Time.realtimeSinceStartup >= deadline)
+						{
+							camera.DoAlert("Autocraft stopped: ingredients never became ready.", false);
+							yield break;
 						}
 						yield return null;
 					}
-					MultiplayerCompat.ClearClientCraft(request);
-					if (!resultReceived)
+					MultiplayerCompat.NativeCraftState state = MultiplayerCompat.RequestNativeCraft(camera, step.Recipe);
+					while (true)
 					{
-						camera.DoAlert("Autocraft stopped waiting for host to send crafted item.", false);
-						yield break;
+						switch (state)
+						{
+						case MultiplayerCompat.NativeCraftState.Pending:
+							yield return null;
+							if (StillRunning(camera, plan))
+							{
+								if (!(Time.realtimeSinceStartup >= deadline))
+								{
+									state = MultiplayerCompat.RequestNativeCraft(camera, step.Recipe);
+									continue;
+								}
+								camera.DoAlert("Autocraft stopped waiting for the host's answer.", false);
+							}
+							yield break;
+						default:
+							yield break;
+						case MultiplayerCompat.NativeCraftState.Accepted:
+							break;
+						}
+						break;
 					}
 					ReachableItems.InvalidateGround();
 					CraftingModule.InvalidateInventoryCache();
-					CraftingModule.ScheduleRefresh(camera);
-					yield return null;
-					request = null;
 				}
 			}
 		}
 		finally
 		{
-			if (clientPlan == plan)
+			if (mpPlan == plan)
 			{
-				clientPlan = null;
-				clientCamera = null;
-				clientBody = null;
+				mpPlan = null;
+				mpCamera = null;
+				mpBody = null;
 				ReachableItems.InvalidateGround();
 				CraftingModule.InvalidateInventoryCache();
 				CraftingModule.ForceRefresh(camera);
@@ -167,57 +174,9 @@ internal static class CraftRunner
 		}
 	}
 
-	internal static float CountRecipeResult(Body body, Recipe recipe)
+	private static bool StillRunning(PlayerCamera camera, CraftPlan plan)
 	{
-		RecipeResult val = recipe?.result;
-		if ((Object)(object)body == (Object)null || val == null || string.IsNullOrEmpty(val.id))
-		{
-			return 0f;
-		}
-		List<Item> list = ReachableItems.Gather(body);
-		float num = 0f;
-		for (int i = 0; i < list.Count; i++)
-		{
-			Item val2 = list[i];
-			if ((Object)(object)val2 == (Object)null)
-			{
-				continue;
-			}
-			if (val.isLiquid)
-			{
-				WaterContainerItem component = ((Component)val2).GetComponent<WaterContainerItem>();
-				if ((Object)(object)component == (Object)null || component.stack == null)
-				{
-					continue;
-				}
-				foreach (LiquidStack item in component.stack)
-				{
-					if (item != null && item.liquidId == val.id)
-					{
-						num += item.amount;
-					}
-				}
-			}
-			else if (val2.id == val.id)
-			{
-				num += 1f;
-			}
-		}
-		return num;
-	}
-
-	private static bool CraftOne(Body body, Recipe recipe, CraftBackend backend)
-	{
-		switch (backend)
-		{
-		case CraftBackend.MultiplayerHost:
-			return MultiplayerCompat.CraftStepAsHost(body, recipe);
-		case CraftBackend.MultiplayerClient:
-			return MultiplayerCompat.CraftStepAsClient(PlayerCamera.main, recipe);
-		default:
-			recipe.TryMake();
-			return true;
-		}
+		return mpPlan == plan && IsMultiplayerCraftRunning && !mpCancelRequested && (Object)(object)camera == (Object)(object)PlayerCamera.main;
 	}
 
 	private static bool ApplyCombines(Body body, List<CraftCombine> combines)

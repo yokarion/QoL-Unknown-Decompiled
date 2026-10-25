@@ -18,13 +18,13 @@ internal class SaveSystemPatcher
 	{
 		public static readonly _003C_003Ec _003C_003E9 = new _003C_003Ec();
 
-		public static Action _003C_003E9__20_0;
+		public static Action _003C_003E9__23_0;
 
-		public static Predicate<Command> _003C_003E9__28_0;
+		public static Predicate<Command> _003C_003E9__31_0;
 
-		public static Action _003C_003E9__28_1;
+		public static Action _003C_003E9__31_1;
 
-		internal void _003CRegisterCommands_Postfix_003Eb__20_0(string[] args)
+		internal void _003CRegisterCommands_Postfix_003Eb__23_0(string[] args)
 		{
 			if (SeedManager.IsSeeded && !string.IsNullOrEmpty(SeedManager.InputString))
 			{
@@ -36,12 +36,12 @@ internal class SaveSystemPatcher
 			}
 		}
 
-		internal bool _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__28_0(Command c)
+		internal bool _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__31_0(Command c)
 		{
 			return c != null && c.name == "saveandquit";
 		}
 
-		internal void _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__28_1(string[] args)
+		internal void _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__31_1(string[] args)
 		{
 			ConsoleHelper.CheckForWorld(ConsoleScript.instance);
 			SaveSystem.SaveGame();
@@ -57,6 +57,10 @@ internal class SaveSystemPatcher
 	public static bool IsAutosaveOperation = false;
 
 	private static bool deletedAutosaveForCurrentDeath;
+
+	internal static string PendingVanillaSaveRestorePath;
+
+	private static int saveGameNesting;
 
 	public static Vector3? PendingLoadPosition = null;
 
@@ -90,7 +94,7 @@ internal class SaveSystemPatcher
 	{
 		__state = null;
 		LastSaveRedirectSucceeded = false;
-		if (!BypassDepthFix && (Object)(object)WorldGeneration.world != (Object)null)
+		if (saveGameNesting++ <= 0 && !BypassDepthFix && (Object)(object)WorldGeneration.world != (Object)null)
 		{
 			__state = WorldGeneration.world.biomeDepth;
 			WorldGeneration world = WorldGeneration.world;
@@ -111,6 +115,7 @@ internal class SaveSystemPatcher
 	[HarmonyFinalizer]
 	private static Exception SaveGame_Finalizer_RestoreState(Exception __exception, int? __state)
 	{
+		saveGameNesting--;
 		try
 		{
 			RestoreSavedDepth(__state);
@@ -136,7 +141,22 @@ internal class SaveSystemPatcher
 	private static Exception TryLoadGame_Finalizer(Exception __exception)
 	{
 		CuCoreLibTransitionCompat.SkipWorldRestore = false;
+		RestorePendingVanillaSave();
 		return __exception;
+	}
+
+	internal static void RestorePendingVanillaSave()
+	{
+		string pendingVanillaSaveRestorePath = PendingVanillaSaveRestorePath;
+		if (pendingVanillaSaveRestorePath != null)
+		{
+			PendingVanillaSaveRestorePath = null;
+			string destinationPath = Path.Combine(Application.persistentDataPath, "save.sv");
+			if (SaveFileStore.TryCopyAtomic(pendingVanillaSaveRestorePath, destinationPath, Logger, "restore vanilla save after layer transition"))
+			{
+				SaveFileStore.TryDelete(pendingVanillaSaveRestorePath, Logger, "remove vanilla save recovery copy");
+			}
+		}
 	}
 
 	private static void RestoreSavedDepth(int? state)
@@ -278,7 +298,7 @@ internal class SaveSystemPatcher
 		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
 		//IL_002f: Expected O, but got Unknown
 		List<Command> commands = ConsoleScript.Commands;
-		object obj = _003C_003Ec._003C_003E9__20_0;
+		object obj = _003C_003Ec._003C_003E9__23_0;
 		if (obj == null)
 		{
 			Action val = delegate
@@ -292,7 +312,7 @@ internal class SaveSystemPatcher
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, $"<color=grey>{SeedManager.CurrentSeed}</color>");
 				}
 			};
-			_003C_003Ec._003C_003E9__20_0 = val;
+			_003C_003Ec._003C_003E9__23_0 = val;
 			obj = (object)val;
 		}
 		commands.Add(new Command("seed", "Displays the current world seed.", (Action)obj, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>()));
@@ -414,7 +434,7 @@ internal class SaveSystemPatcher
 			{
 				return;
 			}
-			object obj = _003C_003Ec._003C_003E9__28_1;
+			object obj = _003C_003Ec._003C_003E9__31_1;
 			if (obj == null)
 			{
 				Action val = delegate
@@ -426,7 +446,7 @@ internal class SaveSystemPatcher
 					PlayerCamera.main.ToMainMenu();
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, "Saved the game and quit to menu.");
 				};
-				_003C_003Ec._003C_003E9__28_1 = val;
+				_003C_003Ec._003C_003E9__31_1 = val;
 				obj = (object)val;
 			}
 			commands[num] = new Command("saveandquit", "!! NOT RECOMMENDED !!. Instantly saves the game and exits to the main menu as per vanilla. Loading the save will put you at the beginning of the current layer.", (Action)obj, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>());

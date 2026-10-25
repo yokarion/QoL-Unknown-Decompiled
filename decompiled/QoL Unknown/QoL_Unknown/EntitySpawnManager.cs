@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace QoL_Unknown;
@@ -29,7 +30,19 @@ public static class EntitySpawnManager
 		{
 			return value;
 		}
-		return 1f;
+		string text = "SpawnMult_" + entityName;
+		if (!PlayerPrefs.HasKey(text))
+		{
+			return 1f;
+		}
+		value = NormalizeMultiplier(PlayerPrefs.GetFloat(text));
+		Multipliers[entityName] = value;
+		return value;
+	}
+
+	public static List<string> GetAllEntities()
+	{
+		return KnownEntities.Concat(CuCoreLibSpawnCompat.GetBuildingEntityIds()).ToList();
 	}
 
 	public static void SetMultiplier(string entityName, float val)
@@ -45,9 +58,9 @@ public static class EntitySpawnManager
 	public static void ResetMultipliers()
 	{
 		Multipliers.Clear();
-		foreach (string knownEntity in KnownEntities)
+		foreach (string allEntity in GetAllEntities())
 		{
-			PlayerPrefs.DeleteKey("SpawnMult_" + knownEntity);
+			PlayerPrefs.DeleteKey("SpawnMult_" + allEntity);
 		}
 	}
 

@@ -4,8 +4,8 @@ Generated automatically by [dotnet-autodecompiler](https://github.com/Yokarion/d
 
 This is a reconstruction produced by a decompiler, not the author's original source. Local variable names and compiler-generated members will not match what was written.
 
-- Upstream release: `v1.0.5.1`
-- Source: https://github.com/jimmyking9999999/QoL-Unknown/releases/tag/v1.0.5.1
+- Upstream release: `v1.0.5.2`
+- Source: https://github.com/jimmyking9999999/QoL-Unknown/releases/tag/v1.0.5.2
 - Decompiler: ICSharpCode.Decompiler 10.1.1.8388
 - Language version: C# 10.0
 - Embedded resources: none
@@ -14,7 +14,7 @@ This is a reconstruction produced by a decompiler, not the author's original sou
 
 | Assembly | Version | Target framework | Source files | Folder |
 | --- | --- | --- | ---: | --- |
-| QoL Unknown | 1.0.5.1 | .NET Framework 4.8 | 136 | [`QoL Unknown/`](QoL%20Unknown/) |
+| QoL Unknown | 1.0.5.2 | .NET Framework 4.8 | 145 | [`QoL Unknown/`](QoL%20Unknown/) |
 
 ## Third-party dependencies
 

@@ -22,11 +22,11 @@ internal class QoLSettingsMenu
 	{
 		public static readonly _003C_003Ec _003C_003E9 = new _003C_003Ec();
 
-		public static UnityAction _003C_003E9__12_0;
+		public static UnityAction _003C_003E9__13_0;
 
-		public static Func<TextMeshProUGUI, bool> _003C_003E9__27_0;
+		public static Func<TextMeshProUGUI, bool> _003C_003E9__28_0;
 
-		internal void _003CBuildSettingsUI_003Eb__12_0()
+		internal void _003CBuildSettingsUI_003Eb__13_0()
 		{
 			ManualLogSource logger = Logger;
 			if (logger != null)
@@ -36,7 +36,7 @@ internal class QoLSettingsMenu
 			EnhancedMenuController.Instance.OpenMenu();
 		}
 
-		internal bool _003CTryGetFooterText_003Eb__27_0(TextMeshProUGUI tmp)
+		internal bool _003CTryGetFooterText_003Eb__28_0(TextMeshProUGUI tmp)
 		{
 			int result;
 			if ((Object)(object)tmp != (Object)null)
@@ -67,6 +67,8 @@ internal class QoLSettingsMenu
 	private static GameObject geofruitOptionsList;
 
 	private static int geofruitOptionsLookupFrame = -1;
+
+	private static readonly HashSet<string> GeofruitBlacklist = new HashSet<string> { "qol_ui_ctrlitemlabels", "qol_game_modifiers", "qol_ui_scroll", "qol_craft_uncrafted" };
 
 	internal static UnityAction QoLToggleAction;
 
@@ -132,7 +134,7 @@ internal class QoLSettingsMenu
 			ManualLogSource logger = Logger;
 			if (logger != null)
 			{
-				logger.LogInfo((object)"BuildSettingsUI: PreRunScript or mainCanvas not ready");
+				logger.LogInfo((object)"Looks like we're starting a run. Good luck!");
 			}
 		}
 		else
@@ -168,7 +170,7 @@ internal class QoLSettingsMenu
 			Button component2 = val.GetComponent<Button>();
 			component2.onClick = new ButtonClickedEvent();
 			ButtonClickedEvent onClick = component2.onClick;
-			object obj = _003C_003Ec._003C_003E9__12_0;
+			object obj = _003C_003Ec._003C_003E9__13_0;
 			if (obj == null)
 			{
 				UnityAction val2 = delegate
@@ -180,7 +182,7 @@ internal class QoLSettingsMenu
 					}
 					EnhancedMenuController.Instance.OpenMenu();
 				};
-				_003C_003Ec._003C_003E9__12_0 = val2;
+				_003C_003Ec._003C_003E9__13_0 = val2;
 				obj = (object)val2;
 			}
 			((UnityEvent)onClick).AddListener((UnityAction)obj);
@@ -372,7 +374,7 @@ internal class QoLSettingsMenu
 		listFitter.horizontalFit = (FitMode)2;
 		foreach (QoLModuleDef module in QoLModuleManager.Modules)
 		{
-			if (module.IsCore)
+			if (module.IsCore || GeofruitBlacklist.Contains(module.ID))
 			{
 				continue;
 			}

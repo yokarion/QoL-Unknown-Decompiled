@@ -1,9 +1,10 @@
 using System;
 using BepInEx;
+using UnityEngine;
 
 namespace QoL_Unknown;
 
-[BepInPlugin("org.bepinex.plugins.qol_unknown", "QoL Unknown", "1.0.5.1")]
+[BepInPlugin("org.bepinex.plugins.qol_unknown", "QoL Unknown", "1.0.5.2")]
 [BepInDependency(/*Could not decode attribute arguments.*/)]
 [BepInDependency(/*Could not decode attribute arguments.*/)]
 public class Plugin : BaseUnityPlugin
@@ -174,6 +175,10 @@ public class Plugin : BaseUnityPlugin
 		{
 			MiscPatches.Initialize(((BaseUnityPlugin)this).Logger);
 		});
+		InitializeComponent("CraftFavourites", delegate
+		{
+			CraftFavourites.Initialize(((BaseUnityPlugin)this).Logger);
+		});
 		InitializeComponent("MultiplayerHoverArbitrationPatcher", delegate
 		{
 			MultiplayerHoverArbitrationPatcher.Initialize(((BaseUnityPlugin)this).Logger);
@@ -186,6 +191,10 @@ public class Plugin : BaseUnityPlugin
 		InitializeComponent("EtomophobiaPatcher", delegate
 		{
 			EtomophobiaPatcher.Initialize(((BaseUnityPlugin)this).Logger);
+		});
+		InitializeComponent("TutorialSelectionPatcher", delegate
+		{
+			TutorialSelectionPatcher.Initialize(((BaseUnityPlugin)this).Logger);
 		});
 		foreach (QoLModuleDef module in QoLModuleManager.Modules)
 		{
@@ -207,6 +216,18 @@ public class Plugin : BaseUnityPlugin
 		{
 			QoLModSettings.Initialize(((BaseUnityPlugin)this).Logger);
 		});
+	}
+
+	public static void RegisterLayerArt(int biomeIndex, Sprite banner, Sprite icon)
+	{
+		if ((Object)(object)banner != (Object)null)
+		{
+			SaveSaveMenuPatcher.layerBackgrounds[biomeIndex] = banner;
+		}
+		if ((Object)(object)icon != (Object)null)
+		{
+			SaveSaveMenuPatcher.layerIcons[biomeIndex] = icon;
+		}
 	}
 
 	private void InitializeComponent(string componentName, Action initialize)

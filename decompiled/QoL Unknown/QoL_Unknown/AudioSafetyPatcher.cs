@@ -18,14 +18,14 @@ internal class AudioSafetyPatcher
 
 		public static Func<KeyValuePair<string, float>, string> _003C_003E9__12_0;
 
-		public static Action _003C_003E9__19_0;
+		public static Action _003C_003E9__19_1;
 
 		internal string _003CSaveOverrides_003Eb__12_0(KeyValuePair<string, float> x)
 		{
 			return $"{x.Key}={x.Value}";
 		}
 
-		internal void _003CRegisterCommands_Postfix_003Eb__19_0(string[] args)
+		internal void _003CRegisterCommands_Postfix_003Eb__19_1(string[] args)
 		{
 			if (args.Length < 2)
 			{
@@ -244,12 +244,12 @@ internal class AudioSafetyPatcher
 	[HarmonyPostfix]
 	private static void RegisterCommands_Postfix()
 	{
-		//IL_0115: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011f: Expected O, but got Unknown
-		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cc: Expected O, but got Unknown
-		List<string> list = new List<string>();
+		//IL_0152: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015c: Expected O, but got Unknown
+		//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0109: Expected O, but got Unknown
+		List<string> allSounds = new List<string>();
 		try
 		{
 			AudioClip[] array = Resources.LoadAll<AudioClip>("Sounds");
@@ -258,23 +258,25 @@ internal class AudioSafetyPatcher
 			{
 				if ((Object)(object)val != (Object)null)
 				{
-					list.Add(((Object)val).name);
+					allSounds.Add(((Object)val).name);
 				}
 			}
 		}
 		catch
 		{
 		}
+		SoundLibrary.Load();
+		allSounds.AddRange(SoundLibrary.CuCoreLibClipNames.Where((string name) => !allSounds.Contains(name)));
 		Dictionary<int, List<string>> dictionary = new Dictionary<int, List<string>>
 		{
 			{
 				0,
 				new List<string> { "change", "list", "remove", "clear" }
 			},
-			{ 1, list }
+			{ 1, allSounds }
 		};
 		List<Command> commands = ConsoleScript.Commands;
-		object obj2 = _003C_003Ec._003C_003E9__19_0;
+		object obj2 = _003C_003Ec._003C_003E9__19_1;
 		if (obj2 == null)
 		{
 			Action val2 = delegate(string[] args)
@@ -355,7 +357,7 @@ internal class AudioSafetyPatcher
 					}
 				}
 			};
-			_003C_003Ec._003C_003E9__19_0 = val2;
+			_003C_003Ec._003C_003E9__19_1 = val2;
 			obj2 = (object)val2;
 		}
 		commands.Add(new Command("noise", "Manage sound volume overrides.", (Action)obj2, dictionary, new(string, string)[3]

@@ -26,8 +26,8 @@ internal class LayerTransitionPatcher
 	[HarmonyPrefix]
 	private static bool RegenerateWorld_Prefix(WorldGeneration __instance, bool twice)
 	{
-		//IL_019d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0204: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0209: Unknown result type (might be due to invalid IL or missing references)
 		if (MultiplayerCompat.ShouldBlockQoLLoads)
 		{
 			return true;
@@ -42,16 +42,25 @@ internal class LayerTransitionPatcher
 		__instance.biomeDepth = ((num >= __instance.amountOfLayers) ? 1 : num);
 		__instance.lootRarityMultiplier *= WorldGeneration.GetRunSettingFloat("lootmultiplier");
 		__instance.trapRarityMultiplier += WorldGeneration.GetRunSettingFloat("trapincrease");
+		string text = Path.Combine(Application.persistentDataPath, "save.sv");
+		string destinationPath = Path.Combine(Application.persistentDataPath, "autosave.sv");
 		try
 		{
+			string text2 = text + ".qol-transition-backup";
+			if (File.Exists(text))
+			{
+				if (!SaveFileStore.TryCopyAtomic(text, text2, Logger, "back up vanilla save before layer transition"))
+				{
+					throw new IOException("The vanilla save could not be backed up.");
+				}
+				SaveSystemPatcher.PendingVanillaSaveRestorePath = text2;
+			}
 			SaveSystem.SaveGame();
 			if (!SaveSystemPatcher.LastSaveRedirectSucceeded)
 			{
 				throw new IOException("The transition save was not committed.");
 			}
-			string sourcePath = Path.Combine(Application.persistentDataPath, "save.sv");
-			string destinationPath = Path.Combine(Application.persistentDataPath, "autosave.sv");
-			if (!SaveFileStore.TryCopyAtomic(sourcePath, destinationPath, Logger, "synchronize autosave after layer transition"))
+			if (!SaveFileStore.TryCopyAtomic(text, destinationPath, Logger, "synchronize autosave after layer transition"))
 			{
 				throw new IOException("The transition autosave was not committed.");
 			}
@@ -63,7 +72,8 @@ internal class LayerTransitionPatcher
 					logger.LogWarning((object)"Layer transition completed, but autosave metadata could not be updated.");
 				}
 			}
-			if (SaveManager.CurrentSaveFile != "autosave.sv" && !UpdateMetadata(__instance, SaveManager.CurrentSaveFile))
+			bool flag = SaveSystemPatcher.PendingVanillaSaveRestorePath != null && SaveManager.CurrentSaveFile == "save.sv";
+			if (SaveManager.CurrentSaveFile != "autosave.sv" && !flag && !UpdateMetadata(__instance, SaveManager.CurrentSaveFile))
 			{
 				ManualLogSource logger2 = Logger;
 				if (logger2 != null)
@@ -82,6 +92,7 @@ internal class LayerTransitionPatcher
 		{
 			SaveSystem.loadedRun = false;
 			CuCoreLibTransitionCompat.SkipWorldRestore = false;
+			SaveSystemPatcher.RestorePendingVanillaSave();
 			if (Object.op_Implicit((Object)(object)PlayerCamera.main))
 			{
 				PlayerCamera.main.DoAlert("Could not save the layer transition. Reload was cancelled to protect your save.", false);

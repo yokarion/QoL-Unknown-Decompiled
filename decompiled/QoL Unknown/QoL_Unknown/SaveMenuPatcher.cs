@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using BepInEx.Logging;
 using HarmonyLib;
@@ -16,31 +15,18 @@ namespace QoL_Unknown;
 
 internal class SaveMenuPatcher
 {
-	[Serializable]
-	[CompilerGenerated]
-	private sealed class _003C_003Ec
-	{
-		public static readonly _003C_003Ec _003C_003E9 = new _003C_003Ec();
-
-		public static UnityAction _003C_003E9__5_1;
-
-		internal void _003CCreateQuickLoadButtons_003Eb__5_1()
-		{
-			SaveSaveMenuPatcher.DoLoad("autosave.sv", 0);
-		}
-	}
-
 	private static ManualLogSource Logger;
 
 	private static bool initialized;
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001e: Expected O, but got Unknown
+		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0024: Expected O, but got Unknown
 		if (!initialized)
 		{
 			Logger = logger;
+			MainMenuSavePanel.Logger = logger;
 			Harmony val = new Harmony("org.bepinex.plugins.qol.savemenu");
 			val.PatchAll(typeof(SaveMenuPatcher));
 			initialized = true;
@@ -71,29 +57,10 @@ internal class SaveMenuPatcher
 
 	private static void CreateQuickLoadButtons(PreRunScript context)
 	{
-		//IL_00eb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0102: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0203: Unknown result type (might be due to invalid IL or missing references)
-		//IL_044c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0228: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0235: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0242: Unknown result type (might be due to invalid IL or missing references)
-		//IL_024f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_025c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0269: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0471: Unknown result type (might be due to invalid IL or missing references)
-		//IL_047e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_048b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0498: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0548: Unknown result type (might be due to invalid IL or missing references)
-		//IL_054d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0553: Expected O, but got Unknown
-		//IL_037a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0384: Expected O, but got Unknown
+		//IL_0109: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0113: Expected O, but got Unknown
+		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012c: Expected O, but got Unknown
 		GameObject val = GameObject.Find("Canvas");
 		if ((Object)(object)val == (Object)null)
 		{
@@ -133,115 +100,17 @@ internal class SaveMenuPatcher
 			{
 				logger4.LogWarning((object)"[SaveMenuPatcher] Source quick load button has no RectTransform; skipping quick load button creation.");
 			}
-			return;
 		}
-		RemoveExistingQuickLoadButtons(gameObject.transform.parent);
-		Rect rect = component.rect;
-		float width = ((Rect)(ref rect)).width;
-		rect = component.rect;
-		float height = ((Rect)(ref rect)).height;
-		float spacing = height * 0.08f;
-		float width2 = height;
-		CreateSeedInput(val.transform);
-		for (int i = 1; i <= 3; i++)
+		else
 		{
-			GameObject val4 = Object.Instantiate<GameObject>(gameObject, gameObject.transform.parent);
-			((Object)val4).name = $"QuickLoadSlot_{i}";
-			Button component2 = val4.GetComponent<Button>();
+			RemoveExistingQuickLoadButtons(gameObject.transform.parent);
+			CreateSeedInput(val.transform);
+			Button component2 = gameObject.GetComponent<Button>();
 			((UnityEventBase)component2.onClick).RemoveAllListeners();
+			component2.onClick = new ButtonClickedEvent();
+			((UnityEvent)component2.onClick).AddListener(new UnityAction(MainMenuSavePanel.Show));
 			((Selectable)component2).interactable = true;
-			ConfigureQuickLoadRect(val4, component, i - 1, width2, height, spacing);
-			ConfigureQuickLoadFollower(val4, component, i - 1, width2, height, spacing);
-			val4.SetActive(true);
-			TextMeshProUGUI[] componentsInChildren = val4.GetComponentsInChildren<TextMeshProUGUI>(true);
-			TextMeshProUGUI[] array = componentsInChildren;
-			foreach (TextMeshProUGUI val5 in array)
-			{
-				((TMP_Text)val5).text = $"{i}";
-				((TMP_Text)val5).fontSize = 24f;
-				((TMP_Text)val5).enableAutoSizing = false;
-				((Graphic)val5).color = Color.white;
-				RectTransform component3 = ((Component)val5).GetComponent<RectTransform>();
-				if ((Object)(object)component3 != (Object)null)
-				{
-					component3.anchorMin = Vector2.zero;
-					component3.anchorMax = Vector2.one;
-					component3.offsetMin = Vector2.zero;
-					component3.offsetMax = Vector2.zero;
-					component3.anchoredPosition = Vector2.zero;
-					component3.sizeDelta = Vector2.zero;
-				}
-				SaveSlotButtonTextEnforcer saveSlotButtonTextEnforcer = ((Component)val5).gameObject.AddComponent<SaveSlotButtonTextEnforcer>();
-				saveSlotButtonTextEnforcer.textToEnforce = $"{i}";
-			}
-			string filename = $"slot_{i}.sv";
-			string text = Path.Combine(SaveManager.SaveFolder, filename);
-			string metaPath = text + ".meta";
-			bool flag = File.Exists(text);
-			BuildSlotTooltip(i, text, metaPath, flag, out var tipName, out var tipDesc);
-			UITooltip val6 = val4.GetComponent<UITooltip>();
-			if ((Object)(object)val6 == (Object)null)
-			{
-				val6 = val4.AddComponent<UITooltip>();
-			}
-			val6.skipLocale = true;
-			val6.tipName = tipName;
-			val6.tipDesc = tipDesc;
-			if (!flag)
-			{
-				((Selectable)component2).interactable = false;
-			}
-			ApplyQuickLoadLayerIcon(val4, LoadLayerIcon(metaPath), flag);
-			int slotIndex = i;
-			((UnityEvent)component2.onClick).AddListener((UnityAction)delegate
-			{
-				SaveSaveMenuPatcher.DoLoad(filename, slotIndex);
-			});
 		}
-		int num = 4;
-		GameObject val7 = Object.Instantiate<GameObject>(gameObject, gameObject.transform.parent);
-		((Object)val7).name = "QuickLoadSlot_A";
-		Button component4 = val7.GetComponent<Button>();
-		((UnityEventBase)component4.onClick).RemoveAllListeners();
-		ConfigureQuickLoadRect(val7, component, num - 1, width2, height, spacing);
-		ConfigureQuickLoadFollower(val7, component, num - 1, width2, height, spacing);
-		val7.SetActive(true);
-		TextMeshProUGUI[] componentsInChildren2 = val7.GetComponentsInChildren<TextMeshProUGUI>(true);
-		TextMeshProUGUI[] array2 = componentsInChildren2;
-		foreach (TextMeshProUGUI val8 in array2)
-		{
-			((TMP_Text)val8).text = "A";
-			((TMP_Text)val8).fontSize = 24f;
-			((TMP_Text)val8).enableAutoSizing = false;
-			((Graphic)val8).color = Color.white;
-			RectTransform component5 = ((Component)val8).GetComponent<RectTransform>();
-			if ((Object)(object)component5 != (Object)null)
-			{
-				component5.anchorMin = Vector2.zero;
-				component5.anchorMax = Vector2.one;
-				component5.offsetMin = Vector2.zero;
-				component5.offsetMax = Vector2.zero;
-				component5.anchoredPosition = Vector2.zero;
-				component5.sizeDelta = Vector2.zero;
-			}
-			SaveSlotButtonTextEnforcer saveSlotButtonTextEnforcer2 = ((Component)val8).gameObject.AddComponent<SaveSlotButtonTextEnforcer>();
-			saveSlotButtonTextEnforcer2.textToEnforce = "A";
-		}
-		string text2 = Path.Combine(SaveManager.SaveFolder, "autosave.sv");
-		string metaPath2 = text2 + ".meta";
-		ApplyQuickLoadLayerIcon(saveExists: ((Selectable)component4).interactable = File.Exists(text2), buttonObject: val7, layerSprite: LoadLayerIcon(metaPath2));
-		ButtonClickedEvent onClick = component4.onClick;
-		object obj = _003C_003Ec._003C_003E9__5_1;
-		if (obj == null)
-		{
-			UnityAction val9 = delegate
-			{
-				SaveSaveMenuPatcher.DoLoad("autosave.sv", 0);
-			};
-			_003C_003Ec._003C_003E9__5_1 = val9;
-			obj = (object)val9;
-		}
-		((UnityEvent)onClick).AddListener((UnityAction)obj);
 	}
 
 	private static Sprite LoadLayerIcon(string metaPath)
@@ -253,7 +122,12 @@ internal class SaveMenuPatcher
 		try
 		{
 			SaveMetadata saveMetadata = JsonConvert.DeserializeObject<SaveMetadata>(File.ReadAllText(metaPath));
-			return (saveMetadata != null) ? Helper.LoadEmbeddedSprite($"layer{saveMetadata.BiomeIndex}ui") : null;
+			if (saveMetadata == null)
+			{
+				return null;
+			}
+			Sprite value;
+			return SaveSaveMenuPatcher.layerIcons.TryGetValue(saveMetadata.BiomeIndex, out value) ? value : Helper.LoadEmbeddedSprite($"layer{saveMetadata.BiomeIndex}ui");
 		}
 		catch
 		{
@@ -655,18 +529,6 @@ internal class SaveMenuPatcher
 			}
 		}
 		return null;
-	}
-
-	[HarmonyPatch(typeof(PreRunScript), "LoadRun")]
-	[HarmonyPrefix]
-	private static bool LoadRun_Prefix(PreRunScript __instance)
-	{
-		if (MultiplayerCompat.ShouldBlockQoLLoads)
-		{
-			MultiplayerCompat.NotifyLoadBlocked();
-			return false;
-		}
-		return true;
 	}
 
 	public static bool ShouldBlockQuickLoad(string filename)
