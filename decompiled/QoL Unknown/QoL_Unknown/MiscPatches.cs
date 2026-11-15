@@ -69,34 +69,73 @@ internal class MiscPatches
 
 	private const string MegalovaniaCode = "2296";
 
+	internal const string CategoryTintPrefKey = "qol.game.categorytint";
+
+	private static readonly FieldRef<InvButton, Image> InvButtonImageRef = AccessTools.FieldRefAccess<InvButton, Image>("image");
+
+	private static readonly Dictionary<string, Color> CategoryTints = new Dictionary<string, Color>
+	{
+		{
+			"medical",
+			new Color(0.78f, 1f, 0.78f)
+		},
+		{
+			"drug",
+			new Color(1f, 0.8f, 1f)
+		},
+		{
+			"tool",
+			new Color(1f, 0.88f, 0.73f)
+		},
+		{
+			"food",
+			new Color(1f, 1f, 0.78f)
+		},
+		{
+			"water",
+			new Color(0.78f, 0.9f, 1f)
+		},
+		{
+			"container",
+			new Color(0.88f, 0.8f, 1f)
+		},
+		{
+			"utility",
+			new Color(0.78f, 1f, 1f)
+		},
+		{
+			"trash",
+			new Color(0.85f, 0.85f, 0.85f)
+		}
+	};
+
 	private static bool wasConsoleActive = false;
 
 	private static int framesToClearConsole = 0;
 
+	private static bool CategoryTintEnabled => PlayerPrefs.GetInt("qol.game.categorytint", 0) == 1;
+
 	public static void Initialize(ManualLogSource logger)
 	{
 		Logger = logger;
-		bool flag = RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.misc", typeof(MiscPatches), logger);
-		if (!(flag | RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.misc.recipefilter", typeof(RecipeFilterPatch), logger)))
-		{
-		}
+		_ = RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.misc", typeof(MiscPatches), logger) | RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.misc.recipefilter", typeof(RecipeFilterPatch), logger);
 	}
 
 	[HarmonyPatch(typeof(UIUtil), "GetEventSystemRaycastResults")]
 	[HarmonyPrefix]
 	private static bool UIUtil_GetEventSystemRaycastResults_Prefix(Vector2? pos, ref List<RaycastResult> __result)
 	{
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0071: Expected O, but got Unknown
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005c: Expected O, but got Unknown
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
 		EventSystem current = EventSystem.current;
 		if ((Object)(object)current == (Object)null)
 		{
@@ -127,13 +166,12 @@ internal class MiscPatches
 	[HarmonyPostfix]
 	private static void Update_Postfix(WorldGeneration __instance)
 	{
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
 		if (__instance.worldExists && !((Object)(object)PlayerCamera.main == (Object)null) && !((Object)(object)PlayerCamera.main.body == (Object)null) && !MultiplayerCompat.IsActive && __instance.savePanel.activeSelf)
 		{
 			PlayerCamera.main.body.forceWalk = false;
 			float num = (float)(0L - (long)__instance.halfHeight) + 3.1f;
-			float y = ((Component)PlayerCamera.main.body).transform.position.y;
-			if (y > num + 0.5f)
+			if (((Component)PlayerCamera.main.body).transform.position.y > num + 0.5f)
 			{
 				__instance.savePanel.SetActive(false);
 			}
@@ -149,8 +187,8 @@ internal class MiscPatches
 	[HarmonyPrefix]
 	private static bool PlayerCamera_SetTimeScale_Prefix(SpeedType speed)
 	{
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000a: Invalid comparison between Unknown and I4
+		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0009: Invalid comparison between Unknown and I4
 		if (MultiplayerCompat.IsActive && (int)speed == 6)
 		{
 			Time.timeScale = 1f;
@@ -173,13 +211,12 @@ internal class MiscPatches
 	[HarmonyPostfix]
 	private static void PlayerCamera_HandleWhileDragging_Postfix(PlayerCamera __instance)
 	{
-		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a8: Invalid comparison between Unknown and I4
-		//IL_00c7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)__instance == (Object)null || (Object)(object)__instance.dragItem == (Object)null || (Object)(object)__instance.dragImage == (Object)null || !((Behaviour)__instance.dragImage).enabled || !EnhancedMenuController.NeedsScreenSpaceUiCompatibility())
 		{
 			return;
@@ -193,7 +230,7 @@ internal class MiscPatches
 			RectTransform val = (RectTransform)(object)((parent is RectTransform) ? parent : null);
 			Camera val2 = null;
 			Canvas mainCanvas = __instance.mainCanvas;
-			if ((Object)(object)mainCanvas != (Object)null && (int)mainCanvas.renderMode > 0)
+			if ((Object)(object)mainCanvas != (Object)null && (int)mainCanvas.renderMode != 0)
 			{
 				val2 = mainCanvas.worldCamera;
 			}
@@ -207,6 +244,36 @@ internal class MiscPatches
 				((Transform)rectTransform).position = Input.mousePosition;
 			}
 			((Transform)rectTransform).localScale = Vector3.one;
+		}
+	}
+
+	[HarmonyPatch(typeof(InvButton), "UpdateGraphic")]
+	[HarmonyPostfix]
+	private static void InvButton_UpdateGraphic_CategoryTint_Postfix(InvButton __instance)
+	{
+		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
+		if (!CategoryTintEnabled)
+		{
+			return;
+		}
+		Item item = __instance.GetItem();
+		if (!((Object)(object)item == (Object)null) && item.colorSwatch == 0)
+		{
+			string text = item.Stats?.category;
+			if (text != null && CategoryTints.TryGetValue(text, out var value))
+			{
+				Image obj = InvButtonImageRef.Invoke(__instance);
+				Color color = ((Graphic)obj).color;
+				color.r *= value.r;
+				color.g *= value.g;
+				color.b *= value.b;
+				((Graphic)obj).color = color;
+			}
 		}
 	}
 
@@ -231,43 +298,42 @@ internal class MiscPatches
 	[HarmonyPrefix]
 	private static bool GlobalDark_HandleTooltip_Prefix(GlobalDark __instance)
 	{
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009e: Invalid comparison between Unknown and I4
-		//IL_00d0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ea: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0107: Unknown result type (might be due to invalid IL or missing references)
-		//IL_057f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0191: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0197: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02c0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02da: Unknown result type (might be due to invalid IL or missing references)
-		//IL_039e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0455: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0465: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0478: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0488: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04c0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04d9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_050c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_050e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03e1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03e6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_051c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_051e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0520: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0525: Unknown result type (might be due to invalid IL or missing references)
-		//IL_052e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0533: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0535: Unknown result type (might be due to invalid IL or missing references)
-		//IL_053a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0511: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0148: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0265: Unknown result type (might be due to invalid IL or missing references)
+		//IL_027f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_033f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0344: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03f1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0401: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0414: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0424: Unknown result type (might be due to invalid IL or missing references)
+		//IL_043c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_044c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_045c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0475: Unknown result type (might be due to invalid IL or missing references)
+		//IL_048c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04a8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04aa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0382: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0387: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04b3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04b5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04b7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04bc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04c5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04ca: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04cc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04d1: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)__instance == (Object)null || (Object)(object)__instance.tooltipRect == (Object)null)
 		{
 			return true;
@@ -281,7 +347,7 @@ internal class MiscPatches
 		Transform parent = ((Transform)__instance.tooltipRect).parent;
 		RectTransform val = (RectTransform)(object)((parent is RectTransform) ? parent : null);
 		Camera val2 = null;
-		if ((Object)(object)__instance.canvas != (Object)null && (int)__instance.canvas.renderMode > 0)
+		if ((Object)(object)__instance.canvas != (Object)null && (int)__instance.canvas.renderMode != 0)
 		{
 			val2 = __instance.canvas.worldCamera;
 		}
@@ -394,9 +460,9 @@ internal class MiscPatches
 
 	private static void FixTooltipHeaderWidth(TextMeshProUGUI headerText, RectTransform headerBackground)
 	{
-		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0090: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)headerText == (Object)null || (Object)(object)headerBackground == (Object)null)
 		{
 			return;
@@ -424,14 +490,13 @@ internal class MiscPatches
 
 	private static void StabilizeSelectedItemOverlay(PlayerCamera playerCamera)
 	{
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b6: Invalid comparison between Unknown and I4
-		//IL_00cc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ad: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)playerCamera == (Object)null || (Object)(object)playerCamera.selectedItemOverlay == (Object)null || !EnhancedMenuController.NeedsScreenSpaceUiCompatibility())
 		{
 			return;
@@ -458,7 +523,7 @@ internal class MiscPatches
 		{
 			Camera val2 = null;
 			Canvas mainCanvas = playerCamera.mainCanvas;
-			if ((Object)(object)mainCanvas != (Object)null && (int)mainCanvas.renderMode > 0)
+			if ((Object)(object)mainCanvas != (Object)null && (int)mainCanvas.renderMode != 0)
 			{
 				val2 = mainCanvas.worldCamera;
 			}
@@ -566,7 +631,7 @@ internal class MiscPatches
 
 	private static void CacheTooltipPivot(RectTransform tooltipRect)
 	{
-		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)tooltipRect != (Object)null && !baseTooltipPivots.ContainsKey(tooltipRect))
 		{
 			baseTooltipPivots[tooltipRect] = tooltipRect.pivot;
@@ -575,7 +640,7 @@ internal class MiscPatches
 
 	private static void RestoreTooltipPivot(RectTransform tooltipRect)
 	{
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)tooltipRect != (Object)null && baseTooltipPivots.TryGetValue(tooltipRect, out var value))
 		{
 			tooltipRect.pivot = value;
@@ -584,9 +649,9 @@ internal class MiscPatches
 
 	private static void ClampTooltipContentToScreen(RectTransform tooltipRect, RectTransform nameRect, RectTransform descRect, float leftPadding, float rightPadding, float topPadding, float bottomPadding)
 	{
-		//IL_02c7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02d5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02da: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0264: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0272: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0277: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)tooltipRect == (Object)null)
 		{
 			return;
@@ -648,11 +713,12 @@ internal class MiscPatches
 			{
 				num12 = num3 - num7;
 			}
-			if (Mathf.Abs(num11) <= 0.01f && Mathf.Abs(num12) <= 0.01f)
+			if (!(Mathf.Abs(num11) <= 0.01f) || !(Mathf.Abs(num12) <= 0.01f))
 			{
-				break;
+				((Transform)tooltipRect).position = ((Transform)tooltipRect).position + new Vector3(num11, num12, 0f);
+				continue;
 			}
-			((Transform)tooltipRect).position = ((Transform)tooltipRect).position + new Vector3(num11, num12, 0f);
+			break;
 		}
 	}
 
@@ -660,16 +726,16 @@ internal class MiscPatches
 	[HarmonyPostfix]
 	private static void WoundView_Update_Postfix(WoundView __instance)
 	{
-		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0140: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0145: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0124: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00db: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e4: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)__instance == (Object)null || (Object)(object)((Component)__instance).transform == (Object)null)
 		{
 			return;
@@ -744,12 +810,16 @@ internal class MiscPatches
 			return false;
 		}
 		string name = ((Object)child).name;
-		return string.Equals(name, "WoundItem", StringComparison.Ordinal) || string.Equals(name, "WoundItem (1)", StringComparison.Ordinal) || string.Equals(name, "WoundItem (2)", StringComparison.Ordinal) || string.Equals(name, "WoundItem (3)", StringComparison.Ordinal) || string.Equals(name, "WoundItem (4)", StringComparison.Ordinal) || string.Equals(name, "WoundItem (5)", StringComparison.Ordinal);
+		if (!string.Equals(name, "WoundItem", StringComparison.Ordinal) && !string.Equals(name, "WoundItem (1)", StringComparison.Ordinal) && !string.Equals(name, "WoundItem (2)", StringComparison.Ordinal) && !string.Equals(name, "WoundItem (3)", StringComparison.Ordinal) && !string.Equals(name, "WoundItem (4)", StringComparison.Ordinal))
+		{
+			return string.Equals(name, "WoundItem (5)", StringComparison.Ordinal);
+		}
+		return true;
 	}
 
 	private static void RestoreWoundItemPositions()
 	{
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004a: Unknown result type (might be due to invalid IL or missing references)
 		if (baseWoundItemAnchoredPositions.Count == 0)
 		{
 			return;
@@ -893,8 +963,8 @@ internal class MiscPatches
 
 	private static bool IsCraftButtonHit(PlayerCamera camera, List<RaycastResult> uiCasts)
 	{
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
 		Transform transform = camera.craftButton.transform;
 		if ((Object)(object)transform == (Object)null)
 		{
@@ -903,11 +973,10 @@ internal class MiscPatches
 		foreach (RaycastResult uiCast in uiCasts)
 		{
 			RaycastResult current = uiCast;
-			if ((Object)(object)((RaycastResult)(ref current)).gameObject == (Object)null || (!((Object)(object)((RaycastResult)(ref current)).gameObject == (Object)(object)camera.craftButton) && !((RaycastResult)(ref current)).gameObject.transform.IsChildOf(transform)))
+			if (!((Object)(object)((RaycastResult)(ref current)).gameObject == (Object)null) && ((Object)(object)((RaycastResult)(ref current)).gameObject == (Object)(object)camera.craftButton || ((RaycastResult)(ref current)).gameObject.transform.IsChildOf(transform)))
 			{
-				continue;
+				return true;
 			}
-			return true;
 		}
 		return false;
 	}
@@ -1027,7 +1096,11 @@ internal class MiscPatches
 
 	private static bool CodeContainsMegalovaniaAt(string code, int index)
 	{
-		return !string.IsNullOrEmpty(code) && index >= 0 && index <= code.Length - "2296".Length && string.Compare(code, index, "2296", 0, "2296".Length, StringComparison.Ordinal) == 0;
+		if (!string.IsNullOrEmpty(code) && index >= 0 && index <= code.Length - "2296".Length)
+		{
+			return string.Compare(code, index, "2296", 0, "2296".Length, StringComparison.Ordinal) == 0;
+		}
+		return false;
 	}
 
 	public static bool ContainsIgnoreCase(string source, string value)
@@ -1053,8 +1126,7 @@ internal class MiscPatches
 		{
 			if (item.specific && !string.IsNullOrEmpty(item.specificId))
 			{
-				string source = (item.isLiquid ? Locale.GetOther(item.specificId) : Locale.GetItem(item.specificId));
-				if (ContainsIgnoreCase(source, filter))
+				if (ContainsIgnoreCase(item.isLiquid ? Locale.GetOther(item.specificId) : Locale.GetItem(item.specificId), filter))
 				{
 					return true;
 				}

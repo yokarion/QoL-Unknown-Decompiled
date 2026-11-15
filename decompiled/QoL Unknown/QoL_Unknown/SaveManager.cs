@@ -31,11 +31,9 @@ public static class SaveManager
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.savemanager");
-		val.PatchAll(typeof(SaveManager));
+		new Harmony("org.bepinex.plugins.qol.savemanager").PatchAll(typeof(SaveManager));
 	}
 
 	public static bool IsAutosaveOnExitEnabled()
@@ -108,7 +106,9 @@ public static class SaveManager
 
 	public static void PerformAutosave(bool showMessage = true)
 	{
-		if (!QoLModuleManager.IsEnabled("qol_autosave") || autosaveInProgress || MultiplayerCompat.IsActive || (Object)(object)WorldGeneration.world == (Object)null || !WorldGeneration.world.worldExists || !Object.op_Implicit((Object)(object)PlayerCamera.main) || !Object.op_Implicit((Object)(object)PlayerCamera.main.body) || !PlayerCamera.main.body.alive || !PlayerCamera.main.body.standing)
+		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Invalid comparison between Unknown and I4
+		if (!QoLModuleManager.IsEnabled("qol_autosave") || autosaveInProgress || MultiplayerCompat.IsActive || (Object)(object)WorldGeneration.world == (Object)null || !WorldGeneration.world.worldExists || (int)WorldGeneration.world.biomeOverride == 1 || !Object.op_Implicit((Object)(object)PlayerCamera.main) || !Object.op_Implicit((Object)(object)PlayerCamera.main.body) || !PlayerCamera.main.body.alive || !PlayerCamera.main.body.standing)
 		{
 			return;
 		}

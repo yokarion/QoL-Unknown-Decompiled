@@ -36,7 +36,11 @@ internal static class SaveSlotRegistry
 
 	public static string DefaultName(int slot)
 	{
-		return (slot == 0) ? "Autosave" : $"Slot {slot}";
+		if (slot != 0)
+		{
+			return $"Slot {slot}";
+		}
+		return "Autosave";
 	}
 
 	public static bool IsFilled(int slot)
@@ -91,8 +95,11 @@ internal static class SaveSlotRegistry
 
 	public static string GetName(int slot)
 	{
-		string value;
-		return (GetLayout().Names.TryGetValue(slot, out value) && !string.IsNullOrWhiteSpace(value)) ? value : DefaultName(slot);
+		if (!GetLayout().Names.TryGetValue(slot, out var value) || string.IsNullOrWhiteSpace(value))
+		{
+			return DefaultName(slot);
+		}
+		return value;
 	}
 
 	public static void SetName(int slot, string name)

@@ -12,6 +12,8 @@ namespace QoL_Unknown;
 
 internal class CraftingPreviewPatcher
 {
+	internal const string ModuleId = "qol_ui_preview";
+
 	private static ManualLogSource Logger;
 
 	private static readonly FieldInfo RecipeItemPreviewObjectsField = AccessTools.Field(typeof(PlayerCamera), "recipeItemPreviewObjects");
@@ -20,24 +22,28 @@ internal class CraftingPreviewPatcher
 	{
 		Logger = logger;
 		RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.craftingpreview", typeof(CraftingPreviewPatcher), logger);
+		RecipeIngredientLookupPatcher.Initialize(logger);
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "RefreshCurrentlySelectedRecipe")]
 	[HarmonyPostfix]
 	private static void RefreshCurrentlySelectedRecipe_Postfix(PlayerCamera __instance)
 	{
-		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0204: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0209: Unknown result type (might be due to invalid IL or missing references)
-		//IL_020b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0193: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)__instance == (Object)null || RecipeItemPreviewObjectsField == null || (Object)(object)__instance.craftingPanel == (Object)null || !(RecipeItemPreviewObjectsField.GetValue(__instance) is List<GameObject> previewObjects) || __instance.craftingPanel.transform.childCount <= 8 || __instance.selectedRecipe < 0 || __instance.selectedRecipe >= Recipes.recipes.Count)
 		{
 			return;
 		}
 		Recipe val = Recipes.recipes[__instance.selectedRecipe];
-		List<Item> itemsForRecipeThorough = val.GetItemsForRecipeThorough();
+		List<Item> items;
+		bool flag = CraftingModule.TryGetResolvedItems(val, out items);
+		if (!flag)
+		{
+			items = val.GetItemsForRecipeThorough();
+		}
 		TextMeshProUGUI component = ((Component)__instance.craftingPanel.transform.GetChild(8)).GetComponent<TextMeshProUGUI>();
-		RebuildMissingPreviewObjects(__instance, component, itemsForRecipeThorough, previewObjects);
+		RebuildMissingPreviewObjects(__instance, component, items, previewObjects, flag);
 		if (!(RecipeItemPreviewObjectsField.GetValue(__instance) is List<GameObject> { Count: not 0 } list))
 		{
 			return;
@@ -46,15 +52,10 @@ internal class CraftingPreviewPatcher
 		for (int i = 0; i < list.Count; i++)
 		{
 			GameObject val2 = list[i];
-			if ((Object)(object)val2 == (Object)null)
+			if (!((Object)(object)val2 == (Object)null))
 			{
-				continue;
-			}
-			RectTransform component2 = val2.GetComponent<RectTransform>();
-			if (!((Object)(object)component2 == (Object)null))
-			{
-				float x = component2.anchoredPosition.x;
-				if (x < -21f)
+				RectTransform component2 = val2.GetComponent<RectTransform>();
+				if (!((Object)(object)component2 == (Object)null) && component2.anchoredPosition.x < -21f)
 				{
 					anyStacked = true;
 					break;
@@ -67,40 +68,39 @@ internal class CraftingPreviewPatcher
 			GameObject val3 = list[k];
 			if (!((Object)(object)val3 == (Object)null))
 			{
-				for (; j < itemsForRecipeThorough.Count && (Object)(object)itemsForRecipeThorough[j] == (Object)null; j++)
+				for (; j < items.Count && (Object)(object)items[j] == (Object)null; j++)
 				{
 				}
-				if (j >= itemsForRecipeThorough.Count)
+				if (j >= items.Count)
 				{
 					break;
 				}
-				Item item = itemsForRecipeThorough[j++];
+				Item item = items[j++];
 				RectTransform component3 = val3.GetComponent<RectTransform>();
 				if (!((Object)(object)component3 == (Object)null))
 				{
-					Vector2 anchoredPosition = component3.anchoredPosition;
-					bool isStacked = anchoredPosition.x < -21f;
+					bool isStacked = component3.anchoredPosition.x < -21f;
 					EnhancePreviewObject(val3, item, isStacked, anyStacked);
 				}
 			}
 		}
 	}
 
-	private static void RebuildMissingPreviewObjects(PlayerCamera camera, TextMeshProUGUI ingredientText, List<Item> recipeItems, List<GameObject> previewObjects)
+	private static void RebuildMissingPreviewObjects(PlayerCamera camera, TextMeshProUGUI ingredientText, List<Item> recipeItems, List<GameObject> previewObjects, bool force)
 	{
-		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0100: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0102: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0108: Invalid comparison between Unknown and I4
-		//IL_010a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0174: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0176: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_027c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bf: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00da: Invalid comparison between Unknown and I4
+		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
+		//IL_017f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_021c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_024e: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)camera == (Object)null || (Object)(object)ingredientText == (Object)null || recipeItems == null || previewObjects == null)
 		{
 			return;
@@ -113,7 +113,7 @@ internal class CraftingPreviewPatcher
 				num++;
 			}
 		}
-		if (previewObjects.Count == num)
+		if (!force && previewObjects.Count == num)
 		{
 			return;
 		}
@@ -180,13 +180,17 @@ internal class CraftingPreviewPatcher
 
 	private static bool IsIngredientMarker(int spriteIndex)
 	{
-		return spriteIndex == 17 || spriteIndex == 23 || spriteIndex == 24;
+		if (spriteIndex != 17 && spriteIndex != 23)
+		{
+			return spriteIndex == 24;
+		}
+		return true;
 	}
 
 	private static void EnhancePreviewObject(GameObject previewObj, Item item, bool isStacked, bool anyStacked)
 	{
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)previewObj == (Object)null || (Object)(object)item == (Object)null)
 		{
 			return;
@@ -207,21 +211,22 @@ internal class CraftingPreviewPatcher
 
 	private static void CreateContainerSideDisplay(GameObject mainPreviewObj, Container container, bool isStacked, bool anyStacked)
 	{
-		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005e: Expected O, but got Unknown
-		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ea: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0101: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0173: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017a: Expected O, but got Unknown
-		//IL_0199: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01bd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0234: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0243: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0051: Expected O, but got Unknown
+		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0117: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0146: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0164: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0183: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01f7: Unknown result type (might be due to invalid IL or missing references)
 		Image val = (((Object)(object)mainPreviewObj != (Object)null) ? mainPreviewObj.GetComponent<Image>() : null);
 		if (!((Object)(object)val == (Object)null) && !((Object)(object)container == (Object)null))
 		{
@@ -277,21 +282,22 @@ internal class CraftingPreviewPatcher
 
 	private static void CreateConditionBar(Transform parent, float condition, Vector2 anchoredPos, Vector2 size)
 	{
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0047: Expected O, but got Unknown
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0102: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0108: Expected O, but got Unknown
-		//IL_0125: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0145: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0152: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0168: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003d: Expected O, but got Unknown
+		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0090: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ec: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0130: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0141: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)parent == (Object)null))
 		{
 			condition = Mathf.Clamp01(condition);

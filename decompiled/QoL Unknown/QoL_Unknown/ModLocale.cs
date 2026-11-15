@@ -58,8 +58,7 @@ internal static class ModLocale
 
 	private static void EnsureCurrentLocaleLoaded()
 	{
-		string currentLocaleName = GetCurrentLocaleName();
-		if (!string.Equals(currentLocaleName, loadedLocaleName, StringComparison.OrdinalIgnoreCase))
+		if (!string.Equals(GetCurrentLocaleName(), loadedLocaleName, StringComparison.OrdinalIgnoreCase))
 		{
 			Reload();
 		}
@@ -72,7 +71,11 @@ internal static class ModLocale
 			return Locale.currentLangName;
 		}
 		string text = PlayerPrefs.GetString("locale", string.Empty);
-		return string.IsNullOrEmpty(text) ? "EN" : text;
+		if (!string.IsNullOrEmpty(text))
+		{
+			return text;
+		}
+		return "EN";
 	}
 
 	private static void LoadEnglishFallbacks()

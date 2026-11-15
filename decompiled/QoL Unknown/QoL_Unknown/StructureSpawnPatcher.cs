@@ -19,20 +19,18 @@ internal class StructureSpawnPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0012: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0018: Expected O, but got Unknown
+		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
 		StructureSpawnManager.LoadMultipliers();
-		Harmony val = new Harmony("org.bepinex.plugins.qol.structurespawn");
-		val.PatchAll(typeof(StructureSpawnPatcher));
+		new Harmony("org.bepinex.plugins.qol.structurespawn").PatchAll(typeof(StructureSpawnPatcher));
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "GenerateObjectAtPos")]
 	[HarmonyPrefix]
 	private static bool GenerateObjectAtPos_Prefix(WorldGeneration __instance, Vector2Int pos, Tilemap tilemap, float blockChance, bool genMode)
 	{
-		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
 		if (ShouldBypassStructureSpawnPatches())
 		{
 			SkippingCurrent = false;
@@ -60,18 +58,18 @@ internal class StructureSpawnPatcher
 
 	private static bool ExecuteVanillaGeneration(WorldGeneration instance, Vector2Int pos, Tilemap tilemap, float blockChance, bool genMode)
 	{
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0170: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0132: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0137: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
 		ushort[,] worldBlocks = null;
 		if (genMode && worldBlocksField != null)
 		{

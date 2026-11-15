@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using BepInEx.Logging;
 using HarmonyLib;
 using UnityEngine;
@@ -15,26 +16,90 @@ internal class RecipeFixPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.recipefix");
-		val.PatchAll(typeof(RecipeFixPatcher));
+		new Harmony("org.bepinex.plugins.qol.recipefix").PatchAll(typeof(RecipeFixPatcher));
 	}
 
 	[HarmonyPatch(typeof(RecipeItem), "UseItem")]
 	[HarmonyPostfix]
 	private static void UseItem_Postfix(RecipeItem __instance, Item item)
 	{
-		if (!((Object)(object)item == (Object)null) && __instance.destroyItem && !__instance.isLiquid)
+		if ((Object)(object)item == (Object)null || !__instance.destroyItem || __instance.isLiquid)
 		{
-			if (consumedFrame != Time.frameCount)
-			{
-				consumedThisFrame.Clear();
-				consumedFrame = Time.frameCount;
-			}
-			consumedThisFrame.Add(item);
+			return;
 		}
+		if (consumedFrame != Time.frameCount)
+		{
+			consumedThisFrame.Clear();
+			consumedFrame = Time.frameCount;
+		}
+		consumedThisFrame.Add(item);
+		Container val = default(Container);
+		if ((Object)(object)((Component)item).transform.parent != (Object)null && item.TryGetParentContainer(ref val))
+		{
+			val.UnloadItem(item, (Body)null);
+		}
+		if (__instance.destroyItem || !(item.condition <= 0f) || !item.Stats.destroyAtZeroCondition || !((Object)(object)((Component)item).transform.parent != (Object)null))
+		{
+			return;
+		}
+		Container val2 = default(Container);
+		if (item.TryGetParentContainer(ref val2))
+		{
+			val2.UnloadItem(item, (Body)null);
+			return;
+		}
+		PlayerCamera main = PlayerCamera.main;
+		if (main != null)
+		{
+			main.body.DropItem(item);
+		}
+	}
+
+	[HarmonyPatch(typeof(Body), "AutoPickUpItem")]
+	[HarmonyPostfix]
+	private static void AutoPickUpItem_Diagnose(Body __instance, Item item)
+	{
+		Container val = default(Container);
+		if ((Object)(object)item == (Object)null || (Object)(object)__instance == (Object)null || item.Stats == null || item.Stats.wearable || item.Stats.HasTag("noautopickup") || __instance.HoldingItem(item) || item.TryGetParentContainer(ref val))
+		{
+			return;
+		}
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.Append("[CraftPlace] f").Append(Time.frameCount).Append(' ')
+			.Append(item.id)
+			.Append(" left loose. slots:");
+		for (int i = 0; i < __instance.slots.Length; i++)
+		{
+			InventorySlot val2 = __instance.slots[i];
+			stringBuilder.Append(' ').Append(i).Append(':');
+			if (!val2.canPickUp)
+			{
+				stringBuilder.Append("noPickup");
+				continue;
+			}
+			if (((Component)val2).transform.childCount == 0)
+			{
+				stringBuilder.Append("empty");
+				continue;
+			}
+			Item component = ((Component)((Component)val2).transform.GetChild(0)).GetComponent<Item>();
+			stringBuilder.Append(((Object)(object)component != (Object)null) ? (component.id + "@" + component.condition.ToString("0.##")) : "nonItem");
+		}
+		foreach (Item surfaceInventoryItem in __instance.GetSurfaceInventoryItems())
+		{
+			if (!((Object)(object)surfaceInventoryItem == (Object)null) && Object.op_Implicit((Object)(object)surfaceInventoryItem.container))
+			{
+				stringBuilder.Append(" | ").Append(surfaceInventoryItem.id).Append(" w=")
+					.Append(surfaceInventoryItem.container.GetHoldingWeight().ToString("0.##"))
+					.Append('/')
+					.Append(surfaceInventoryItem.container.maxWeight.ToString("0.##"))
+					.Append(" canHold=")
+					.Append(surfaceInventoryItem.container.CanHoldItem(item));
+			}
+		}
+		Logger.LogInfo((object)stringBuilder.ToString());
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "RefreshRecipeList")]
@@ -117,12 +182,12 @@ internal class RecipeFixPatcher
 				}
 				if (__instance.specific)
 				{
-					if (!(val2.AmountOf(__instance.specificId) >= __instance.minimumCondition))
+					if (val2.AmountOf(__instance.specificId) >= __instance.minimumCondition)
 					{
-						continue;
+						__result = item2;
+						return false;
 					}
-					__result = item2;
-					return false;
+					continue;
 				}
 				foreach (LiquidStack item3 in val2.stack)
 				{
@@ -141,13 +206,13 @@ internal class RecipeFixPatcher
 				}
 				if (__instance.specific)
 				{
-					if (item2.id == __instance.specificId && item2.condition >= __instance.minimumCondition)
+					if (item2.id == __instance.specificId && item2.condition >= __instance.minimumCondition && (!__instance.noMaxCondition || item2.condition < 0.991f) && (!item2.Stats.destroyAtZeroCondition || item2.condition > 0f))
 					{
 						__result = item2;
 						return false;
 					}
 				}
-				else if (item2.condition >= __instance.minimumCondition && Item.GetQualityThatMeetsCriteria(__instance.quality, item2.Stats.qualities) != null)
+				else if (item2.condition >= __instance.minimumCondition && (!__instance.noMaxCondition || item2.condition < 0.991f) && (!item2.Stats.destroyAtZeroCondition || item2.condition > 0f) && Item.GetQualityThatMeetsCriteria(__instance.quality, item2.Stats.qualities) != null)
 				{
 					if (!flag)
 					{
@@ -175,7 +240,11 @@ internal class RecipeFixPatcher
 			return false;
 		}
 		string text = ingredient?.quality?.id;
-		return text == "hammering" || text == "cutting";
+		if (!(text == "hammering"))
+		{
+			return text == "cutting";
+		}
+		return true;
 	}
 
 	private static float GetMatchedQualityAmount(RecipeItem ingredient, Item item)

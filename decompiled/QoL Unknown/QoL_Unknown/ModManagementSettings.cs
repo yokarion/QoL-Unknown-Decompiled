@@ -1,18 +1,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Logging;
-using HarmonyLib;
 using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
@@ -48,7 +45,17 @@ internal static class ModManagementSettings
 
 		public string LatestVersion;
 
-		public bool CanToggle => !IsCore && !IsSelf && !string.IsNullOrWhiteSpace(PluginPath);
+		public bool CanToggle
+		{
+			get
+			{
+				if (!IsCore && !IsSelf)
+				{
+					return !string.IsNullOrWhiteSpace(PluginPath);
+				}
+				return false;
+			}
+		}
 	}
 
 	private sealed class PendingModState
@@ -85,8 +92,8 @@ internal static class ModManagementSettings
 
 		public void OnPointerClick(PointerEventData eventData)
 		{
-			//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-			//IL_000b: Invalid comparison between Unknown and I4
+			//IL_0004: Unknown result type (might be due to invalid IL or missing references)
+			//IL_000a: Invalid comparison between Unknown and I4
 			if (eventData != null && (int)eventData.button == 1)
 			{
 				SavePreset(slot);
@@ -111,74 +118,86 @@ internal static class ModManagementSettings
 	{
 		public static readonly _003C_003Ec _003C_003E9 = new _003C_003Ec();
 
-		public static Func<ModPresetEntry, bool> _003C_003E9__31_1;
+		public static Func<ModPresetEntry, bool> _003C_003E9__28_1;
 
-		public static Func<Image, bool> _003C_003E9__33_0;
+		public static Func<Image, bool> _003C_003E9__30_0;
 
-		public static Func<Button, bool> _003C_003E9__35_0;
+		public static Func<Button, bool> _003C_003E9__32_0;
 
-		public static Func<UILocalizer, bool> _003C_003E9__35_1;
+		public static Func<UILocalizer, bool> _003C_003E9__32_1;
 
-		public static Func<ModEntry, bool> _003C_003E9__38_0;
+		public static Func<ModEntry, bool> _003C_003E9__35_0;
 
-		public static Func<ModEntry, ModPresetEntry> _003C_003E9__38_1;
+		public static Func<ModEntry, ModPresetEntry> _003C_003E9__35_1;
 
-		public static Func<KeyValuePair<string, PluginInfo>, string> _003C_003E9__40_0;
+		public static Func<KeyValuePair<string, PluginInfo>, string> _003C_003E9__37_0;
 
-		public static Func<SerialMod, bool> _003C_003E9__41_0;
+		public static Func<SerialMod, bool> _003C_003E9__38_0;
 
-		public static Func<SerialMod, string> _003C_003E9__41_1;
+		public static Func<SerialMod, string> _003C_003E9__38_1;
 
-		public static UnityAction _003C_003E9__47_0;
+		public static UnityAction _003C_003E9__44_0;
 
-		public static UnityAction _003C_003E9__48_0;
+		public static UnityAction _003C_003E9__45_0;
 
-		public static Func<KeyValuePair<string, PluginInfo>, string> _003C_003E9__63_1;
+		public static Func<KeyValuePair<string, PluginInfo>, string> _003C_003E9__54_1;
 
-		public static Comparison<ModEntry> _003C_003E9__63_0;
+		public static Comparison<ModEntry> _003C_003E9__54_0;
 
-		public static Func<string, string> _003C_003E9__69_0;
+		public static Func<string, string> _003C_003E9__60_0;
 
-		public static Func<ModEntry, bool> _003C_003E9__80_0;
+		public static Func<ModEntry, bool> _003C_003E9__71_0;
 
-		public static Func<Button, bool> _003C_003E9__83_0;
+		public static Func<Button, bool> _003C_003E9__74_0;
 
-		public static Func<CachedVersionEntry, bool> _003C_003E9__94_0;
+		public static Func<CachedVersionEntry, bool> _003C_003E9__85_0;
 
-		public static Func<CachedVersionEntry, string> _003C_003E9__94_1;
+		public static Func<CachedVersionEntry, string> _003C_003E9__85_1;
 
-		public static Func<IGrouping<string, CachedVersionEntry>, CachedVersionEntry> _003C_003E9__94_2;
+		public static Func<IGrouping<string, CachedVersionEntry>, CachedVersionEntry> _003C_003E9__85_2;
 
-		public static Func<CachedVersionEntry, string> _003C_003E9__94_3;
+		public static Func<CachedVersionEntry, string> _003C_003E9__85_3;
 
-		public static Func<char, char> _003C_003E9__95_0;
+		public static Func<char, char> _003C_003E9__86_0;
 
-		internal bool _003CRefreshPresetButtons_003Eb__31_1(ModPresetEntry entry)
+		internal bool _003CRefreshPresetButtons_003Eb__28_1(ModPresetEntry entry)
 		{
 			return entry.Enabled;
 		}
 
-		internal bool _003CFindSlotSpriteSource_003Eb__33_0(Image candidate)
+		internal bool _003CFindSlotSpriteSource_003Eb__30_0(Image candidate)
 		{
-			return (Object)(object)candidate != (Object)null && (Object)(object)candidate.sprite != (Object)null;
+			if ((Object)(object)candidate != (Object)null)
+			{
+				return (Object)(object)candidate.sprite != (Object)null;
+			}
+			return false;
 		}
 
-		internal bool _003CFindBackButtonRect_003Eb__35_0(Button button)
+		internal bool _003CFindBackButtonRect_003Eb__32_0(Button button)
 		{
-			return (Object)(object)button != (Object)null && string.Equals(((Object)button).name, "Back", StringComparison.Ordinal);
+			if ((Object)(object)button != (Object)null)
+			{
+				return string.Equals(((Object)button).name, "Back", StringComparison.Ordinal);
+			}
+			return false;
 		}
 
-		internal bool _003CFindBackButtonRect_003Eb__35_1(UILocalizer candidate)
+		internal bool _003CFindBackButtonRect_003Eb__32_1(UILocalizer candidate)
 		{
-			return (Object)(object)candidate != (Object)null && string.Equals(candidate.key, "back", StringComparison.OrdinalIgnoreCase);
+			if ((Object)(object)candidate != (Object)null)
+			{
+				return string.Equals(candidate.key, "back", StringComparison.OrdinalIgnoreCase);
+			}
+			return false;
 		}
 
-		internal bool _003CSavePreset_003Eb__38_0(ModEntry entry)
+		internal bool _003CSavePreset_003Eb__35_0(ModEntry entry)
 		{
 			return entry?.CanToggle ?? false;
 		}
 
-		internal ModPresetEntry _003CSavePreset_003Eb__38_1(ModEntry entry)
+		internal ModPresetEntry _003CSavePreset_003Eb__35_1(ModEntry entry)
 		{
 			return new ModPresetEntry
 			{
@@ -188,85 +207,97 @@ internal static class ModManagementSettings
 			};
 		}
 
-		internal string _003CCaptureLoadedMods_003Eb__40_0(KeyValuePair<string, PluginInfo> pair)
+		internal string _003CCaptureLoadedMods_003Eb__37_0(KeyValuePair<string, PluginInfo> pair)
 		{
-			return pair.Value.Metadata.Name;
+			return SafeReadMetadataName(pair.Value) ?? pair.Key;
 		}
 
-		internal bool _003CDescribeMods_003Eb__41_0(SerialMod mod)
+		internal bool _003CDescribeMods_003Eb__38_0(SerialMod mod)
 		{
 			return mod != null;
 		}
 
-		internal string _003CDescribeMods_003Eb__41_1(SerialMod mod)
+		internal string _003CDescribeMods_003Eb__38_1(SerialMod mod)
 		{
 			return mod.Name;
 		}
 
-		internal void _003CPrepareSpawnedRow_003Eb__47_0()
+		internal void _003CPrepareSpawnedRow_003Eb__44_0()
 		{
 			Application.OpenURL("https://www.nexusmods.com/scavprototype/mods");
 		}
 
-		internal void _003CEnsureOpenNexusButton_003Eb__48_0()
+		internal void _003CEnsureOpenNexusButton_003Eb__45_0()
 		{
 			Application.OpenURL("https://www.nexusmods.com/scavprototype/mods");
 		}
 
-		internal string _003CRebuildCache_003Eb__63_1(KeyValuePair<string, PluginInfo> pair)
+		internal string _003CRebuildCache_003Eb__54_1(KeyValuePair<string, PluginInfo> pair)
 		{
-			return pair.Value.Metadata.Name;
+			return SafeReadMetadataName(pair.Value) ?? pair.Key;
 		}
 
-		internal int _003CRebuildCache_003Eb__63_0(ModEntry a, ModEntry b)
+		internal int _003CRebuildCache_003Eb__54_0(ModEntry a, ModEntry b)
 		{
 			return string.Compare(a?.Name, b?.Name, StringComparison.OrdinalIgnoreCase);
 		}
 
-		internal string _003CGetNexusAutofillEntries_003Eb__69_0(string value)
+		internal string _003CGetNexusAutofillEntries_003Eb__60_0(string value)
 		{
 			return value;
 		}
 
-		internal bool _003CHasVisibleEntries_003Eb__80_0(ModEntry entry)
+		internal bool _003CHasVisibleEntries_003Eb__71_0(ModEntry entry)
 		{
-			return entry != null && !entry.IsSelf && !entry.IsCore;
+			if (entry != null && !entry.IsSelf)
+			{
+				return !entry.IsCore;
+			}
+			return false;
 		}
 
-		internal bool _003CFindResetButton_003Eb__83_0(Button button)
+		internal bool _003CFindResetButton_003Eb__74_0(Button button)
 		{
-			return (Object)(object)button != (Object)null && string.Equals(((Object)button).name, "Reset", StringComparison.Ordinal);
+			if ((Object)(object)button != (Object)null)
+			{
+				return string.Equals(((Object)button).name, "Reset", StringComparison.Ordinal);
+			}
+			return false;
 		}
 
-		internal bool _003CSaveVersionCache_003Eb__94_0(CachedVersionEntry entry)
+		internal bool _003CSaveVersionCache_003Eb__85_0(CachedVersionEntry entry)
 		{
-			return entry != null && !string.IsNullOrWhiteSpace(entry.Version);
+			if (entry != null)
+			{
+				return !string.IsNullOrWhiteSpace(entry.Version);
+			}
+			return false;
 		}
 
-		internal string _003CSaveVersionCache_003Eb__94_1(CachedVersionEntry entry)
+		internal string _003CSaveVersionCache_003Eb__85_1(CachedVersionEntry entry)
 		{
 			return entry.PluginPath ?? string.Empty;
 		}
 
-		internal CachedVersionEntry _003CSaveVersionCache_003Eb__94_2(IGrouping<string, CachedVersionEntry> group)
+		internal CachedVersionEntry _003CSaveVersionCache_003Eb__85_2(IGrouping<string, CachedVersionEntry> group)
 		{
 			return group.First();
 		}
 
-		internal string _003CSaveVersionCache_003Eb__94_3(CachedVersionEntry entry)
+		internal string _003CSaveVersionCache_003Eb__85_3(CachedVersionEntry entry)
 		{
 			return entry.DllName;
 		}
 
-		internal char _003CBuildSettingId_003Eb__95_0(char ch)
+		internal char _003CBuildSettingId_003Eb__86_0(char ch)
 		{
-			return (char.IsLetterOrDigit(ch) || ch == '.') ? char.ToLowerInvariant(ch) : '_';
+			if (!char.IsLetterOrDigit(ch) && ch != '.')
+			{
+				return '_';
+			}
+			return char.ToLowerInvariant(ch);
 		}
 	}
-
-	private const uint SteamAppIdDemo = 4576510u;
-
-	private const uint SteamAppIdPlaytest = 4584420u;
 
 	private const string CategoryName = "Mods";
 
@@ -314,8 +345,6 @@ internal static class ModManagementSettings
 
 	private static bool initialized;
 
-	private static bool pendingApply;
-
 	private static bool versionsFetchStarted;
 
 	private static bool versionsLoaded;
@@ -347,30 +376,29 @@ internal static class ModManagementSettings
 				string name = modEntry.Name;
 				string guid = modEntry.Guid;
 				bool isEnabled = modEntry.IsEnabled;
-				string settingId = modEntry.SettingId;
-				ModOptionsMenu.Register(ModOptionDefinition.Bool(settingId, name, guid, "Mods", isEnabled).WithoutSavedValueRestore());
+				ModOptionsMenu.Register(ModOptionDefinition.Bool(modEntry.SettingId, name, guid, "Mods", isEnabled).WithoutSavedValueRestore());
 			}
 		}
 	}
 
 	internal static void RefreshMenuAffordances(SettingsMenu menu, SettingCategory category)
 	{
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Invalid comparison between Unknown and I4
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0057: Expected I4, but got Unknown
-		//IL_01c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01cc: Expected O, but got Unknown
-		//IL_01da: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e4: Expected O, but got Unknown
-		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0145: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0028: Invalid comparison between Unknown and I4
+		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Expected I4, but got Unknown
+		//IL_0175: Unknown result type (might be due to invalid IL or missing references)
+		//IL_017f: Expected O, but got Unknown
+		//IL_018c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0196: Expected O, but got Unknown
+		//IL_00fa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0108: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0116: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0124: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0132: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014f: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0154: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0163: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0172: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0179: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0194: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)menu == (Object)null)
 		{
 			return;
@@ -399,11 +427,11 @@ internal static class ModManagementSettings
 		Button val3 = (((Object)(object)val != (Object)null) ? ((Component)val).GetComponent<Button>() : null);
 		if ((Object)(object)val3 == (Object)null)
 		{
-			GameObject val4 = Object.Instantiate<GameObject>(((Component)val2).gameObject, ((Component)val2).transform.parent, false);
-			((Object)val4).name = "QoL_ModRestartButton";
-			val3 = val4.GetComponent<Button>();
+			GameObject obj3 = Object.Instantiate<GameObject>(((Component)val2).gameObject, ((Component)val2).transform.parent, false);
+			((Object)obj3).name = "QoL_ModRestartButton";
+			val3 = obj3.GetComponent<Button>();
 			RectTransform component = ((Component)val2).GetComponent<RectTransform>();
-			RectTransform component2 = val4.GetComponent<RectTransform>();
+			RectTransform component2 = obj3.GetComponent<RectTransform>();
 			if ((Object)(object)component != (Object)null && (Object)(object)component2 != (Object)null)
 			{
 				component2.anchorMin = component.anchorMin;
@@ -419,55 +447,47 @@ internal static class ModManagementSettings
 		}
 		((Component)val3).gameObject.SetActive(true);
 		val3.onClick = new ButtonClickedEvent();
-		((UnityEvent)val3.onClick).AddListener(new UnityAction(RestartAndApply));
+		((UnityEvent)val3.onClick).AddListener(new UnityAction(CloseGame));
 		TextMeshProUGUI componentInChildren = ((Component)val3).GetComponentInChildren<TextMeshProUGUI>(true);
 		if ((Object)(object)componentInChildren != (Object)null)
 		{
-			((TMP_Text)componentInChildren).text = (pendingApply ? "Restart Apply" : "Restart Game");
+			((TMP_Text)componentInChildren).text = "Close Game";
 			Component component3 = ((Component)componentInChildren).GetComponent("UILocalizer");
 			if ((Object)(object)component3 != (Object)null)
 			{
 				Object.Destroy((Object)(object)component3);
 			}
 		}
-		UITooltip val5 = ((Component)val3).GetComponent<UITooltip>();
-		if ((Object)(object)val5 == (Object)null)
+		UITooltip val4 = ((Component)val3).GetComponent<UITooltip>();
+		if ((Object)(object)val4 == (Object)null)
 		{
-			val5 = ((Component)val3).gameObject.AddComponent<UITooltip>();
+			val4 = ((Component)val3).gameObject.AddComponent<UITooltip>();
 		}
-		val5.skipLocale = true;
-		if (pendingApply)
-		{
-			val5.tipName = "Restart Apply";
-			val5.tipDesc = "Fully restarts the game, enabling/disabling the toggled mods. Click on this to apply your changes.";
-		}
-		else
-		{
-			val5.tipName = "Restart Game";
-			val5.tipDesc = "Fully restarts the game without changing any mods";
-		}
+		val4.skipLocale = true;
+		val4.tipName = "Close Game";
+		val4.tipDesc = "Closes the game and applies any queued mod toggles. Relaunch to load the new set.";
 		RefreshPresetButtons(menu, val2);
 	}
 
 	private static void RefreshPresetButtons(SettingsMenu menu, Button resetButton)
 	{
-		//IL_00f7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0105: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0113: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0130: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0156: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0173: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0189: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a5: Expected O, but got Unknown
-		//IL_01be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c8: Expected O, but got Unknown
-		//IL_0294: Unknown result type (might be due to invalid IL or missing references)
-		//IL_028d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00eb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0107: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0114: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0120: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0148: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0163: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0179: Expected O, but got Unknown
+		//IL_0190: Unknown result type (might be due to invalid IL or missing references)
+		//IL_019a: Expected O, but got Unknown
+		//IL_0248: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0241: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)menu == (Object)null || (Object)(object)resetButton == (Object)null)
 		{
 			return;
@@ -545,17 +565,19 @@ internal static class ModManagementSettings
 
 	private static Button CreatePresetSlotButton(Transform parent, string buttonName, Button reference)
 	{
-		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Expected O, but got Unknown
-		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0113: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011a: Expected O, but got Unknown
-		//IL_0147: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0154: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0161: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003f: Expected O, but got Unknown
+		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ab: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0119: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0120: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0140: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0173: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)parent == (Object)null)
 		{
 			return null;
@@ -644,8 +666,8 @@ internal static class ModManagementSettings
 
 	private static RectTransform FindBackButtonRect(SettingsMenu menu, Button resetButton)
 	{
-		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)menu == (Object)null)
 		{
 			return null;
@@ -682,7 +704,11 @@ internal static class ModManagementSettings
 			UILocalizer val5 = ((Component)menu).GetComponentsInChildren<UILocalizer>(true).FirstOrDefault((UILocalizer candidate) => (Object)(object)candidate != (Object)null && string.Equals(candidate.key, "back", StringComparison.OrdinalIgnoreCase));
 			val4 = (((Object)(object)val5 != (Object)null) ? ((Component)val5).GetComponentInParent<Button>() : null);
 		}
-		return ((Object)(object)val4 != (Object)null) ? ((Component)val4).GetComponent<RectTransform>() : null;
+		if (!((Object)(object)val4 != (Object)null))
+		{
+			return null;
+		}
+		return ((Component)val4).GetComponent<RectTransform>();
 	}
 
 	private static List<ModPresetSlot> LoadPresets()
@@ -795,7 +821,7 @@ internal static class ModManagementSettings
 	internal static List<SerialMod> CaptureLoadedMods()
 	{
 		List<SerialMod> list = new List<SerialMod>();
-		foreach (KeyValuePair<string, PluginInfo> item in Chainloader.PluginInfos.OrderBy<KeyValuePair<string, PluginInfo>, string>((KeyValuePair<string, PluginInfo> pair) => pair.Value.Metadata.Name, StringComparer.OrdinalIgnoreCase))
+		foreach (KeyValuePair<string, PluginInfo> item in Chainloader.PluginInfos.OrderBy<KeyValuePair<string, PluginInfo>, string>((KeyValuePair<string, PluginInfo> pair) => SafeReadMetadataName(pair.Value) ?? pair.Key, StringComparer.OrdinalIgnoreCase))
 		{
 			list.Add(new SerialMod
 			{
@@ -834,8 +860,7 @@ internal static class ModManagementSettings
 	internal static void OpenModsTab()
 	{
 		int categoryIndex = GetCategoryIndex();
-		Transform val = (((Object)(object)PreRunScript.instance != (Object)null) ? ((Component)PreRunScript.instance.mainCanvas).transform : null);
-		SettingsMenu.OpenMenu(val);
+		SettingsMenu.OpenMenu(((Object)(object)PreRunScript.instance != (Object)null) ? ((Component)PreRunScript.instance.mainCanvas).transform : null);
 		if (!((Object)(object)SettingsMenu.instance == (Object)null) && categoryIndex >= 0)
 		{
 			SharedCoroutineStarter.StartCoroutine(SelectTabWhenStarted(categoryIndex));
@@ -861,7 +886,11 @@ internal static class ModManagementSettings
 		{
 			return true;
 		}
-		return !string.IsNullOrWhiteSpace(saved.Name) && string.Equals(saved.Name, entry.Name, StringComparison.OrdinalIgnoreCase);
+		if (!string.IsNullOrWhiteSpace(saved.Name))
+		{
+			return string.Equals(saved.Name, entry.Name, StringComparison.OrdinalIgnoreCase);
+		}
+		return false;
 	}
 
 	private static bool MatchesPresetEntry(ModPresetEntry candidate, ModEntry entry)
@@ -874,14 +903,18 @@ internal static class ModManagementSettings
 		{
 			return true;
 		}
-		return !string.IsNullOrWhiteSpace(candidate.Guid) && string.Equals(candidate.Guid, entry.Guid, StringComparison.OrdinalIgnoreCase);
+		if (!string.IsNullOrWhiteSpace(candidate.Guid))
+		{
+			return string.Equals(candidate.Guid, entry.Guid, StringComparison.OrdinalIgnoreCase);
+		}
+		return false;
 	}
 
 	internal static void PrepareSpawnedRow(GameObject row, Setting setting)
 	{
-		//IL_026d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0272: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0278: Expected O, but got Unknown
+		//IL_0232: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0237: Unknown result type (might be due to invalid IL or missing references)
+		//IL_023d: Expected O, but got Unknown
 		if ((Object)(object)row == (Object)null || setting == null || !TryGetEntryBySettingId(setting.name, out var entry))
 		{
 			return;
@@ -889,14 +922,14 @@ internal static class ModManagementSettings
 		TextMeshProUGUI component = ((Component)row.transform.GetChild(0)).GetComponent<TextMeshProUGUI>();
 		if ((Object)(object)component != (Object)null)
 		{
-			bool flag = IsEnabledOnDisk(entry);
+			bool num = IsEnabledOnDisk(entry);
 			bool desiredEnabled = GetDesiredEnabled(entry);
-			bool flag2 = flag != desiredEnabled;
-			string text = (flag ? "Enabled" : "Disabled");
-			string text2 = (flag ? "#FFEA00" : "#FF5A5A");
+			bool flag = num != desiredEnabled;
+			string text = (num ? "Enabled" : "Disabled");
+			string text2 = (num ? "#FFEA00" : "#FF5A5A");
 			string text3 = (string.IsNullOrWhiteSpace(entry.Version) ? string.Empty : (" <color=#9a9a9a>(v" + entry.Version + ")</color>"));
 			string text4 = ((entry.HasUpdate && !string.IsNullOrWhiteSpace(entry.LatestVersion)) ? (" <color=#E6A15A>(v" + entry.LatestVersion + " Nexus version)</color>") : string.Empty);
-			string text5 = (flag2 ? ("  <color=#7CFF7C>Queued: " + (desiredEnabled ? "Enable" : "Disable") + "</color>") : string.Empty);
+			string text5 = (flag ? ("  <color=#7CFF7C>Queued: " + (desiredEnabled ? "Enable" : "Disable") + "</color>") : string.Empty);
 			((TMP_Text)component).text = entry.Name + text3 + text4 + "\n<size=80%><color=#b6b6b6>" + entry.Guid + "</color>  <color=" + text2 + ">" + text + "</color>" + text5 + "</size>";
 			Component component2 = ((Component)component).GetComponent("UILocalizer");
 			if ((Object)(object)component2 != (Object)null)
@@ -915,14 +948,14 @@ internal static class ModManagementSettings
 		if (((Selectable)val).interactable)
 		{
 			ButtonClickedEvent onClick = val.onClick;
-			object obj = _003C_003Ec._003C_003E9__47_0;
+			object obj = _003C_003Ec._003C_003E9__44_0;
 			if (obj == null)
 			{
 				UnityAction val2 = delegate
 				{
 					Application.OpenURL("https://www.nexusmods.com/scavprototype/mods");
 				};
-				_003C_003Ec._003C_003E9__47_0 = val2;
+				_003C_003Ec._003C_003E9__44_0 = val2;
 				obj = (object)val2;
 			}
 			((UnityEvent)onClick).AddListener((UnityAction)obj);
@@ -967,16 +1000,16 @@ internal static class ModManagementSettings
 
 	private static void EnsureOpenNexusButton(GameObject row)
 	{
-		//IL_00e5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0101: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0135: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01fb: Expected O, but got Unknown
+		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ff: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0104: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01af: Expected O, but got Unknown
 		if ((Object)(object)row == (Object)null)
 		{
 			return;
@@ -1028,14 +1061,14 @@ internal static class ModManagementSettings
 		((Selectable)val2).interactable = true;
 		((Component)val2).gameObject.SetActive(true);
 		ButtonClickedEvent onClick = val2.onClick;
-		object obj = _003C_003Ec._003C_003E9__48_0;
+		object obj = _003C_003Ec._003C_003E9__45_0;
 		if (obj == null)
 		{
 			UnityAction val3 = delegate
 			{
 				Application.OpenURL("https://www.nexusmods.com/scavprototype/mods");
 			};
-			_003C_003Ec._003C_003E9__48_0 = val3;
+			_003C_003Ec._003C_003E9__45_0 = val3;
 			obj = (object)val3;
 		}
 		((UnityEvent)onClick).AddListener((UnityAction)obj);
@@ -1043,20 +1076,21 @@ internal static class ModManagementSettings
 
 	private static Button CreateOpenNexusButton(Transform parent)
 	{
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Expected O, but got Unknown
-		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0113: Expected O, but got Unknown
-		//IL_0130: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0038: Expected O, but got Unknown
+		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ff: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0104: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0116: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0133: Unknown result type (might be due to invalid IL or missing references)
 		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0157: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject("QoL_OpenNexusButton", new Type[3]
 		{
 			typeof(RectTransform),
@@ -1109,29 +1143,112 @@ internal static class ModManagementSettings
 		if (enabled == flag)
 		{
 			PendingStates.Remove(entry.PluginPath);
-			pendingApply = PendingStates.Count > 0;
+			entry.IsEnabled = enabled;
 			if (refresh)
 			{
 				SettingsMenuCategoryExtender.RefreshLiveMenu();
 			}
 			return;
 		}
-		PendingStates[entry.PluginPath] = new PendingModState
+		PendingModState pendingModState = new PendingModState
 		{
 			PluginPath = entry.PluginPath,
 			Guid = entry.Guid,
 			DesiredEnabled = enabled
 		};
-		pendingApply = true;
+		if (TryApplyPendingRename(pendingModState, out var error))
+		{
+			PendingStates.Remove(entry.PluginPath);
+			entry.IsEnabled = enabled;
+		}
+		else
+		{
+			PendingStates[entry.PluginPath] = pendingModState;
+			ManualLogSource obj = logger;
+			if (obj != null)
+			{
+				obj.LogWarning((object)("Could not toggle '" + entry.Guid + "' now: " + error + ". It will be retried when the game closes."));
+			}
+		}
 		if (refresh)
 		{
 			SettingsMenuCategoryExtender.RefreshLiveMenu();
 		}
 	}
 
-	private static void RestartAndApply()
+	private static bool TryApplyPendingRename(PendingModState pendingState, out string error)
 	{
-		QueueApplyAndRelaunch();
+		error = null;
+		if (pendingState == null || string.IsNullOrWhiteSpace(pendingState.PluginPath))
+		{
+			return true;
+		}
+		string pluginPath = pendingState.PluginPath;
+		string text = pluginPath + ".disabled";
+		try
+		{
+			if (pendingState.DesiredEnabled)
+			{
+				if (File.Exists(pluginPath))
+				{
+					return true;
+				}
+				if (!File.Exists(text))
+				{
+					error = "the mod file is missing";
+					return false;
+				}
+				File.Move(text, pluginPath);
+				return true;
+			}
+			if (!File.Exists(pluginPath))
+			{
+				return true;
+			}
+			if (File.Exists(text))
+			{
+				File.Delete(text);
+			}
+			File.Move(pluginPath, text);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			error = ex.Message;
+			return false;
+		}
+	}
+
+	private static void FlushPendingStates(string context)
+	{
+		if (PendingStates.Count == 0)
+		{
+			return;
+		}
+		List<string> list = new List<string>();
+		foreach (KeyValuePair<string, PendingModState> pendingState in PendingStates)
+		{
+			PendingModState value = pendingState.Value;
+			if (TryApplyPendingRename(value, out var error))
+			{
+				list.Add(pendingState.Key);
+				continue;
+			}
+			ManualLogSource obj = logger;
+			if (obj != null)
+			{
+				obj.LogWarning((object)("Could not apply the " + (value.DesiredEnabled ? "enable" : "disable") + " for '" + value.Guid + "' during " + context + ": " + error));
+			}
+		}
+		foreach (string item in list)
+		{
+			PendingStates.Remove(item);
+		}
+	}
+
+	private static void CloseGame()
+	{
+		FlushPendingStates("game close");
 		PreRunScript instance = PreRunScript.instance;
 		if ((Object)(object)instance != (Object)null)
 		{
@@ -1143,181 +1260,12 @@ internal static class ModManagementSettings
 		}
 	}
 
-	private static void QueueApplyAndRelaunch()
-	{
-		try
-		{
-			List<string> list = BuildDelayedApplyAndRelaunchScriptLines();
-			if (list == null || list.Count == 0)
-			{
-				ManualLogSource obj = logger;
-				if (obj != null)
-				{
-					obj.LogWarning((object)"Restart Apply did not have any queued work.");
-				}
-				return;
-			}
-			string text = WriteApplyScript(list);
-			if (string.IsNullOrWhiteSpace(text) || !File.Exists(text))
-			{
-				ManualLogSource obj2 = logger;
-				if (obj2 != null)
-				{
-					obj2.LogWarning((object)"Failed to create mod apply + relaunch script.");
-				}
-			}
-			else
-			{
-				Process.Start(new ProcessStartInfo
-				{
-					FileName = text,
-					UseShellExecute = true,
-					WindowStyle = ProcessWindowStyle.Hidden
-				});
-			}
-		}
-		catch (Exception arg)
-		{
-			ManualLogSource obj3 = logger;
-			if (obj3 != null)
-			{
-				obj3.LogError((object)$"Failed to queue mod apply + relaunch: {arg}");
-			}
-		}
-	}
-
-	private static List<string> BuildDelayedApplyAndRelaunchScriptLines()
-	{
-		List<string> list = BuildRenameCommands();
-		List<string> list2 = BuildRelaunchCommands();
-		if (list.Count == 0 && list2.Count == 0)
-		{
-			return null;
-		}
-		int id = Process.GetCurrentProcess().Id;
-		List<string> list3 = new List<string>
-		{
-			"@echo off",
-			"setlocal EnableExtensions",
-			$":wait_for_exit_{id}",
-			$"tasklist /FI \"PID eq {id}\" | find \"{id}\" >nul",
-			"if not errorlevel 1 (",
-			"    timeout /t 1 /nobreak >nul",
-			$"    goto wait_for_exit_{id}",
-			")",
-			"timeout /t 2 /nobreak >nul"
-		};
-		list3.AddRange(list);
-		list3.Add("timeout /t 2 /nobreak >nul");
-		list3.AddRange(list2);
-		list3.Add("endlocal");
-		return list3;
-	}
-
-	private static string WriteApplyScript(List<string> scriptLines)
-	{
-		try
-		{
-			string text = Path.Combine(Path.GetTempPath(), $"qol-mod-apply-{Guid.NewGuid():N}.bat");
-			File.WriteAllLines(text, scriptLines);
-			return text;
-		}
-		catch (Exception arg)
-		{
-			ManualLogSource obj = logger;
-			if (obj != null)
-			{
-				obj.LogError((object)$"Failed to write mod apply script: {arg}");
-			}
-			return null;
-		}
-	}
-
-	private static List<string> BuildRenameCommands()
-	{
-		List<string> list = new List<string>();
-		if (PendingStates.Count == 0)
-		{
-			pendingApply = false;
-			return list;
-		}
-		foreach (PendingModState item in PendingStates.Values.ToList())
-		{
-			if (item != null && !string.IsNullOrWhiteSpace(item.PluginPath))
-			{
-				string pluginPath = item.PluginPath;
-				string text = pluginPath + ".disabled";
-				if (item.DesiredEnabled)
-				{
-					list.Add("if exist \"" + text + "\" move /Y \"" + text + "\" \"" + pluginPath + "\" >nul");
-				}
-				else
-				{
-					list.Add("if exist \"" + pluginPath + "\" move /Y \"" + pluginPath + "\" \"" + text + "\" >nul");
-				}
-			}
-		}
-		PendingStates.Clear();
-		pendingApply = false;
-		return list;
-	}
-
-	private static List<string> BuildRelaunchCommands()
-	{
-		List<string> list = new List<string>();
-		uint? num = TryGetSteamAppId();
-		string exePath = TryGetCurrentExePath();
-		if (num.HasValue && IsSteamInstallExe(exePath) && (num.Value == 4576510 || num.Value == 4584420))
-		{
-			list.Add($"start \"\" \"steam://run/{num.Value}\"");
-		}
-		return list;
-	}
-
-	private static string TryGetCurrentExePath()
-	{
-		try
-		{
-			return (Process.GetCurrentProcess().MainModule != null) ? Process.GetCurrentProcess().MainModule.FileName : null;
-		}
-		catch (Exception ex)
-		{
-			ManualLogSource obj = logger;
-			if (obj != null)
-			{
-				obj.LogWarning((object)("Failed to read current exe path for relaunch: " + ex.Message));
-			}
-			return null;
-		}
-	}
-
-	private static uint? TryGetSteamAppId()
-	{
-		try
-		{
-			if ((AccessTools.TypeByName("Together.KSteam")?.GetProperty("STEAM_APPID", BindingFlags.Static | BindingFlags.Public))?.GetValue(null, null) is uint value)
-			{
-				return value;
-			}
-		}
-		catch (Exception ex)
-		{
-			ManualLogSource obj = logger;
-			if (obj != null)
-			{
-				obj.LogWarning((object)("Failed to read Steam app id for relaunch: " + ex.Message));
-			}
-		}
-		return null;
-	}
-
 	private static void BeginVersionsFetch()
 	{
 		if (!versionsFetchStarted)
 		{
 			versionsFetchStarted = true;
-			Task versionsTask = FetchNexusVersionsAsync();
-			SharedCoroutineStarter.StartCoroutine(WaitForVersionsFetchCoroutine(versionsTask));
+			SharedCoroutineStarter.StartCoroutine(WaitForVersionsFetchCoroutine(FetchNexusVersionsAsync()));
 		}
 	}
 
@@ -1337,6 +1285,7 @@ internal static class ModManagementSettings
 
 	private static async Task FetchNexusVersionsAsync()
 	{
+		_ = 1;
 		try
 		{
 			HttpClient client = new HttpClient();
@@ -1346,7 +1295,7 @@ internal static class ModManagementSettings
 				client.DefaultRequestHeaders.UserAgent.ParseAdd("QoLUnknownMod");
 				HttpResponseMessage response = await client.GetAsync("https://jimmyking9999999.github.io/Metadata-generator/nexusmods-versions.json").ConfigureAwait(continueOnCapturedContext: false);
 				byte[] bytes = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(continueOnCapturedContext: false);
-				string responseText = Encoding.UTF8.GetString(bytes);
+				string text = Encoding.UTF8.GetString(bytes);
 				if (!response.IsSuccessStatusCode)
 				{
 					ManualLogSource obj = logger;
@@ -1356,17 +1305,17 @@ internal static class ModManagementSettings
 					}
 					return;
 				}
-				Dictionary<string, string> versions = JsonConvert.DeserializeObject<Dictionary<string, string>>(responseText);
+				Dictionary<string, string> dictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(text);
 				lock (VersionsSync)
 				{
 					LatestVersionByGuid.Clear();
-					if (versions != null)
+					if (dictionary != null)
 					{
-						foreach (KeyValuePair<string, string> pair in versions)
+						foreach (KeyValuePair<string, string> item in dictionary)
 						{
-							if (!string.IsNullOrWhiteSpace(pair.Key) && !string.IsNullOrWhiteSpace(pair.Value))
+							if (!string.IsNullOrWhiteSpace(item.Key) && !string.IsNullOrWhiteSpace(item.Value))
 							{
-								LatestVersionByGuid[pair.Key.Trim()] = pair.Value.Trim();
+								LatestVersionByGuid[item.Key.Trim()] = item.Value.Trim();
 							}
 						}
 					}
@@ -1380,38 +1329,11 @@ internal static class ModManagementSettings
 		}
 		catch (Exception ex)
 		{
-			Exception ex2 = ex;
 			ManualLogSource obj2 = logger;
 			if (obj2 != null)
 			{
-				obj2.LogWarning((object)("Failed to fetch or parse Nexus mod versions: " + ex2.Message));
+				obj2.LogWarning((object)("Failed to fetch or parse Nexus mod versions: " + ex.Message));
 			}
-		}
-	}
-
-	private static bool IsSteamInstallExe(string exePath)
-	{
-		if (string.IsNullOrWhiteSpace(exePath))
-		{
-			return false;
-		}
-		try
-		{
-			string value = (AccessTools.TypeByName("Together.KSteam")?.GetMethod("GetAppInstallDir", BindingFlags.Static | BindingFlags.Public))?.Invoke(null, null) as string;
-			if (string.IsNullOrWhiteSpace(value))
-			{
-				return false;
-			}
-			return exePath.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0;
-		}
-		catch (Exception ex)
-		{
-			ManualLogSource obj = logger;
-			if (obj != null)
-			{
-				obj.LogWarning((object)("Failed to verify Steam install path for relaunch: " + ex.Message));
-			}
-			return false;
 		}
 	}
 
@@ -1419,7 +1341,7 @@ internal static class ModManagementSettings
 	{
 		CachedEntries.Clear();
 		HashSet<string> hashSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-		foreach (KeyValuePair<string, PluginInfo> item in Chainloader.PluginInfos.OrderBy<KeyValuePair<string, PluginInfo>, string>((KeyValuePair<string, PluginInfo> pair) => pair.Value.Metadata.Name, StringComparer.OrdinalIgnoreCase))
+		foreach (KeyValuePair<string, PluginInfo> item in Chainloader.PluginInfos.OrderBy<KeyValuePair<string, PluginInfo>, string>((KeyValuePair<string, PluginInfo> pair) => SafeReadMetadataName(pair.Value) ?? pair.Key, StringComparer.OrdinalIgnoreCase))
 		{
 			object value = item.Value;
 			if (value != null)
@@ -1455,7 +1377,21 @@ internal static class ModManagementSettings
 		string pluginsDirectory = GetPluginsDirectory();
 		if (!string.IsNullOrWhiteSpace(pluginsDirectory) && Directory.Exists(pluginsDirectory))
 		{
-			foreach (string item2 in Directory.EnumerateFiles(pluginsDirectory, "*.dll.disabled", SearchOption.AllDirectories))
+			IEnumerable<string> enumerable;
+			try
+			{
+				enumerable = Directory.EnumerateFiles(pluginsDirectory, "*.dll.disabled", SearchOption.AllDirectories).ToList();
+			}
+			catch (Exception ex)
+			{
+				ManualLogSource obj = logger;
+				if (obj != null)
+				{
+					obj.LogWarning((object)("Failed to scan for disabled mods in " + pluginsDirectory + ": " + ex.Message));
+				}
+				enumerable = Enumerable.Empty<string>();
+			}
+			foreach (string item2 in enumerable)
 			{
 				string enabledPath = item2.Substring(0, item2.Length - ".disabled".Length);
 				if (!hashSet.Contains(enabledPath) && !CachedEntries.Any((ModEntry entry) => entry != null && string.Equals(entry.PluginPath, enabledPath, StringComparison.OrdinalIgnoreCase)))
@@ -1592,8 +1528,11 @@ internal static class ModManagementSettings
 		{
 			return false;
 		}
-		Dictionary<string, string> dictionary = BuildNexusAliasMap();
-		return dictionary.TryGetValue(alias.Trim(), out nexusPageUrl) && !string.IsNullOrWhiteSpace(nexusPageUrl);
+		if (BuildNexusAliasMap().TryGetValue(alias.Trim(), out nexusPageUrl))
+		{
+			return !string.IsNullOrWhiteSpace(nexusPageUrl);
+		}
+		return false;
 	}
 
 	internal static List<string> GetNexusAutofillEntries()
@@ -1619,8 +1558,8 @@ internal static class ModManagementSettings
 			{
 				AddNexusAlias(dictionary, key, "https://www.nexusmods.com/scavprototype/mods");
 			}
+			return dictionary;
 		}
-		return dictionary;
 	}
 
 	private static void AddNexusAlias(Dictionary<string, string> aliases, string alias, string nexusPageUrl)
@@ -1641,8 +1580,7 @@ internal static class ModManagementSettings
 		{
 			return false;
 		}
-		int num = CompareVersionStrings(installedVersion, latestVersion);
-		return num < 0;
+		return CompareVersionStrings(installedVersion, latestVersion) < 0;
 	}
 
 	private static bool IsVersionMismatch(string installedVersion, string latestVersion)
@@ -1682,7 +1620,11 @@ internal static class ModManagementSettings
 
 	private static string NormalizeVersionText(string version)
 	{
-		return string.IsNullOrWhiteSpace(version) ? null : version.Trim().TrimStart('v', 'V');
+		if (!string.IsNullOrWhiteSpace(version))
+		{
+			return version.Trim().TrimStart('v', 'V');
+		}
+		return null;
 	}
 
 	private static bool IsUsableDisplayVersion(string version)
@@ -1760,13 +1702,20 @@ internal static class ModManagementSettings
 
 	private static bool GetDesiredEnabled(ModEntry entry)
 	{
-		PendingModState value;
-		return (entry != null && !string.IsNullOrWhiteSpace(entry.PluginPath) && PendingStates.TryGetValue(entry.PluginPath, out value)) ? value.DesiredEnabled : (entry?.IsEnabled ?? false);
+		if (entry == null || string.IsNullOrWhiteSpace(entry.PluginPath) || !PendingStates.TryGetValue(entry.PluginPath, out var value))
+		{
+			return entry?.IsEnabled ?? false;
+		}
+		return value.DesiredEnabled;
 	}
 
 	private static bool IsEnabledOnDisk(ModEntry entry)
 	{
-		return entry != null && !string.IsNullOrWhiteSpace(entry.PluginPath) && File.Exists(entry.PluginPath);
+		if (entry != null && !string.IsNullOrWhiteSpace(entry.PluginPath))
+		{
+			return File.Exists(entry.PluginPath);
+		}
+		return false;
 	}
 
 	private static Button FindResetButton(SettingsMenu menu)
@@ -1862,11 +1811,7 @@ internal static class ModManagementSettings
 				return text;
 			}
 		}
-		string path = location + ".disabled";
-		if (File.Exists(path))
-		{
-			return location;
-		}
+		File.Exists(location + ".disabled");
 		return location;
 	}
 
@@ -1876,8 +1821,7 @@ internal static class ModManagementSettings
 		{
 			return true;
 		}
-		string text = pluginPath.Replace('/', '\\');
-		return text.IndexOf("\\BepInEx\\core\\", StringComparison.OrdinalIgnoreCase) >= 0;
+		return pluginPath.Replace('/', '\\').IndexOf("\\BepInEx\\core\\", StringComparison.OrdinalIgnoreCase) >= 0;
 	}
 
 	private static bool IsSelf(string guid)
@@ -1891,13 +1835,9 @@ internal static class ModManagementSettings
 		{
 			return true;
 		}
-		if (!string.IsNullOrWhiteSpace(pluginPath))
+		if (!string.IsNullOrWhiteSpace(pluginPath) && string.Equals(Path.GetFileNameWithoutExtension(pluginPath), "QoL Unknown", StringComparison.OrdinalIgnoreCase))
 		{
-			string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(pluginPath);
-			if (string.Equals(fileNameWithoutExtension, "QoL Unknown", StringComparison.OrdinalIgnoreCase))
-			{
-				return true;
-			}
+			return true;
 		}
 		return false;
 	}
@@ -1994,7 +1934,7 @@ internal static class ModManagementSettings
 
 	private static string BuildSettingId(string guid)
 	{
-		char[] value = guid.Select((char ch) => (char.IsLetterOrDigit(ch) || ch == '.') ? char.ToLowerInvariant(ch) : '_').ToArray();
+		char[] value = guid.Select((char ch) => (!char.IsLetterOrDigit(ch) && ch != '.') ? '_' : char.ToLowerInvariant(ch)).ToArray();
 		return "mods." + new string(value);
 	}
 }

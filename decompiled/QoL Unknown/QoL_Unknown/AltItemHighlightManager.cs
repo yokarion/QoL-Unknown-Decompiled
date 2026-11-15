@@ -35,14 +35,14 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 		public VisibleItemEntry(string name, Vector2 anchor, Vector2 min, Vector2 max, Vector3 worldAnchor)
 		{
+			//IL_0008: Unknown result type (might be due to invalid IL or missing references)
 			//IL_0009: Unknown result type (might be due to invalid IL or missing references)
-			//IL_000a: Unknown result type (might be due to invalid IL or missing references)
+			//IL_000f: Unknown result type (might be due to invalid IL or missing references)
 			//IL_0010: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0011: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0017: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-			//IL_001f: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0021: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0016: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+			//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0020: Unknown result type (might be due to invalid IL or missing references)
 			Name = name;
 			Anchor = anchor;
 			Min = min;
@@ -73,18 +73,18 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 		public ClusterEntry(VisibleItemEntry item)
 		{
-			//IL_000e: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-			//IL_001a: Unknown result type (might be due to invalid IL or missing references)
-			//IL_002b: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0030: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-			//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0043: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-			//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0071: Unknown result type (might be due to invalid IL or missing references)
+			//IL_000d: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0012: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0019: Unknown result type (might be due to invalid IL or missing references)
+			//IL_002a: Unknown result type (might be due to invalid IL or missing references)
+			//IL_002f: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0036: Unknown result type (might be due to invalid IL or missing references)
+			//IL_003b: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0042: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0047: Unknown result type (might be due to invalid IL or missing references)
+			//IL_004e: Unknown result type (might be due to invalid IL or missing references)
+			//IL_005f: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0070: Unknown result type (might be due to invalid IL or missing references)
 			Items = new List<VisibleItemEntry>();
 			Center = item.Anchor;
 			Right = item.Max.x;
@@ -99,25 +99,25 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 		public void Add(VisibleItemEntry item)
 		{
-			//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0036: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0045: Unknown result type (might be due to invalid IL or missing references)
-			//IL_004a: Unknown result type (might be due to invalid IL or missing references)
-			//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0077: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0086: Unknown result type (might be due to invalid IL or missing references)
-			//IL_008b: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0092: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-			//IL_009d: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00ac: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00e6: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0102: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0131: Unknown result type (might be due to invalid IL or missing references)
-			//IL_013b: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0140: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0019: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0043: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0048: Unknown result type (might be due to invalid IL or missing references)
+			//IL_005a: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0075: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0084: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0089: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0090: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+			//IL_009b: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00e4: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0100: Unknown result type (might be due to invalid IL or missing references)
+			//IL_012f: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0139: Unknown result type (might be due to invalid IL or missing references)
+			//IL_013e: Unknown result type (might be due to invalid IL or missing references)
 			Items.Add(item);
 			min = new Vector2(Mathf.Min(min.x, item.Min.x), Mathf.Min(min.y, item.Min.y));
 			max = new Vector2(Mathf.Max(max.x, item.Max.x), Mathf.Max(max.y, item.Max.y));
@@ -179,12 +179,12 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 		public TableEntry(GameObject gameObject, RectTransform rect, RectTransform background)
 		{
-			//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0027: Unknown result type (might be due to invalid IL or missing references)
-			//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0038: Unknown result type (might be due to invalid IL or missing references)
-			//IL_003d: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0021: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0026: Unknown result type (might be due to invalid IL or missing references)
+			//IL_002c: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0031: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0037: Unknown result type (might be due to invalid IL or missing references)
+			//IL_003c: Unknown result type (might be due to invalid IL or missing references)
 			GameObject = gameObject;
 			Rect = rect;
 			Background = background;
@@ -248,18 +248,19 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	public static AltItemHighlightManager EnsureInstance(string source)
 	{
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Expected O, but got Unknown
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0023: Expected O, but got Unknown
 		if ((Object)(object)Instance != (Object)null)
 		{
 			return Instance;
 		}
 		GameObject val = new GameObject("AltItemHighlightManager");
-		Object.DontDestroyOnLoad((Object)(object)val);
-		AltItemHighlightManager altItemHighlightManager = (Instance = val.AddComponent<AltItemHighlightManager>());
+		Object.DontDestroyOnLoad((Object)val);
+		AltItemHighlightManager obj = (Instance = val.AddComponent<AltItemHighlightManager>());
 		AltItemHighlightPatcher.DebugLog("Manager GameObject created from " + source + ".");
-		altItemHighlightManager.InitializeFields();
-		return altItemHighlightManager;
+		obj.InitializeFields();
+		return obj;
 	}
 
 	private void Awake()
@@ -333,13 +334,17 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private static bool CanShowHighlights(Camera cam)
 	{
-		return (Object)(object)cam != (Object)null && Screen.width > 0 && Screen.height > 0;
+		if ((Object)(object)cam != (Object)null && Screen.width > 0)
+		{
+			return Screen.height > 0;
+		}
+		return false;
 	}
 
 	private void RefreshHighlights(Camera cam)
 	{
-		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
 		activeItems.Clear();
 		EnsureLabelCanvas();
 		GetViewportWorldBounds(cam, out var minWorld, out var maxWorld);
@@ -373,25 +378,25 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private static void GetViewportWorldBounds(Camera cam, out Vector2 minWorld, out Vector2 maxWorld)
 	{
-		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
 		float num = Mathf.Abs(((Component)cam).transform.position.z);
 		Vector3 val = cam.ScreenToWorldPoint(new Vector3(0f, 0f, num));
 		Vector3 val2 = cam.ScreenToWorldPoint(new Vector3((float)Screen.width, (float)Screen.height, num));
@@ -401,14 +406,14 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private static bool IsVisibleLooseItem(Item item, Camera cam, out SpriteRenderer renderer)
 	{
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b5: Unknown result type (might be due to invalid IL or missing references)
 		renderer = null;
 		if ((Object)(object)item == (Object)null || !((Component)item).gameObject.activeInHierarchy || (Object)(object)((Component)item).transform.parent != (Object)null || (Object)(object)item.rb == (Object)null)
 		{
@@ -424,15 +429,19 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 		{
 			return false;
 		}
-		return item.rb.simulated || (Object)(object)WorldGeneration.world == (Object)null || !WorldGeneration.world.worldExists;
+		if (!item.rb.simulated && !((Object)(object)WorldGeneration.world == (Object)null))
+		{
+			return !WorldGeneration.world.worldExists;
+		}
+		return true;
 	}
 
 	private void ShowOutline(Item item, SpriteRenderer itemRenderer)
 	{
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0090: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
 		if (!outlines.TryGetValue(item, out var value) || (Object)(object)value.GameObject == (Object)null)
 		{
 			value = CreateOutline(item);
@@ -457,13 +466,18 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private static OutlineEntry CreateOutline(Item item)
 	{
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001f: Expected O, but got Unknown
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0068: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ad: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bd: Expected O, but got Unknown
 		GameObject val = new GameObject("AltItemOutline", new Type[1] { typeof(SpriteRenderer) });
 		val.transform.SetParent(((Component)item).transform);
 		val.transform.localPosition = Vector3.zero;
@@ -520,36 +534,36 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private VisibleItemEntry CreateVisibleItemEntry(Item item, SpriteRenderer renderer, Camera cam)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d5: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00d6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d8: Unknown result type (might be due to invalid IL or missing references)
 		Bounds bounds = ((Renderer)renderer).bounds;
 		Vector3 val = cam.WorldToScreenPoint(((Bounds)(ref bounds)).min);
 		Vector3 val2 = cam.WorldToScreenPoint(((Bounds)(ref bounds)).max);
@@ -586,10 +600,10 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private static int CompareVisibleItems(VisibleItemEntry left, VisibleItemEntry right)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
 		float x = left.Anchor.x;
 		int num = x.CompareTo(right.Anchor.x);
 		if (num != 0)
@@ -602,17 +616,17 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private static bool IsNearMouseForUi(VisibleItemEntry item)
 	{
-		//IL_0003: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0068: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
 		Vector2 val = default(Vector2);
 		((Vector2)(ref val))._002Ector(Mathf.Clamp(Input.mousePosition.x, item.Min.x, item.Max.x), Mathf.Clamp(Input.mousePosition.y, item.Min.y, item.Max.y));
 		float num = (float)Mathf.Min(Screen.width, Screen.height) * 0.33f;
@@ -622,10 +636,10 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private int FindClusterFor(VisibleItemEntry item)
 	{
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0012: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0035: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
 		for (int i = 0; i < clusters.Count; i++)
 		{
 			ClusterEntry clusterEntry = clusters[i];
@@ -639,17 +653,17 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private void ShowTables()
 	{
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)labelRoot == (Object)null || (Object)(object)labelCanvasRect == (Object)null)
 		{
 			HideAllTables();
@@ -696,8 +710,8 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private void ConfigureTable(TableEntry table, List<RowData> rows)
 	{
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
 		float num = 36f;
 		float fallbackRowHeight = GetFallbackRowHeight();
 		for (int i = 0; i < rows.Count; i++)
@@ -733,7 +747,7 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private static float GetTextPreferredWidth(TextMeshProUGUI text, string value)
 	{
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
 		return Mathf.Max(0f, ((TMP_Text)text).GetPreferredValues(value ?? string.Empty, 0f, 0f).x);
 	}
 
@@ -745,17 +759,13 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private static Vector2 GetTableTargetPosition(Vector3 worldAnchor, Vector2 tableSize, Camera cam)
 	{
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0003: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
 		Vector3 val = cam.WorldToScreenPoint(worldAnchor);
 		float num = val.x + 48f;
 		float num2 = val.y + tableSize.y * 0.5f;
@@ -771,12 +781,12 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 		switch (item.Stats.category)
 		{
 		case "medical":
+		case "utility":
 		case "drug":
+		case "food":
 		case "tool":
 		case "container":
-		case "utility":
 		case "water":
-		case "food":
 			return Locale.GetOther("unknown" + item.Stats.category);
 		default:
 			return Locale.GetOther("unknownobject");
@@ -785,12 +795,12 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private void EnsureLabelCanvas()
 	{
-		//IL_00f6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fc: Expected O, but got Unknown
-		//IL_0134: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0140: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0158: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d6: Expected O, but got Unknown
+		//IL_010b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0116: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012b: Unknown result type (might be due to invalid IL or missing references)
 		Canvas val = null;
 		if ((Object)(object)PlayerCamera.main != (Object)null && (Object)(object)PlayerCamera.main.mainCanvas != (Object)null)
 		{
@@ -837,19 +847,20 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private TableEntry CreateTable()
 	{
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001f: Expected O, but got Unknown
-		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c9: Expected O, but got Unknown
-		//IL_00ee: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0104: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0110: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0131: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001e: Expected O, but got Unknown
+		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0111: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject("AltItemHighlightTable", new Type[1] { typeof(RectTransform) });
 		val.transform.SetParent(labelRoot, false);
 		RectTransform component = val.GetComponent<RectTransform>();
@@ -878,25 +889,27 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private RowVisual CreateRow(Transform parent)
 	{
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001f: Expected O, but got Unknown
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c4: Expected O, but got Unknown
-		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00eb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0153: Expected O, but got Unknown
-		//IL_017c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0193: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01aa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001e: Expected O, but got Unknown
+		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0155: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0166: Unknown result type (might be due to invalid IL or missing references)
+		//IL_017b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0190: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01c2: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject("Row", new Type[1] { typeof(RectTransform) });
 		val.transform.SetParent(parent, false);
 		RectTransform component = val.GetComponent<RectTransform>();
@@ -963,7 +976,7 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private static void CopyTooltipBackground(Image image)
 	{
-		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
 		image.sprite = null;
 		((Graphic)image).material = null;
 		image.type = (Type)0;
@@ -973,10 +986,10 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private static void CopyTooltipTextStyle(TextMeshProUGUI text)
 	{
-		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)GlobalDark.main != (Object)null && (Object)(object)GlobalDark.main.tooltipNameObj != (Object)null)
 		{
 			TextMeshProUGUI tooltipNameObj = GlobalDark.main.tooltipNameObj;
@@ -1009,15 +1022,15 @@ public sealed class AltItemHighlightManager : MonoBehaviour
 
 	private void UpdateTablePositions(Camera cam)
 	{
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0049: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
 		float num = 1f - Mathf.Exp(-24f * Time.unscaledDeltaTime);
 		for (int i = 0; i < tables.Count; i++)
 		{

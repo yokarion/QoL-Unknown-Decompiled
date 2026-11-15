@@ -156,21 +156,7 @@ internal static class AssemblyLoader
 
 	static AssemblyLoader()
 	{
-		assemblyNames.Add("0harmony", "costura.0harmony.dll.compressed");
-		assemblyNames.Add("bepinex", "costura.bepinex.dll.compressed");
-		assemblyNames.Add("costura", "costura.costura.dll.compressed");
-		symbolNames.Add("costura", "costura.costura.pdb.compressed");
 		assemblyNames.Add("discordrpc", "costura.discordrpc.dll.compressed");
-		assemblyNames.Add("mono.cecil", "costura.mono.cecil.dll.compressed");
-		assemblyNames.Add("mono.cecil.mdb", "costura.mono.cecil.mdb.dll.compressed");
-		symbolNames.Add("mono.cecil.mdb", "costura.mono.cecil.mdb.pdb.compressed");
-		symbolNames.Add("mono.cecil", "costura.mono.cecil.pdb.compressed");
-		assemblyNames.Add("mono.cecil.pdb", "costura.mono.cecil.pdb.dll.compressed");
-		symbolNames.Add("mono.cecil.pdb", "costura.mono.cecil.pdb.pdb.compressed");
-		assemblyNames.Add("mono.cecil.rocks", "costura.mono.cecil.rocks.dll.compressed");
-		symbolNames.Add("mono.cecil.rocks", "costura.mono.cecil.rocks.pdb.compressed");
-		assemblyNames.Add("monomod.runtimedetour", "costura.monomod.runtimedetour.dll.compressed");
-		assemblyNames.Add("monomod.utils", "costura.monomod.utils.dll.compressed");
 	}
 
 	public static void Attach(bool subscribe)

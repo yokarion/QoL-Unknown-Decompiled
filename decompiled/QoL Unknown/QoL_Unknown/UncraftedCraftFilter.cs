@@ -49,10 +49,10 @@ internal static class UncraftedCraftFilter
 	[HarmonyPostfix]
 	private static void PlayerCamera_Start_Postfix(PlayerCamera __instance)
 	{
-		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007f: Expected O, but got Unknown
+		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0079: Expected O, but got Unknown
 		Button val = CraftFavourites.CreatePinStyleButton(__instance, "QoL_UncraftedButton", "uncrafted_craft", 2, "Uncrafted only", "Displays only items that have not been crafted before.");
 		if (!((Object)(object)val == (Object)null))
 		{
@@ -60,8 +60,8 @@ internal static class UncraftedCraftFilter
 			((Graphic)image).color = (Enabled ? ActiveColor : Color.white);
 			((UnityEvent)val.onClick).AddListener((UnityAction)delegate
 			{
-				//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-				//IL_001c: Unknown result type (might be due to invalid IL or missing references)
+				//IL_0021: Unknown result type (might be due to invalid IL or missing references)
+				//IL_001a: Unknown result type (might be due to invalid IL or missing references)
 				Enabled = !Enabled;
 				((Graphic)image).color = (Enabled ? ActiveColor : Color.white);
 				__instance.PlayUISound((UISoundType)1, 1f);

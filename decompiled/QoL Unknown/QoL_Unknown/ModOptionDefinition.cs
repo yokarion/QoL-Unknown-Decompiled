@@ -38,6 +38,8 @@ public sealed class ModOptionDefinition
 
 	internal Action<int> IntApply;
 
+	internal Action<GameObject, SettingInt> IntRowBinder;
+
 	internal Action<int> DropdownApply;
 
 	internal Action<bool> BoolApply;
@@ -50,8 +52,8 @@ public sealed class ModOptionDefinition
 
 	internal void SetResolvedCategory(SettingCategory category)
 	{
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0003: Unknown result type (might be due to invalid IL or missing references)
 		Category = category;
 	}
 
@@ -63,8 +65,8 @@ public sealed class ModOptionDefinition
 
 	public static ModOptionDefinition Float(string id, string label, string description, SettingCategory category, float defaultValue, float min, float max, Action<float> apply = null, Func<float, string> formatValue = null)
 	{
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
 		return new ModOptionDefinition
 		{
 			Kind = ModOptionKind.Float,
@@ -99,8 +101,8 @@ public sealed class ModOptionDefinition
 
 	public static ModOptionDefinition Int(string id, string label, string description, SettingCategory category, int defaultValue, int min, int max, Action<int> apply = null)
 	{
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
 		return new ModOptionDefinition
 		{
 			Kind = ModOptionKind.Int,
@@ -133,8 +135,8 @@ public sealed class ModOptionDefinition
 
 	public static ModOptionDefinition Bool(string id, string label, string description, SettingCategory category, bool defaultValue, Action<bool> apply = null)
 	{
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
 		return new ModOptionDefinition
 		{
 			Kind = ModOptionKind.Bool,
@@ -163,8 +165,8 @@ public sealed class ModOptionDefinition
 
 	public static ModOptionDefinition Dropdown(string id, string label, string description, SettingCategory category, int defaultValue, ModDropdownChoice[] choices, Action<int> apply = null)
 	{
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
 		return new ModOptionDefinition
 		{
 			Kind = ModOptionKind.Dropdown,
@@ -195,10 +197,10 @@ public sealed class ModOptionDefinition
 
 	public static ModOptionDefinition Keybind(string id, string label, string description, SettingCategory category, KeyCode defaultValue, Action<KeyCode> apply = null)
 	{
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
 		return new ModOptionDefinition
 		{
 			Kind = ModOptionKind.Keybind,
@@ -213,8 +215,8 @@ public sealed class ModOptionDefinition
 
 	public static ModOptionDefinition Keybind(string id, string label, string description, string customCategory, KeyCode defaultValue, Action<KeyCode> apply = null)
 	{
-		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
 		return new ModOptionDefinition
 		{
 			Kind = ModOptionKind.Keybind,
@@ -229,54 +231,54 @@ public sealed class ModOptionDefinition
 
 	internal Setting CreateSetting()
 	{
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009a: Expected O, but got Unknown
-		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0100: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0105: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0118: Expected O, but got Unknown
-		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0141: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0146: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0159: Expected O, but got Unknown
-		//IL_015e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0163: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ee: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01fa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_020d: Expected O, but got Unknown
-		//IL_01b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01bc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01cf: Expected O, but got Unknown
+		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0097: Expected O, but got Unknown
+		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0110: Expected O, but got Unknown
+		//IL_0110: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0115: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0134: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014c: Expected O, but got Unknown
+		//IL_014c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0151: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0169: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01bd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01c2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01ce: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01da: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01dc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01f9: Expected O, but got Unknown
+		//IL_019e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01aa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01bd: Expected O, but got Unknown
 		return (Setting)(Kind switch
 		{
 			ModOptionKind.Float => (object)new SettingFloat
@@ -332,7 +334,7 @@ public sealed class ModOptionDefinition
 				category = Category,
 				apply = delegate
 				{
-					//IL_0017: Unknown result type (might be due to invalid IL or missing references)
+					//IL_0016: Unknown result type (might be due to invalid IL or missing references)
 					KeybindApply?.Invoke(Settings.Get<SettingKeybind>(Id).value);
 				}
 			}, 

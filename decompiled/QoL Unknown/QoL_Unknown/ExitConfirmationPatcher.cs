@@ -12,11 +12,9 @@ internal class ExitConfirmationPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.exitconfirm");
-		val.PatchAll(typeof(ExitConfirmationPatcher));
+		new Harmony("org.bepinex.plugins.qol.exitconfirm").PatchAll(typeof(ExitConfirmationPatcher));
 	}
 
 	internal static bool IsSkipExitAnimationEnabled()
@@ -32,15 +30,19 @@ internal class ExitConfirmationPatcher
 
 	private static bool ShouldSkipExitConfirmation()
 	{
-		return IsSkipExitAnimationEnabled() || Input.GetKey((KeyCode)304) || Input.GetKey((KeyCode)303);
+		if (!IsSkipExitAnimationEnabled() && !Input.GetKey((KeyCode)304))
+		{
+			return Input.GetKey((KeyCode)303);
+		}
+		return true;
 	}
 
 	[HarmonyPatch(typeof(PauseHandler), "TryQuit")]
 	[HarmonyPrefix]
 	private static bool TryQuit_Prefix(PauseHandler __instance)
 	{
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002a: Invalid comparison between Unknown and I4
+		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0021: Invalid comparison between Unknown and I4
 		if (!ShouldSkipExitConfirmation())
 		{
 			return true;

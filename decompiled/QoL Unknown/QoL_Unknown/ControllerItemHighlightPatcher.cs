@@ -12,19 +12,17 @@ internal class ControllerItemHighlightPatcher
 	{
 		Logger = logger;
 		ItemHighlightManager.EnsureInstance();
-		if (!RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.itemhighlight", typeof(ControllerItemHighlightPatcher), logger))
-		{
-		}
+		RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.itemhighlight", typeof(ControllerItemHighlightPatcher), logger);
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "Update")]
 	[HarmonyPrefix]
 	private static void Update_Prefix(PlayerCamera __instance)
 	{
-		//IL_00ad: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)ControllerInputManager.Instance == (Object)null || !ControllerInputManager.Instance.IsControllerActive || (Object)(object)__instance.body == (Object)null || !__instance.body.alive || Time.timeScale == 0f || (Object)(object)__instance.dragItem != (Object)null || !Input.GetMouseButtonDown(2) || !((Object)(object)ItemHighlightManager.Instance.HighlightedItem != (Object)null))
 		{
 			return;

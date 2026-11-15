@@ -8,6 +8,8 @@ internal static class ContainerStackingPatcher
 {
 	internal const string ModuleId = "qol_inv_stacking";
 
+	private static Vector2? containerItemSize;
+
 	public static void Initialize(ManualLogSource logger)
 	{
 		RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.containerstacking", typeof(ContainerStackingPatcher), logger);
@@ -33,6 +35,7 @@ internal static class ContainerStackingPatcher
 	{
 		if (QoLModuleManager.IsEnabled("qol_inv_stacking") && !((Object)(object)__instance.currentContainer == (Object)null) && !((Object)(object)__instance.contPopulate == (Object)null))
 		{
+			Unsquish(__instance);
 			ContainerStackingView containerStackingView = __instance.contPopulate.GetComponent<ContainerStackingView>();
 			if ((Object)(object)containerStackingView == (Object)null)
 			{
@@ -52,5 +55,40 @@ internal static class ContainerStackingPatcher
 		}
 		maxScroll = containerStackingView.MaxScroll;
 		return true;
+	}
+
+	internal static void Unsquish(PlayerCamera camera)
+	{
+		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bf: Unknown result type (might be due to invalid IL or missing references)
+		Container currentContainer = camera.currentContainer;
+		if ((Object)(object)currentContainer == (Object)null || ((Component)currentContainer).transform.childCount <= 36)
+		{
+			return;
+		}
+		if (!containerItemSize.HasValue)
+		{
+			GameObject val = Resources.Load<GameObject>("ContainerItem");
+			if ((Object)(object)val == (Object)null)
+			{
+				return;
+			}
+			containerItemSize = val.GetComponent<RectTransform>().sizeDelta;
+		}
+		int num = 0;
+		foreach (GameObject containerUnloadButton in camera.containerUnloadButtons)
+		{
+			if (!((Object)(object)containerUnloadButton == (Object)null))
+			{
+				RectTransform component = containerUnloadButton.GetComponent<RectTransform>();
+				if (!((Object)(object)component == (Object)null))
+				{
+					component.sizeDelta = containerItemSize.Value;
+					component.anchoredPosition = new Vector2(34.5f + (float)(num % 3) * 66f, -34.5f - (float)(num / 3) * 66f);
+					num++;
+				}
+			}
+		}
 	}
 }

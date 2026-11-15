@@ -13,7 +13,7 @@ internal static class RuntimePatchRegistry
 
 	public static bool PatchAllOnce(string harmonyId, Type patchType, ManualLogSource logger)
 	{
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
 		if (string.IsNullOrEmpty(harmonyId))
 		{
 			throw new ArgumentException("A Harmony ID is required.", "harmonyId");

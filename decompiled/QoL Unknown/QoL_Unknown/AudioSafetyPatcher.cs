@@ -59,8 +59,10 @@ internal class AudioSafetyPatcher
 				throw new Exception("Missing sound name argument.");
 			}
 			string text3 = args[2].ToLower();
-			if (text == "remove" || text == "delete")
+			switch (text)
 			{
+			case "remove":
+			case "delete":
 				if (UserVolumeOverrides.ContainsKey(text3))
 				{
 					UserVolumeOverrides.Remove(text3);
@@ -71,9 +73,10 @@ internal class AudioSafetyPatcher
 				{
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, "No override found for \"" + text3 + "\".");
 				}
-				return;
-			}
-			if (text == "change" || text == "set" || text == "add")
+				break;
+			case "change":
+			case "set":
+			case "add":
 			{
 				if (args.Length < 4)
 				{
@@ -93,11 +96,13 @@ internal class AudioSafetyPatcher
 					}
 					SaveOverrides();
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, $"Set volume for \"{text3}\" to {num} ({num * 100f:0}%).");
-					return;
+					break;
 				}
 				throw new Exception("Invalid volume number.");
 			}
-			throw new Exception("Unknown action '" + text + "'. Use change, list, remove, or clear.");
+			default:
+				throw new Exception("Unknown action '" + text + "'. Use change, list, remove, or clear.");
+			}
 		}
 	}
 
@@ -133,12 +138,10 @@ internal class AudioSafetyPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0012: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0018: Expected O, but got Unknown
+		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
 		LoadOverrides();
-		Harmony val = new Harmony("org.bepinex.plugins.qol.audiosafety");
-		val.PatchAll(typeof(AudioSafetyPatcher));
+		new Harmony("org.bepinex.plugins.qol.audiosafety").PatchAll(typeof(AudioSafetyPatcher));
 	}
 
 	private static void SaveOverrides()
@@ -163,15 +166,14 @@ internal class AudioSafetyPatcher
 			{
 				return;
 			}
-			string text = PlayerPrefs.GetString("QoL_AudioOverrides");
-			string[] array = text.Split(new char[1] { ';' });
+			string[] array = PlayerPrefs.GetString("QoL_AudioOverrides").Split(new char[1] { ';' });
 			UserVolumeOverrides.Clear();
 			string[] array2 = array;
-			foreach (string text2 in array2)
+			foreach (string text in array2)
 			{
-				if (!string.IsNullOrWhiteSpace(text2))
+				if (!string.IsNullOrWhiteSpace(text))
 				{
-					string[] array3 = text2.Split(new char[1] { '=' });
+					string[] array3 = text.Split(new char[1] { '=' });
 					if (array3.Length == 2 && float.TryParse(array3[1], out var result))
 					{
 						UserVolumeOverrides[array3[0]] = Mathf.Clamp(result, 0f, 1.2f);
@@ -224,37 +226,38 @@ internal class AudioSafetyPatcher
 		string text = soundName.ToLowerInvariant();
 		foreach (KeyValuePair<string, float> userVolumeOverride in UserVolumeOverrides)
 		{
-			if (string.IsNullOrWhiteSpace(userVolumeOverride.Key) || !text.Contains(userVolumeOverride.Key))
+			if (!string.IsNullOrWhiteSpace(userVolumeOverride.Key) && text.Contains(userVolumeOverride.Key))
 			{
-				continue;
+				volumeMultiplier = userVolumeOverride.Value;
+				return true;
 			}
-			volumeMultiplier = userVolumeOverride.Value;
-			return true;
 		}
 		return false;
 	}
 
 	internal static float GetVolumeMultiplierOrDefault(string soundName)
 	{
-		float volumeMultiplier;
-		return TryGetOverrideMultiplier(soundName, out volumeMultiplier) ? Mathf.Max(0f, volumeMultiplier) : 1f;
+		if (!TryGetOverrideMultiplier(soundName, out var volumeMultiplier))
+		{
+			return 1f;
+		}
+		return Mathf.Max(0f, volumeMultiplier);
 	}
 
 	[HarmonyPatch(typeof(ConsoleScript), "RegisterAllCommands")]
 	[HarmonyPostfix]
 	private static void RegisterCommands_Postfix()
 	{
-		//IL_0152: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015c: Expected O, but got Unknown
-		//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0109: Expected O, but got Unknown
+		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0142: Expected O, but got Unknown
+		//IL_00e4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ef: Expected O, but got Unknown
 		List<string> allSounds = new List<string>();
 		try
 		{
 			AudioClip[] array = Resources.LoadAll<AudioClip>("Sounds");
-			AudioClip[] array2 = array;
-			foreach (AudioClip val in array2)
+			foreach (AudioClip val in array)
 			{
 				if ((Object)(object)val != (Object)null)
 				{
@@ -315,8 +318,10 @@ internal class AudioSafetyPatcher
 						throw new Exception("Missing sound name argument.");
 					}
 					string text3 = args[2].ToLower();
-					if (text == "remove" || text == "delete")
+					switch (text)
 					{
+					case "remove":
+					case "delete":
 						if (UserVolumeOverrides.ContainsKey(text3))
 						{
 							UserVolumeOverrides.Remove(text3);
@@ -327,13 +332,11 @@ internal class AudioSafetyPatcher
 						{
 							ConsoleHelper.LogToConsole(ConsoleScript.instance, "No override found for \"" + text3 + "\".");
 						}
-					}
-					else
+						break;
+					case "change":
+					case "set":
+					case "add":
 					{
-						if (!(text == "change") && !(text == "set") && !(text == "add"))
-						{
-							throw new Exception("Unknown action '" + text + "'. Use change, list, remove, or clear.");
-						}
 						if (args.Length < 4)
 						{
 							throw new Exception("Missing volume argument. Usage: noise change [name] [volume]");
@@ -354,6 +357,10 @@ internal class AudioSafetyPatcher
 						}
 						SaveOverrides();
 						ConsoleHelper.LogToConsole(ConsoleScript.instance, $"Set volume for \"{text3}\" to {num} ({num * 100f:0}%).");
+						break;
+					}
+					default:
+						throw new Exception("Unknown action '" + text + "'. Use change, list, remove, or clear.");
 					}
 				}
 			};

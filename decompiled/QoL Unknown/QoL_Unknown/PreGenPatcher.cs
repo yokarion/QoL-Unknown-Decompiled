@@ -15,9 +15,7 @@ internal class PreGenPatcher
 	public static void Initialize(ManualLogSource logger)
 	{
 		Logger = logger;
-		if (!RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.pregen_ui", typeof(PreGenPatcher), logger))
-		{
-		}
+		RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.pregen_ui", typeof(PreGenPatcher), logger);
 	}
 
 	[HarmonyPatch(typeof(PreRunScript), "Start")]

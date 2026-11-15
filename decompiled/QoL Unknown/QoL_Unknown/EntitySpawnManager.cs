@@ -17,7 +17,11 @@ public static class EntitySpawnManager
 		"plantiation", "coil", "wallbiter", "oilpipe", "turret", "stalactite", "Special/sandvinehook", "Special/sandvinerope", "rag", "thornbackyoung",
 		"overgrowntick", "caveticks", "thornbackelder", "browncap", "bananaplant", "grabberplant", "skullcrusher", "wallflower", "LifepodStart", "Special/wallholes",
 		"minibarrel", "experimentflesh", "internalorgans", "lifepodchest", "LoreNote", "dropcapsule", "drillpodbroken", "BloodCrystal", "SoothingCrystal", "ReliefCrystal",
-		"TurbulentCrystal", "OxygenCrystal", "EmissiveCrystal", "DigestionCrystal"
+		"TurbulentCrystal", "OxygenCrystal", "EmissiveCrystal", "DigestionCrystal", "hydreed", "fan", "pop", "heatfern", "frigiant", "spaceheater",
+		"icestalagmite", "snowstrider", "gunmine", "mushroomtree", "glowshroom", "mushroomdropper", "bouncecap", "fungalibungali", "mushroomplatform", "sidestabber",
+		"sidestabberflip", "sawblade", "grabbershroom", "corecrystal", "piston", "pistonright", "pistonleft", "bloodsuckerden", "laserdrone", "lavalamp",
+		"coldpuff", "spicevine", "spicevineceiling", "stalagmitedark", "lavageyser", "ceilingturret", "mushlight", "crimsonbush", "crimsontree", "pussack",
+		"radbarrel", "antirad"
 	};
 
 	public static float GetMultiplier(string entityName)
@@ -78,6 +82,10 @@ public static class EntitySpawnManager
 
 	private static float NormalizeMultiplier(float value)
 	{
-		return (float.IsNaN(value) || float.IsInfinity(value)) ? 1f : Mathf.Clamp(value, 0f, 10f);
+		if (!float.IsNaN(value) && !float.IsInfinity(value))
+		{
+			return Mathf.Clamp(value, 0f, 10f);
+		}
+		return 1f;
 	}
 }

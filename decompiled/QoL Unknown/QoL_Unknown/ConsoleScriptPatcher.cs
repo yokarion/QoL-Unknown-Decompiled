@@ -24,34 +24,36 @@ internal class ConsoleScriptPatcher
 	{
 		public static readonly _003C_003Ec _003C_003E9 = new _003C_003Ec();
 
-		public static UnityAction<Scene, LoadSceneMode> _003C_003E9__14_0;
+		public static UnityAction<Scene, LoadSceneMode> _003C_003E9__15_0;
 
-		public static Action _003C_003E9__16_0;
+		public static Action _003C_003E9__17_0;
 
-		public static Predicate<Command> _003C_003E9__16_1;
+		public static Predicate<Command> _003C_003E9__17_1;
 
-		public static Action _003C_003E9__16_2;
+		public static Action _003C_003E9__17_2;
 
-		public static Action _003C_003E9__16_3;
+		public static Action _003C_003E9__17_3;
 
-		public static Action _003C_003E9__16_4;
+		public static Action _003C_003E9__17_4;
 
-		public static Predicate<Command> _003C_003E9__16_5;
+		public static Predicate<Command> _003C_003E9__17_5;
 
-		public static Action _003C_003E9__16_6;
+		public static Action _003C_003E9__17_6;
 
-		public static Action _003C_003E9__16_7;
+		public static Predicate<Command> _003C_003E9__17_7;
 
-		public static Action _003C_003E9__16_8;
+		public static Action _003C_003E9__17_8;
 
-		public static Action _003C_003E9__16_9;
+		public static Action _003C_003E9__17_9;
 
-		internal void _003CInitialize_003Eb__14_0(Scene scene, LoadSceneMode loadMode)
+		public static Action _003C_003E9__17_10;
+
+		internal void _003CInitialize_003Eb__15_0(Scene scene, LoadSceneMode loadMode)
 		{
 			locateAutofillDirty = true;
 		}
 
-		internal void _003CRegisterAllCommands_Postfix_003Eb__16_0(string[] args)
+		internal void _003CRegisterAllCommands_Postfix_003Eb__17_0(string[] args)
 		{
 			if ((Object)(object)WorldGeneration.world == (Object)null)
 			{
@@ -65,24 +67,24 @@ internal class ConsoleScriptPatcher
 			ConsoleHelper.LogToConsole(ConsoleScript.instance, $"<color=green>Loot: {totalLootRarity * 100f:0.#}% | Traps: {totalTrapRarity * 100f:0.#}%</color> <color=grey>(layer: {lootRarityMultiplier * 100f:0.#}%/{trapRarityMultiplier * 100f:0.#}%)</color>");
 		}
 
-		internal bool _003CRegisterAllCommands_Postfix_003Eb__16_1(Command cmd)
+		internal bool _003CRegisterAllCommands_Postfix_003Eb__17_1(Command cmd)
 		{
 			return cmd?.name.Equals("fucklore", StringComparison.OrdinalIgnoreCase) ?? false;
 		}
 
-		internal void _003CRegisterAllCommands_Postfix_003Eb__16_2(string[] args)
+		internal void _003CRegisterAllCommands_Postfix_003Eb__17_2(string[] args)
 		{
 			bool flag = PreRunScriptPatcher.ToggleAlwaysSkipLore();
 			ConsoleHelper.LogToConsole(ConsoleScript.instance, flag ? "Always skipping the lore now..." : "Always showing the lore now.");
 		}
 
-		internal void _003CRegisterAllCommands_Postfix_003Eb__16_3(string[] args)
+		internal void _003CRegisterAllCommands_Postfix_003Eb__17_3(string[] args)
 		{
 			bool flag = QoLModSettings.ToggleExperimentalFeatures();
 			ConsoleHelper.LogToConsole(ConsoleScript.instance, "Experimental features " + (flag ? "enabled" : "disabled") + ". Reopen the settings menu to refresh experimental options.");
 		}
 
-		internal void _003CRegisterAllCommands_Postfix_003Eb__16_4(string[] args)
+		internal void _003CRegisterAllCommands_Postfix_003Eb__17_4(string[] args)
 		{
 			if (args == null || args.Length < 2)
 			{
@@ -104,19 +106,19 @@ internal class ConsoleScriptPatcher
 			ConsoleHelper.LogToConsole(ConsoleScript.instance, "<color=green>Opened Nexus page: " + nexusPageUrl + "</color>");
 		}
 
-		internal bool _003CRegisterAllCommands_Postfix_003Eb__16_5(Command cmd)
+		internal bool _003CRegisterAllCommands_Postfix_003Eb__17_5(Command cmd)
 		{
 			return cmd?.name.Equals("bind", StringComparison.OrdinalIgnoreCase) ?? false;
 		}
 
-		internal unsafe void _003CRegisterAllCommands_Postfix_003Eb__16_6(string[] args)
+		internal unsafe void _003CRegisterAllCommands_Postfix_003Eb__17_6(string[] args)
 		{
-			//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0115: Unknown result type (might be due to invalid IL or missing references)
-			//IL_011a: Unknown result type (might be due to invalid IL or missing references)
-			//IL_01e5: Unknown result type (might be due to invalid IL or missing references)
-			//IL_02fa: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00f9: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
+			//IL_01b0: Unknown result type (might be due to invalid IL or missing references)
+			//IL_029f: Unknown result type (might be due to invalid IL or missing references)
 			if (args.Length <= 1)
 			{
 				throw new Exception(string.Format("Expected at least {0} argument{1}, but got {2}.", 1, "s", args.Length - 1));
@@ -188,7 +190,12 @@ internal class ConsoleScriptPatcher
 			}
 		}
 
-		internal void _003CRegisterAllCommands_Postfix_003Eb__16_7(string[] args)
+		internal bool _003CRegisterAllCommands_Postfix_003Eb__17_7(Command cmd)
+		{
+			return cmd?.name.Equals("repeat", StringComparison.OrdinalIgnoreCase) ?? false;
+		}
+
+		internal void _003CRegisterAllCommands_Postfix_003Eb__17_8(string[] args)
 		{
 			if (args.Length == 0)
 			{
@@ -241,7 +248,7 @@ internal class ConsoleScriptPatcher
 			}
 		}
 
-		internal void _003CRegisterAllCommands_Postfix_003Eb__16_8(string[] args)
+		internal void _003CRegisterAllCommands_Postfix_003Eb__17_9(string[] args)
 		{
 			if (args.Length < 2)
 			{
@@ -263,7 +270,7 @@ internal class ConsoleScriptPatcher
 			}
 		}
 
-		internal void _003CRegisterAllCommands_Postfix_003Eb__16_9(string[] args)
+		internal void _003CRegisterAllCommands_Postfix_003Eb__17_10(string[] args)
 		{
 			List<string> list = ConsoleScript.instance?.settings?.customCommands;
 			if (list == null || list.Count == 0)
@@ -305,6 +312,8 @@ internal class ConsoleScriptPatcher
 
 	private const string LayerIndexCommandName = "skiplayer";
 
+	private const string LayerModifierCommandName = "applylayermodifier";
+
 	private static readonly HashSet<string> LocateBlacklist = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 	{
 		"algaeparticle", "anim", "arrowguide", "audio", "back", "blocker1", "blocker2", "chunk", "chunkback", "chutegrabpoint",
@@ -321,10 +330,8 @@ internal class ConsoleScriptPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000c: Expected O, but got Unknown
-		Harmony val = new Harmony("org.bepinex.plugins.qol.consolepatch");
-		val.PatchAll(typeof(ConsoleScriptPatcher));
+		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
+		new Harmony("org.bepinex.plugins.qol.consolepatch").PatchAll(typeof(ConsoleScriptPatcher));
 		SceneManager.sceneLoaded += delegate
 		{
 			locateAutofillDirty = true;
@@ -347,50 +354,70 @@ internal class ConsoleScriptPatcher
 	[HarmonyPostfix]
 	private unsafe static void RegisterAllCommands_Postfix()
 	{
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0051: Expected O, but got Unknown
-		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Expected O, but got Unknown
-		//IL_00da: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e4: Expected O, but got Unknown
-		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Expected O, but got Unknown
-		//IL_012e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0138: Expected O, but got Unknown
-		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0128: Expected O, but got Unknown
-		//IL_019d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a7: Expected O, but got Unknown
-		//IL_0171: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0176: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004a: Expected O, but got Unknown
+		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Expected O, but got Unknown
+		//IL_00c0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ca: Expected O, but got Unknown
+		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ba: Expected O, but got Unknown
+		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0177: Expected O, but got Unknown
+		//IL_0172: Unknown result type (might be due to invalid IL or missing references)
 		//IL_017c: Expected O, but got Unknown
-		//IL_02ad: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02b7: Expected O, but got Unknown
-		//IL_01f6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01fb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0201: Expected O, but got Unknown
-		//IL_04ac: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04b6: Expected O, but got Unknown
-		//IL_046e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0473: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0479: Expected O, but got Unknown
-		//IL_04ff: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0509: Expected O, but got Unknown
-		//IL_04ee: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04f3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04f9: Expected O, but got Unknown
-		//IL_0553: Unknown result type (might be due to invalid IL or missing references)
-		//IL_055d: Expected O, but got Unknown
-		//IL_0542: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0547: Unknown result type (might be due to invalid IL or missing references)
-		//IL_054d: Expected O, but got Unknown
+		//IL_010a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0114: Expected O, but got Unknown
+		//IL_00f9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0104: Expected O, but got Unknown
+		//IL_019e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01f5: Expected O, but got Unknown
+		//IL_01f0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01fa: Expected O, but got Unknown
+		//IL_021c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0269: Expected O, but got Unknown
+		//IL_0264: Unknown result type (might be due to invalid IL or missing references)
+		//IL_026e: Expected O, but got Unknown
+		//IL_02c9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02d3: Expected O, but got Unknown
+		//IL_029d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02a8: Expected O, but got Unknown
+		//IL_03cb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03d5: Expected O, but got Unknown
+		//IL_0320: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0325: Unknown result type (might be due to invalid IL or missing references)
+		//IL_032b: Expected O, but got Unknown
+		//IL_0415: Unknown result type (might be due to invalid IL or missing references)
+		//IL_047e: Expected O, but got Unknown
+		//IL_0479: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0483: Expected O, but got Unknown
+		//IL_04a8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_052d: Expected O, but got Unknown
+		//IL_0528: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0532: Expected O, but got Unknown
+		//IL_0700: Unknown result type (might be due to invalid IL or missing references)
+		//IL_070a: Expected O, but got Unknown
+		//IL_06c2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_06c7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_06cd: Expected O, but got Unknown
+		//IL_074a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0754: Expected O, but got Unknown
+		//IL_0739: Unknown result type (might be due to invalid IL or missing references)
+		//IL_073e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0744: Expected O, but got Unknown
+		//IL_0794: Unknown result type (might be due to invalid IL or missing references)
+		//IL_079e: Expected O, but got Unknown
+		//IL_0783: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0788: Unknown result type (might be due to invalid IL or missing references)
+		//IL_078e: Expected O, but got Unknown
 		if (ConsoleScript.SearchExact("worldrates") == null)
 		{
 			List<Command> commands = ConsoleScript.Commands;
-			object obj = _003C_003Ec._003C_003E9__16_0;
+			object obj = _003C_003Ec._003C_003E9__17_0;
 			if (obj == null)
 			{
 				Action val = delegate
@@ -408,7 +435,7 @@ internal class ConsoleScriptPatcher
 						ConsoleHelper.LogToConsole(ConsoleScript.instance, $"<color=green>Loot: {totalLootRarity * 100f:0.#}% | Traps: {totalTrapRarity * 100f:0.#}%</color> <color=grey>(layer: {lootRarityMultiplier * 100f:0.#}%/{trapRarityMultiplier * 100f:0.#}%)</color>");
 					}
 				};
-				_003C_003Ec._003C_003E9__16_0 = val;
+				_003C_003Ec._003C_003E9__17_0 = val;
 				obj = (object)val;
 			}
 			commands.Add(new Command("worldrates", "Shows current loot% and traps% multipliers.", (Action)obj, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>()));
@@ -420,7 +447,7 @@ internal class ConsoleScriptPatcher
 		if (ConsoleScript.SearchExact("fucklore") == null)
 		{
 			List<Command> commands2 = ConsoleScript.Commands;
-			object obj2 = _003C_003Ec._003C_003E9__16_2;
+			object obj2 = _003C_003Ec._003C_003E9__17_2;
 			if (obj2 == null)
 			{
 				Action val2 = delegate
@@ -428,7 +455,7 @@ internal class ConsoleScriptPatcher
 					bool flag = PreRunScriptPatcher.ToggleAlwaysSkipLore();
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, flag ? "Always skipping the lore now..." : "Always showing the lore now.");
 				};
-				_003C_003Ec._003C_003E9__16_2 = val2;
+				_003C_003Ec._003C_003E9__17_2 = val2;
 				obj2 = (object)val2;
 			}
 			commands2.Add(new Command("fucklore", "Toggles always skipping the fullscreen intro lore.", (Action)obj2, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>()));
@@ -436,7 +463,7 @@ internal class ConsoleScriptPatcher
 		if (ConsoleScript.SearchExact("toggleExperimentalFeatures") == null)
 		{
 			List<Command> commands3 = ConsoleScript.Commands;
-			object obj3 = _003C_003Ec._003C_003E9__16_3;
+			object obj3 = _003C_003Ec._003C_003E9__17_3;
 			if (obj3 == null)
 			{
 				Action val3 = delegate
@@ -444,15 +471,44 @@ internal class ConsoleScriptPatcher
 					bool flag = QoLModSettings.ToggleExperimentalFeatures();
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, "Experimental features " + (flag ? "enabled" : "disabled") + ". Reopen the settings menu to refresh experimental options.");
 				};
-				_003C_003Ec._003C_003E9__16_3 = val3;
+				_003C_003Ec._003C_003E9__17_3 = val3;
 				obj3 = (object)val3;
 			}
 			commands3.Add(new Command("toggleExperimentalFeatures", "Toggles experimental QoL features.", (Action)obj3, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>()));
 		}
+		if (ConsoleScript.SearchExact("getbodyfield") == null)
+		{
+			ConsoleScript.Commands.Add(new Command("getbodyfield", "Reads a field from the player's Body without changing it.", new Action(BodyFieldReader.GetBodyField), BodyFieldReader.BodyAutofill(), new(string, string)[2]
+			{
+				("string field", "The field you want to read"),
+				("string player", "(multiplayer) Name of the player to read from")
+			}));
+		}
+		if (ConsoleScript.SearchExact("getlimbfield") == null)
+		{
+			ConsoleScript.Commands.Add(new Command("getlimbfield", "Reads a field from one of the player's limbs without changing it.", new Action(BodyFieldReader.GetLimbField), BodyFieldReader.LimbAutofill(), new(string, string)[3]
+			{
+				("string limb", "Name of your desired limb"),
+				("string field", "The field you want to read"),
+				("string player", "(multiplayer) Name of the player to read from")
+			}));
+		}
+		if (ConsoleScript.SearchExact("switchcharacter") == null)
+		{
+			ConsoleScript.Commands.Add(new Command("switchcharacter", "Switch your character type mid-game.", new Action(CharacterSwapManager.SwapCommand), new Dictionary<int, List<string>> { 
+			{
+				0,
+				CharacterSwapManager.RaceAutofill()
+			} }, new(string, string)[2]
+			{
+				("string character", "experiment, milky or dune"),
+				("bool changeSkillRatio", "(optional, default true) Convert skill progress.")
+			}));
+		}
 		if (ConsoleScript.SearchExact("nexus") == null)
 		{
 			List<Command> commands4 = ConsoleScript.Commands;
-			object obj4 = _003C_003Ec._003C_003E9__16_4;
+			object obj4 = _003C_003Ec._003C_003E9__17_4;
 			if (obj4 == null)
 			{
 				Action val4 = delegate(string[] args)
@@ -480,24 +536,24 @@ internal class ConsoleScriptPatcher
 						}
 					}
 				};
-				_003C_003Ec._003C_003E9__16_4 = val4;
+				_003C_003Ec._003C_003E9__17_4 = val4;
 				obj4 = (object)val4;
 			}
 			commands4.Add(new Command("nexus", "Open the Nexus Mods page for an installed mod. Usage: nexus <name or guid>", (Action)obj4, BuildNexusCommandAutofill(), new(string, string)[1] { ("name or guid", "Mod name or BepInEx plugin GUID") }));
 		}
 		ConsoleScript.Commands.RemoveAll((Command cmd) => cmd?.name.Equals("bind", StringComparison.OrdinalIgnoreCase) ?? false);
 		List<Command> commands5 = ConsoleScript.Commands;
-		object obj5 = _003C_003Ec._003C_003E9__16_6;
+		object obj5 = _003C_003Ec._003C_003E9__17_6;
 		if (obj5 == null)
 		{
 			Action val5 = delegate(string[] args)
 			{
-				//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
-				//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
-				//IL_0115: Unknown result type (might be due to invalid IL or missing references)
-				//IL_011a: Unknown result type (might be due to invalid IL or missing references)
-				//IL_01e5: Unknown result type (might be due to invalid IL or missing references)
-				//IL_02fa: Unknown result type (might be due to invalid IL or missing references)
+				//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
+				//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
+				//IL_00f9: Unknown result type (might be due to invalid IL or missing references)
+				//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
+				//IL_01b0: Unknown result type (might be due to invalid IL or missing references)
+				//IL_029f: Unknown result type (might be due to invalid IL or missing references)
 				if (args.Length <= 1)
 				{
 					throw new Exception(string.Format("Expected at least {0} argument{1}, but got {2}.", 1, "s", args.Length - 1));
@@ -568,7 +624,7 @@ internal class ConsoleScriptPatcher
 					throw new Exception("\"" + args[1] + "\" is not a valid bind action!");
 				}
 			};
-			_003C_003Ec._003C_003E9__16_6 = val5;
+			_003C_003Ec._003C_003E9__17_6 = val5;
 			obj5 = (object)val5;
 		}
 		commands5.Add(new Command("bind", "Manages custom command binds, by either adding/removing/listing them.", (Action)obj5, new Dictionary<int, List<string>>
@@ -587,7 +643,34 @@ internal class ConsoleScriptPatcher
 			("keycode", "(if adding/removing) Keyboard button to bind"),
 			("string action", "(if adding) Commands to run, separated by ; and spaces replaced by _")
 		}));
+		ConsoleScript.Commands.RemoveAll((Command cmd) => cmd?.name.Equals("repeat", StringComparison.OrdinalIgnoreCase) ?? false);
+		ConsoleScript.Commands.Add(new Command("repeat", "Runs a specified series of commands a specified amount of times with a delay. Optional name allows control via controlrepeat.", new Action(RepeatCommandManager.StartRepeat), (Dictionary<int, List<string>>)null, new(string, string)[4]
+		{
+			("int times", "How many times to repeat the command"),
+			("float delay", "How long to wait between each repeat, in seconds"),
+			("string command", "Commands to run, separated by ; and spaces replaced by _"),
+			("string name", "(optional) Name for this repeat command, used by controlrepeat")
+		}));
+		if (ConsoleScript.SearchExact("controlrepeat") == null)
+		{
+			ConsoleScript.Commands.Add(new Command("controlrepeat", "Pauses, unpauses, stops or lists active repeat commands by name.", new Action(RepeatCommandManager.Control), new Dictionary<int, List<string>>
+			{
+				{
+					0,
+					new List<string> { "pause", "unpause", "stop", "list" }
+				},
+				{
+					1,
+					new List<string>()
+				}
+			}, new(string, string)[2]
+			{
+				("string action", "pause, unpause, stop or list"),
+				("string name", "(if not listing) Name of the repeat command")
+			}));
+		}
 		RefreshSkiPlayerCommandAutofill();
+		RefreshApplyLayerModifierCommandAutofill();
 		if (ConsoleScript.SearchExact("controllerbind") != null)
 		{
 			return;
@@ -608,7 +691,7 @@ internal class ConsoleScriptPatcher
 			{ 1, value2 }
 		};
 		List<Command> commands6 = ConsoleScript.Commands;
-		object obj6 = _003C_003Ec._003C_003E9__16_7;
+		object obj6 = _003C_003Ec._003C_003E9__17_8;
 		if (obj6 == null)
 		{
 			Action val6 = delegate(string[] args)
@@ -663,7 +746,7 @@ internal class ConsoleScriptPatcher
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, "<color=orange>Too many arguments</color>");
 				}
 			};
-			_003C_003Ec._003C_003E9__16_7 = val6;
+			_003C_003Ec._003C_003E9__17_8 = val6;
 			obj6 = (object)val6;
 		}
 		commands6.Add(new Command("controllerbind", "Set or view controller button bindings", (Action)obj6, dictionary, new(string, string)[2]
@@ -674,7 +757,7 @@ internal class ConsoleScriptPatcher
 		if (ConsoleScript.SearchExact("runatstart") == null)
 		{
 			List<Command> commands7 = ConsoleScript.Commands;
-			object obj7 = _003C_003Ec._003C_003E9__16_8;
+			object obj7 = _003C_003Ec._003C_003E9__17_9;
 			if (obj7 == null)
 			{
 				Action val7 = delegate(string[] args)
@@ -700,7 +783,7 @@ internal class ConsoleScriptPatcher
 						}
 					}
 				};
-				_003C_003Ec._003C_003E9__16_8 = val7;
+				_003C_003Ec._003C_003E9__17_9 = val7;
 				obj7 = (object)val7;
 			}
 			commands7.Add(new Command("runatstart", "Sets commands to execute on a fresh run (split by ;). Usage: runatstart [commands] OR runatstart clear", (Action)obj7, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>()));
@@ -710,7 +793,7 @@ internal class ConsoleScriptPatcher
 			return;
 		}
 		List<Command> commands8 = ConsoleScript.Commands;
-		object obj8 = _003C_003Ec._003C_003E9__16_9;
+		object obj8 = _003C_003Ec._003C_003E9__17_10;
 		if (obj8 == null)
 		{
 			Action val8 = delegate
@@ -733,7 +816,7 @@ internal class ConsoleScriptPatcher
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, text.TrimEnd(Array.Empty<char>()));
 				}
 			};
-			_003C_003Ec._003C_003E9__16_9 = val8;
+			_003C_003Ec._003C_003E9__17_10 = val8;
 			obj8 = (object)val8;
 		}
 		commands8.Add(new Command("listcustomcommands", "Lists the custom commands you added with addcustomcommand.", (Action)obj8, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>()));
@@ -805,6 +888,24 @@ internal class ConsoleScriptPatcher
 		return list;
 	}
 
+	internal static void RefreshApplyLayerModifierCommandAutofill()
+	{
+		Command val = ConsoleScript.SearchExact("applylayermodifier");
+		if (val != null)
+		{
+			if (val.argAutofill == null)
+			{
+				val.argAutofill = new Dictionary<int, List<string>>();
+			}
+			List<string> list = new List<string>(LayerModifierPatcher.ModifierNames.Count);
+			for (int i = 0; i < LayerModifierPatcher.ModifierNames.Count; i++)
+			{
+				list.Add(i + " - " + LayerModifierPatcher.ModifierNames[i]);
+			}
+			val.argAutofill[0] = list;
+		}
+	}
+
 	private static bool TryForwardClientHealCommand(ref string[] args)
 	{
 		if (args == null || args.Length == 0 || !args[0].Equals("heal", StringComparison.OrdinalIgnoreCase))
@@ -866,7 +967,7 @@ internal class ConsoleScriptPatcher
 
 	private static bool TryBuildClientSpawnCommand(string[] args, out string commandString, out string errorMessage)
 	{
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
 		commandString = null;
 		errorMessage = null;
 		if (args.Length > 5)
@@ -875,8 +976,7 @@ internal class ConsoleScriptPatcher
 			return false;
 		}
 		string item = args[1];
-		string positionArg = ((args.Length > 2) ? args[2] : "cursor");
-		if (!TryResolveClientSpawnPosition(positionArg, out var position, out errorMessage))
+		if (!TryResolveClientSpawnPosition((args.Length > 2) ? args[2] : "cursor", out var position, out errorMessage))
 		{
 			return false;
 		}
@@ -900,17 +1000,17 @@ internal class ConsoleScriptPatcher
 
 	private static bool TryResolveClientSpawnPosition(string positionArg, out Vector2 position, out string errorMessage)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0155: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ac: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0117: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
 		position = Vector2.zero;
 		errorMessage = null;
 		switch (positionArg.ToLowerInvariant())
@@ -950,8 +1050,8 @@ internal class ConsoleScriptPatcher
 
 	private static string FormatVector2(Vector2 position)
 	{
-		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
 		return string.Format(CultureInfo.InvariantCulture, "{0},{1}", position.x, position.y);
 	}
 
@@ -992,10 +1092,10 @@ internal class ConsoleScriptPatcher
 	[HarmonyPrefix]
 	private static bool Update_Prefix(ConsoleScript __instance)
 	{
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
 		if (!__instance.active)
 		{
 			return true;
@@ -1075,30 +1175,36 @@ internal class ConsoleScriptPatcher
 
 	private static string GetAutofillCompletion(Command command, string entry)
 	{
-		if (!command.name.Equals("skiplayer", StringComparison.OrdinalIgnoreCase))
+		if (!command.name.Equals("skiplayer", StringComparison.OrdinalIgnoreCase) && !command.name.Equals("applylayermodifier", StringComparison.OrdinalIgnoreCase))
 		{
 			return entry;
 		}
 		int num = entry.IndexOf(" - ", StringComparison.Ordinal);
-		return (num > 0) ? entry.Substring(0, num) : entry;
+		if (num <= 0)
+		{
+			return entry;
+		}
+		return entry.Substring(0, num);
 	}
 
 	[HarmonyPatch(typeof(ConsoleScript), "HandleDescriptionText")]
 	[HarmonyPrefix]
 	private static bool HandleDescriptionText_Prefix(ConsoleScript __instance, string[] args)
 	{
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0090: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ad: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
 		((TMP_Text)__instance.descriptionText).text = "";
 		lastSuggestionCount = 0;
 		RefreshLocateAutofill(args);
+		RepeatCommandManager.RefreshAutofill();
+		BodyFieldReader.RefreshAutofill(args);
 		if (__instance.input.caretPosition >= 0 && __instance.input.caretPosition < __instance.input.textComponent.textInfo.characterCount)
 		{
 			Vector3 bottomLeft = __instance.input.textComponent.textInfo.characterInfo[__instance.input.caretPosition].bottomLeft;
@@ -1201,13 +1307,13 @@ internal class ConsoleScriptPatcher
 				}
 				for (int k = num5; k < num7; k++)
 				{
-					bool flag2 = k == selectedAutofillIndex;
-					if (flag2)
+					bool num8 = k == selectedAutofillIndex;
+					if (num8)
 					{
 						text += "<color=yellow>";
 					}
 					text = text + list2[k] + "\n";
-					if (flag2)
+					if (num8)
 					{
 						text += "</color>";
 					}
@@ -1251,8 +1357,8 @@ internal class ConsoleScriptPatcher
 
 	private static void BuildLocateAutofill(List<string> autofill)
 	{
-		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
 		autofill.Clear();
 		locateAutofillSeen.Clear();
 		if ((Object)(object)WorldGeneration.world == (Object)null)
@@ -1386,11 +1492,11 @@ internal class ConsoleScriptPatcher
 
 	private static void WriteConsoleSettings()
 	{
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008a: Expected O, but got Unknown
+		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007f: Expected O, but got Unknown
 		ConsoleScript instance = ConsoleScript.instance;
 		if (!((Object)(object)instance == (Object)null) && instance.settings != null)
 		{

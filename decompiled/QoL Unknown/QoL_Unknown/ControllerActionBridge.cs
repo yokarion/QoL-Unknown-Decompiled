@@ -51,58 +51,82 @@ internal static class ControllerActionBridge
 
 	public static bool GetKeyDown(ControllerState state, KeyCode key)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001f: Invalid comparison between Unknown and I4
-		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002e: Invalid comparison between Unknown and I4
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0016: Invalid comparison between Unknown and I4
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Invalid comparison between Unknown and I4
 		if (state == null)
 		{
 			return false;
 		}
-		return MatchesBoundAction(state, key, down: true) || ((int)key == 304 && state.IsDown(ControllerButton.LB)) || ((int)key == 120 && state.IsDown(ControllerButton.L3));
+		if (!MatchesBoundAction(state, key, down: true) && ((int)key != 304 || !state.IsDown(ControllerButton.LB)))
+		{
+			if ((int)key == 120)
+			{
+				return state.IsDown(ControllerButton.L3);
+			}
+			return false;
+		}
+		return true;
 	}
 
 	public static bool GetKey(ControllerState state, KeyCode key)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001f: Invalid comparison between Unknown and I4
-		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002e: Invalid comparison between Unknown and I4
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0016: Invalid comparison between Unknown and I4
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Invalid comparison between Unknown and I4
 		if (state == null)
 		{
 			return false;
 		}
-		return MatchesBoundAction(state, key, down: false) || ((int)key == 304 && state.IsHeld(ControllerButton.LB)) || ((int)key == 120 && state.IsHeld(ControllerButton.L3));
+		if (!MatchesBoundAction(state, key, down: false) && ((int)key != 304 || !state.IsHeld(ControllerButton.LB)))
+		{
+			if ((int)key == 120)
+			{
+				return state.IsHeld(ControllerButton.L3);
+			}
+			return false;
+		}
+		return true;
 	}
 
 	public static bool GetKeyUp(ControllerState state, KeyCode key)
 	{
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001f: Invalid comparison between Unknown and I4
-		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002e: Invalid comparison between Unknown and I4
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0016: Invalid comparison between Unknown and I4
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Invalid comparison between Unknown and I4
 		if (state == null)
 		{
 			return false;
 		}
-		return MatchesBoundAction(state, key, down: false, up: true) || ((int)key == 304 && state.IsUp(ControllerButton.LB)) || ((int)key == 120 && state.IsUp(ControllerButton.L3));
+		if (!MatchesBoundAction(state, key, down: false, up: true) && ((int)key != 304 || !state.IsUp(ControllerButton.LB)))
+		{
+			if ((int)key == 120)
+			{
+				return state.IsUp(ControllerButton.L3);
+			}
+			return false;
+		}
+		return true;
 	}
 
 	private static bool MatchesBoundAction(ControllerState state, KeyCode key, bool down, bool up = false)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ba: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ad: Unknown result type (might be due to invalid IL or missing references)
 		if (MatchBinding(state, key, "jump", ControllerButton.A, down, up))
 		{
 			return true;
@@ -148,8 +172,8 @@ internal static class ControllerActionBridge
 
 	private static bool MatchBinding(ControllerState state, KeyCode key, string action, ControllerButton button, bool down, bool up)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0003: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
 		if (key != KeyBinds.GetBind(action))
 		{
 			return false;
@@ -162,6 +186,10 @@ internal static class ControllerActionBridge
 		{
 			return state.IsUp(button);
 		}
-		return down ? state.IsDown(button) : state.IsHeld(button);
+		if (!down)
+		{
+			return state.IsHeld(button);
+		}
+		return state.IsDown(button);
 	}
 }

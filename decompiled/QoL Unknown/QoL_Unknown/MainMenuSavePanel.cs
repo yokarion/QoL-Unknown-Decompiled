@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace QoL_Unknown;
@@ -23,9 +24,9 @@ internal static class MainMenuSavePanel
 
 		private void Update()
 		{
-			//IL_0053: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0059: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0094: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0052: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0058: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0085: Unknown result type (might be due to invalid IL or missing references)
 			progress += Time.unscaledDeltaTime / Mathf.Max(0.01f, duration);
 			float num = Mathf.Clamp01(progress);
 			float num2 = (closing ? (1f - Utils.OutCubic(num)) : Utils.OutCubic(num));
@@ -50,23 +51,23 @@ internal static class MainMenuSavePanel
 	{
 		public static readonly _003C_003Ec _003C_003E9 = new _003C_003Ec();
 
-		public static Action<int> _003C_003E9__20_0;
+		public static Action<int> _003C_003E9__22_0;
 
-		public static Action<int> _003C_003E9__20_1;
+		public static Action<int> _003C_003E9__22_1;
 
-		public static UnityAction _003C_003E9__27_0;
+		public static UnityAction _003C_003E9__29_0;
 
-		internal void _003CBuild_003Eb__20_0(int slot)
+		internal void _003CBuild_003Eb__22_0(int slot)
 		{
 			SaveSaveMenuPatcher.DoLoad(SaveSlotRegistry.FileName(slot), slot);
 		}
 
-		internal void _003CBuild_003Eb__20_1(int slot)
+		internal void _003CBuild_003Eb__22_1(int slot)
 		{
 			SaveSaveMenuPatcher.DoLoad("autosave.sv", slot);
 		}
 
-		internal void _003CBuildContinueButton_003Eb__27_0()
+		internal void _003CBuildContinueButton_003Eb__29_0()
 		{
 			if ((Object)(object)PreRunScript.instance != (Object)null)
 			{
@@ -97,9 +98,9 @@ internal static class MainMenuSavePanel
 
 	private const int BODY_PADDING = 14;
 
-	private static readonly Color PANEL_COLOR = new Color(0f, 0f, 0f, 0.98f);
+	private static readonly Color PANEL_COLOR;
 
-	private static readonly Color BORDER_COLOR = Color.white;
+	private static readonly Color BORDER_COLOR;
 
 	private static GameObject overlayObj;
 
@@ -109,12 +110,32 @@ internal static class MainMenuSavePanel
 
 	private static RectTransform continueButton;
 
+	static MainMenuSavePanel()
+	{
+		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
+		PANEL_COLOR = new Color(0f, 0f, 0f, 0.98f);
+		BORDER_COLOR = Color.white;
+		SceneManager.sceneUnloaded += OnSceneUnloaded;
+	}
+
+	private static void OnSceneUnloaded(Scene scene)
+	{
+		overlayObj = null;
+		panelObj = null;
+		slotList = null;
+		continueButton = null;
+	}
+
 	public static void Show()
 	{
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0049: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)panelObj == (Object)null) || Build())
 		{
 			slotList.Refresh();
+			slotList.ScrollToTop();
 			SaveSystem.loadedRun = false;
 			overlayObj.SetActive(true);
 			PositionPanel();
@@ -148,45 +169,46 @@ internal static class MainMenuSavePanel
 
 	private static void PositionPanel()
 	{
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Expected O, but got Unknown
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0038: Expected O, but got Unknown
-		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002d: Expected O, but got Unknown
+		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ab: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ac: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ec: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ee: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fd: Unknown result type (might be due to invalid IL or missing references)
 		//IL_010b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0124: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0133: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)continueButton == (Object)null))
 		{
 			RectTransform val = (RectTransform)panelObj.transform;
@@ -211,70 +233,78 @@ internal static class MainMenuSavePanel
 
 	private static bool Build()
 	{
-		//IL_00d0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00da: Expected O, but got Unknown
-		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0102: Expected O, but got Unknown
-		//IL_0104: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0111: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0133: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0184: Expected O, but got Unknown
-		//IL_01a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01aa: Expected O, but got Unknown
+		//IL_00e9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f3: Expected O, but got Unknown
+		//IL_0113: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0119: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0123: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0124: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
+		//IL_018b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0190: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a6: Unknown result type (might be due to invalid IL or missing references)
 		//IL_01ac: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01dc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0210: Unknown result type (might be due to invalid IL or missing references)
-		//IL_021a: Expected O, but got Unknown
-		//IL_0276: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0280: Expected O, but got Unknown
-		//IL_02a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02ac: Expected O, but got Unknown
-		//IL_02b8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02cf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02e6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02fd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0316: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0369: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0370: Expected O, but got Unknown
-		//IL_038f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0396: Expected O, but got Unknown
-		//IL_0398: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03bd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03da: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03e7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03f1: Expected O, but got Unknown
-		//IL_0448: Unknown result type (might be due to invalid IL or missing references)
-		//IL_044f: Expected O, but got Unknown
-		//IL_04ab: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0556: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01b1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01b2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01bc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01bd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01c7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0201: Unknown result type (might be due to invalid IL or missing references)
+		//IL_020b: Expected O, but got Unknown
+		//IL_025e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0268: Expected O, but got Unknown
+		//IL_028c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0291: Unknown result type (might be due to invalid IL or missing references)
+		//IL_029c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02a6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02b1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02bb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02c6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02da: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02ef: Unknown result type (might be due to invalid IL or missing references)
+		//IL_033d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0344: Expected O, but got Unknown
+		//IL_0362: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0367: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0368: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0372: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0373: Unknown result type (might be due to invalid IL or missing references)
+		//IL_037d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0387: Unknown result type (might be due to invalid IL or missing references)
+		//IL_038c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03a1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03ae: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03b8: Expected O, but got Unknown
+		//IL_0403: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0408: Unknown result type (might be due to invalid IL or missing references)
+		//IL_041b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0459: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04f9: Unknown result type (might be due to invalid IL or missing references)
 		try
 		{
-			GameObject val = GameObject.Find("Canvas");
-			Transform val2 = (((Object)(object)val != (Object)null) ? val.transform.Find("RunSettings") : null);
-			object obj;
-			if (!((Object)(object)val2 != (Object)null))
-			{
-				obj = null;
-			}
-			else
-			{
-				Transform obj2 = val2.Find("Presets/Load");
-				obj = ((obj2 is RectTransform) ? obj2 : null);
-			}
-			continueButton = (RectTransform)obj;
+			Button val = PreRunScript.instance?.loadButton;
+			continueButton = (((Object)(object)val != (Object)null) ? ((Component)val).GetComponent<RectTransform>() : null);
 			if ((Object)(object)continueButton == (Object)null)
 			{
 				ManualLogSource logger = Logger;
 				if (logger != null)
 				{
-					logger.LogWarning((object)"[MainMenuSavePanel] Continue button not found; cannot build the load menu.");
+					logger.LogWarning((object)"[MainMenuSavePanel] Continue button (loadButton) not found; cannot build the load menu.");
+				}
+				return false;
+			}
+			Canvas val2 = (((Object)(object)PreRunScript.instance != (Object)null) ? PreRunScript.instance.mainCanvas : null);
+			if ((Object)(object)val2 == (Object)null)
+			{
+				ManualLogSource logger2 = Logger;
+				if (logger2 != null)
+				{
+					logger2.LogWarning((object)"[MainMenuSavePanel] Menu canvas (PreRunScript.mainCanvas) not found; cannot build the load menu.");
 				}
 				return false;
 			}
@@ -287,7 +317,7 @@ internal static class MainMenuSavePanel
 				typeof(CanvasRenderer),
 				typeof(Image)
 			});
-			overlayObj.transform.SetParent(val.transform, false);
+			overlayObj.transform.SetParent(((Component)val2).transform, false);
 			RectTransform val4 = (RectTransform)overlayObj.transform;
 			val4.anchorMin = Vector2.zero;
 			val4.anchorMax = Vector2.one;
@@ -364,9 +394,9 @@ internal static class MainMenuSavePanel
 			((TMP_Text)component6).fontSize = 24f;
 			((TMP_Text)component6).alignment = (TextAlignmentOptions)514;
 			((Graphic)component6).color = Color.yellow;
-			LayoutElement val12 = val11.AddComponent<LayoutElement>();
-			val12.minHeight = 38f;
-			val12.preferredHeight = 38f;
+			LayoutElement obj = val11.AddComponent<LayoutElement>();
+			obj.minHeight = 38f;
+			obj.preferredHeight = 38f;
 			slotList = new SaveSlotListView(val8.transform, val3, uiSprite, null, delegate(int slot)
 			{
 				SaveSaveMenuPatcher.DoLoad(SaveSlotRegistry.FileName(slot), slot);
@@ -382,10 +412,10 @@ internal static class MainMenuSavePanel
 		}
 		catch (Exception arg)
 		{
-			ManualLogSource logger2 = Logger;
-			if (logger2 != null)
+			ManualLogSource logger3 = Logger;
+			if (logger3 != null)
 			{
-				logger2.LogError((object)$"[MainMenuSavePanel] Failed to build: {arg}");
+				logger3.LogError((object)$"[MainMenuSavePanel] Failed to build: {arg}");
 			}
 			return false;
 		}
@@ -424,7 +454,11 @@ internal static class MainMenuSavePanel
 	private static string DescribeSlotMods(int slot)
 	{
 		List<SerialMod> list = SlotMods(slot);
-		return (list == null) ? null : ModManagementSettings.DescribeMods(list);
+		if (list != null)
+		{
+			return ModManagementSettings.DescribeMods(list);
+		}
+		return null;
 	}
 
 	private static void StageSlotMods(int slot)
@@ -440,29 +474,35 @@ internal static class MainMenuSavePanel
 
 	private static void BuildFrame(Transform parent, float width, float height)
 	{
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001f: Expected O, but got Unknown
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0045: Expected O, but got Unknown
-		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0035: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00fc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0107: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0127: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0141: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0146: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0101: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0129: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0134: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject("Frame", new Type[1] { typeof(RectTransform) });
 		val.transform.SetParent(parent, false);
 		val.transform.SetAsFirstSibling();
@@ -478,16 +518,20 @@ internal static class MainMenuSavePanel
 
 	private static void CreateBar(Transform parent, Vector2 anchor, Vector2 pivot, Vector2 size, Vector2 position)
 	{
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Expected O, but got Unknown
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0053: Expected O, but got Unknown
-		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject("Bar", new Type[3]
 		{
 			typeof(RectTransform),
@@ -508,13 +552,11 @@ internal static class MainMenuSavePanel
 
 	private static Vector2 ContinueButtonSize()
 	{
-		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
 		Rect rect = continueButton.rect;
 		float num = Mathf.Max(1f, ((Rect)(ref rect)).width);
 		rect = continueButton.rect;
@@ -525,28 +567,34 @@ internal static class MainMenuSavePanel
 
 	private static void BuildContinueButton(Vector2 size)
 	{
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0033: Expected O, but got Unknown
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
 		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0090: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ef: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f9: Expected O, but got Unknown
-		//IL_0114: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0119: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011f: Expected O, but got Unknown
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010d: Expected O, but got Unknown
+		//IL_0127: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0132: Expected O, but got Unknown
 		GameObject val = Object.Instantiate<GameObject>(((Component)continueButton).gameObject, panelObj.transform);
 		((Object)val).name = "ContinueVanilla";
+		Transform obj = val.transform.Find("ExpandIcon");
+		Object.Destroy((Object)(object)((obj != null) ? ((Component)obj).gameObject : null));
 		RectTransform val2 = (RectTransform)val.transform;
 		val2.anchorMin = new Vector2(0.5f, 0f);
 		val2.anchorMax = new Vector2(0.5f, 0f);
@@ -561,8 +609,8 @@ internal static class MainMenuSavePanel
 		Button component = val.GetComponent<Button>();
 		component.onClick = new ButtonClickedEvent();
 		ButtonClickedEvent onClick = component.onClick;
-		object obj = _003C_003Ec._003C_003E9__27_0;
-		if (obj == null)
+		object obj2 = _003C_003Ec._003C_003E9__29_0;
+		if (obj2 == null)
 		{
 			UnityAction val3 = delegate
 			{
@@ -571,10 +619,10 @@ internal static class MainMenuSavePanel
 					PreRunScript.instance.LoadRun();
 				}
 			};
-			_003C_003Ec._003C_003E9__27_0 = val3;
-			obj = (object)val3;
+			_003C_003Ec._003C_003E9__29_0 = val3;
+			obj2 = (object)val3;
 		}
-		((UnityEvent)onClick).AddListener((UnityAction)obj);
+		((UnityEvent)onClick).AddListener((UnityAction)obj2);
 		((Selectable)component).interactable = SaveSystem.HasSave();
 		UITooltip val4 = val.GetComponent<UITooltip>();
 		if ((Object)(object)val4 == (Object)null)
@@ -588,32 +636,37 @@ internal static class MainMenuSavePanel
 
 	private static void BuildCloseButton(Transform parent, TMP_FontAsset font)
 	{
-		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0046: Expected O, but got Unknown
-		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0060: Expected O, but got Unknown
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ad: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0100: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0124: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0145: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0151: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0165: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016f: Expected O, but got Unknown
-		//IL_0195: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019c: Expected O, but got Unknown
-		//IL_01f7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0209: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0210: Expected O, but got Unknown
-		//IL_0212: Unknown result type (might be due to invalid IL or missing references)
-		//IL_021f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_022c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0045: Expected O, but got Unknown
+		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0068: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0155: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015f: Expected O, but got Unknown
+		//IL_0184: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0189: Unknown result type (might be due to invalid IL or missing references)
+		//IL_019b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01f2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01f3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01fd: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject("Close", new Type[4]
 		{
 			typeof(RectTransform),

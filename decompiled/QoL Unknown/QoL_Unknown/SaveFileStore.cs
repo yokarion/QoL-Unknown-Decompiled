@@ -208,18 +208,18 @@ internal static class SaveFileStore
 	{
 		Directory.CreateDirectory(destinationDirectory);
 		string[] directories = Directory.GetDirectories(sourceDirectory, "*", SearchOption.AllDirectories);
-		foreach (string text in directories)
+		for (int i = 0; i < directories.Length; i++)
 		{
-			string path = text.Substring(sourceDirectory.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+			string path = directories[i].Substring(sourceDirectory.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 			Directory.CreateDirectory(Path.Combine(destinationDirectory, path));
 		}
-		string[] files = Directory.GetFiles(sourceDirectory, "*", SearchOption.AllDirectories);
-		foreach (string text2 in files)
+		directories = Directory.GetFiles(sourceDirectory, "*", SearchOption.AllDirectories);
+		foreach (string text in directories)
 		{
-			string path2 = text2.Substring(sourceDirectory.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-			string text3 = Path.Combine(destinationDirectory, path2);
-			EnsureParentDirectory(text3);
-			File.Copy(text2, text3, overwrite: true);
+			string path2 = text.Substring(sourceDirectory.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+			string text2 = Path.Combine(destinationDirectory, path2);
+			EnsureParentDirectory(text2);
+			File.Copy(text, text2, overwrite: true);
 		}
 	}
 }

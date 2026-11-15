@@ -9,12 +9,12 @@
       "outputDirectory": "QoL Unknown",
       "fileName": "QoL.Unknown.dll",
       "assemblyName": "QoL Unknown",
-      "assemblyVersion": "1.0.5.2",
+      "assemblyVersion": "1.1.3.0",
       "targetFramework": ".NETFramework,Version=v4.8",
-      "sha256": "3b697b32d13e7604dc6b7ccbf6dbdd26aef80e43d834454e6d854ec00082e5e8",
-      "sourceUrl": "https://github.com/jimmyking9999999/QoL-Unknown/releases/tag/v1.0.5.2",
-      "sourceRef": "v1.0.5.2",
-      "sourceFileCount": 145,
+      "sha256": "721413f5023460ad8cdec552c308235807582f591e5c353e814a62c70ae9ac85",
+      "sourceUrl": "https://github.com/jimmyking9999999/QoL-Unknown/releases/tag/v1.1.3",
+      "sourceRef": "v1.1.3",
+      "sourceFileCount": 151,
       "references": [
         {
           "name": "0Harmony",
@@ -72,6 +72,12 @@
         },
         {
           "name": "Unity.TextMeshPro",
+          "version": "0.0.0.0",
+          "resolved": false,
+          "framework": false
+        },
+        {
+          "name": "UnityEngine.AnimationModule",
           "version": "0.0.0.0",
           "resolved": false,
           "framework": false

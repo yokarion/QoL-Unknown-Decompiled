@@ -24,10 +24,10 @@ internal sealed class UnityJoystickControllerSource : IControllerInputSource
 
 	public bool TryRead(out RawControllerState rawState, out string deviceName)
 	{
-		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
 		rawState = default(RawControllerState);
 		deviceName = string.Empty;
 		string deviceName2;
@@ -94,18 +94,13 @@ internal sealed class UnityJoystickControllerSource : IControllerInputSource
 
 	private static bool GetJoystickButton(int joystickIndex, int button)
 	{
-		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Unknown result type (might be due to invalid IL or missing references)
 		int num = (joystickIndex - 1) * 20 + button;
-		KeyCode val = (KeyCode)(350 + num);
-		return Input.GetKey(val);
+		return Input.GetKey((KeyCode)(350 + num));
 	}
 
 	private static Vector2 ReadRightStick()
 	{
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
 		float axisAny = GetAxisAny("4th axis", "Axis 4", "3rd axis", "Axis 3", "Joystick X", "RightStickX");
 		float axisAny2 = GetAxisAny("5th axis", "Axis 5", "4th axis", "Axis 4", "Joystick Y", "RightStickY");
 		return new Vector2(axisAny, axisAny2);

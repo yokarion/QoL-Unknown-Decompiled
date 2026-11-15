@@ -57,27 +57,27 @@ internal class RecipeFilterPatch
 
 	private static void RebuildRecipeList(PlayerCamera __instance, Item recipeItemFilter)
 	{
+		//IL_00d1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d6: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00e6: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00eb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0100: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0183: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0314: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0358: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0354: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0423: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0450: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0449: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0441: Unknown result type (might be due to invalid IL or missing references)
-		//IL_043d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_047d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0487: Expected O, but got Unknown
+		//IL_0163: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0473: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02a7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02e9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02e5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0338: Unknown result type (might be due to invalid IL or missing references)
+		//IL_037d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03af: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03db: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03cc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03c8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0407: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0411: Expected O, but got Unknown
 		List<GameObject> list = RecipeObjectsField.GetValue(__instance) as List<GameObject>;
 		if (list == null)
 		{
@@ -156,10 +156,10 @@ internal class RecipeFilterPatch
 				{
 					__instance.SelectRecipe(toIndex);
 				});
-				UITooltip val6 = val5.AddComponent<UITooltip>();
-				val6.skipLocale = true;
-				val6.tipName = item.simpleName;
-				val6.tipDesc = item.description;
+				UITooltip obj = val5.AddComponent<UITooltip>();
+				obj.skipLocale = true;
+				obj.tipName = item.simpleName;
+				obj.tipDesc = item.description;
 				list.Add(val5);
 				num2++;
 			}

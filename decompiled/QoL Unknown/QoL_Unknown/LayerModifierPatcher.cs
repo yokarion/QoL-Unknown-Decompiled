@@ -36,33 +36,35 @@ internal class LayerModifierPatcher
 
 	private const string ModifierMultiplierPrefPrefix = "LayerModifierMult_";
 
-	private static readonly float[] modifierMultipliers = new float[11];
+	private static readonly float[] modifierMultipliers = new float[19];
 
 	private static bool initialized;
 
 	public static readonly List<string> ModifierNames = new List<string>
 	{
 		"Foggy", "Warm", "Hot", "Cold", "Freezing", "Flooded", "Dry", "Rainy", "Infested", "Ionized",
-		"Unchipped"
+		"Unchipped", "Turbulent", "Shiny", "Oxygenated", "Sterile", "Stable", "Beautiful", "Unsightly", "Rich"
 	};
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Expected O, but got Unknown
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
 		if (!initialized)
 		{
 			initialized = true;
 			LoadMultipliers();
-			Harmony val = new Harmony("org.bepinex.plugins.qol.layermod");
-			val.PatchAll(typeof(LayerModifierPatcher));
+			new Harmony("org.bepinex.plugins.qol.layermod").PatchAll(typeof(LayerModifierPatcher));
 		}
 	}
 
 	public static float GetMultiplier(string modifierName)
 	{
 		int num = FindModifierIndex(modifierName);
-		return (num >= 0) ? GetMultiplier(num) : 1f;
+		if (num < 0)
+		{
+			return 1f;
+		}
+		return GetMultiplier(num);
 	}
 
 	public static float GetMultiplier(int index)
@@ -156,11 +158,11 @@ internal class LayerModifierPatcher
 	[HarmonyPostfix]
 	private static void RegisterCommands_Postfix()
 	{
-		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Expected O, but got Unknown
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002f: Expected O, but got Unknown
+		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0055: Expected O, but got Unknown
+		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002e: Expected O, but got Unknown
 		List<Command> commands = ConsoleScript.Commands;
 		object obj = _003C_003Ec._003C_003E9__15_0;
 		if (obj == null)

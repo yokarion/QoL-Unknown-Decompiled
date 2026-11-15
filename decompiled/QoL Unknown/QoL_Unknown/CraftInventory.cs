@@ -88,11 +88,19 @@ internal sealed class CraftInventory
 
 	public bool TryConsume(RecipeItem ingredient)
 	{
+		Item used;
+		return TryConsume(ingredient, out used);
+	}
+
+	public bool TryConsume(RecipeItem ingredient, out Item used)
+	{
 		int num = Find(ingredient);
 		if (num < 0)
 		{
+			used = null;
 			return false;
 		}
+		used = items[num].Actual;
 		Use(ingredient, num);
 		return true;
 	}
@@ -161,6 +169,11 @@ internal sealed class CraftInventory
 		if (!string.IsNullOrEmpty(item.Id))
 		{
 			Bucket(byItemId, item.Id).Add(item2);
+			int num = item.Id.IndexOf('$');
+			if (num > 0)
+			{
+				Bucket(byItemId, item.Id.Substring(0, num)).Add(item2);
+			}
 		}
 		for (int i = 0; i < item.Qualities.Count; i++)
 		{
@@ -231,17 +244,23 @@ internal sealed class CraftInventory
 		{
 			return all;
 		}
-		List<int> value;
 		if (ingredient.specific)
 		{
-			return byItemId.TryGetValue(ingredient.specificId, out value) ? value : NoCandidates;
+			if (!byItemId.TryGetValue(ingredient.specificId, out var value))
+			{
+				return NoCandidates;
+			}
+			return value;
 		}
 		if (ingredient.quality == null || string.IsNullOrEmpty(ingredient.quality.id))
 		{
 			return NoCandidates;
 		}
-		List<int> value2;
-		return byQualityId.TryGetValue(ingredient.quality.id, out value2) ? value2 : NoCandidates;
+		if (!byQualityId.TryGetValue(ingredient.quality.id, out var value2))
+		{
+			return NoCandidates;
+		}
+		return value2;
 	}
 
 	private int FindRepairTarget(RecipeItem ingredient)
@@ -252,7 +271,7 @@ internal sealed class CraftInventory
 		{
 			int num2 = list[i];
 			CraftItem craftItem = items[num2];
-			if (!IsUnavailable(num2) && !((Object)(object)craftItem.Actual == (Object)null) && craftItem.ContainerItemCount <= 0 && !craftItem.IsLiquidContainer && !(craftItem.Condition <= 0f) && !(craftItem.Condition >= ingredient.minimumCondition) && (ingredient.specific ? string.Equals(craftItem.Id, ingredient.specificId, StringComparison.OrdinalIgnoreCase) : (MatchedQuality(ingredient, craftItem) != null)) && (num < 0 || craftItem.Condition > items[num].Condition))
+			if (!IsUnavailable(num2) && !((Object)(object)craftItem.Actual == (Object)null) && craftItem.ContainerItemCount <= 0 && !(craftItem.Id == ingredient.ignoredId) && !craftItem.IsLiquidContainer && !(craftItem.Condition <= 0f) && !(craftItem.Condition >= ingredient.minimumCondition) && (ingredient.specific ? ingredient.DoesUseItemType(craftItem.Actual) : (MatchedQuality(ingredient, craftItem) != null)) && (num < 0 || craftItem.Condition > items[num].Condition))
 			{
 				num = num2;
 			}
@@ -263,7 +282,11 @@ internal sealed class CraftInventory
 	private bool IsUnavailable(int index)
 	{
 		CraftItem craftItem = items[index];
-		return craftItem.Consumed || craftItem.Favourited || claimed.Contains(index);
+		if (!craftItem.Consumed && !craftItem.Favourited)
+		{
+			return claimed.Contains(index);
+		}
+		return true;
 	}
 
 	private bool Satisfies(RecipeItem ingredient, int index)
@@ -273,16 +296,32 @@ internal sealed class CraftInventory
 		{
 			return false;
 		}
-		return ingredient.isLiquid ? MatchesLiquid(ingredient, craftItem) : (craftItem.ContainerItemCount == 0 && SatisfiesAtLeast(ingredient, craftItem));
+		if (!ingredient.isLiquid)
+		{
+			if (craftItem.ContainerItemCount == 0)
+			{
+				return SatisfiesAtLeast(ingredient, craftItem);
+			}
+			return false;
+		}
+		return MatchesLiquid(ingredient, craftItem);
 	}
 
 	private static bool SatisfiesAtLeast(RecipeItem ingredient, CraftItem item)
 	{
-		if (item.Condition < ingredient.minimumCondition)
+		if (item.Condition < ingredient.minimumCondition || (ingredient.noMaxCondition && item.Condition >= 0.991f) || (item.DestroyAtZeroCondition && item.Condition <= 0f) || item.Id == ingredient.ignoredId)
 		{
 			return false;
 		}
-		return ingredient.specific ? string.Equals(item.Id, ingredient.specificId, StringComparison.OrdinalIgnoreCase) : (MatchedQuality(ingredient, item) != null);
+		if (ingredient.specific)
+		{
+			if (!((Object)(object)item.Actual == (Object)null))
+			{
+				return ingredient.DoesUseItemType(item.Actual);
+			}
+			return item.Id == ingredient.specificId;
+		}
+		return MatchedQuality(ingredient, item) != null;
 	}
 
 	private static bool MatchesLiquid(RecipeItem ingredient, CraftItem item)
@@ -312,7 +351,11 @@ internal sealed class CraftInventory
 
 	private static CraftingQuality MatchedQuality(RecipeItem ingredient, CraftItem item)
 	{
-		return (ingredient?.quality == null) ? null : MatchedQuality(ingredient.quality, item.Qualities);
+		if (ingredient?.quality != null)
+		{
+			return MatchedQuality(ingredient.quality, item.Qualities);
+		}
+		return null;
 	}
 
 	private static CraftingQuality MatchedQuality(CraftingQuality target, List<CraftingQuality> qualities)
@@ -398,7 +441,11 @@ internal sealed class CraftInventory
 		{
 			return false;
 		}
-		return target.Actual.Stats.combineable && source.Actual.Stats.combineable;
+		if (target.Actual.Stats.combineable)
+		{
+			return source.Actual.Stats.combineable;
+		}
+		return false;
 	}
 
 	private static int ComputeRevision(List<CraftItem> items)
@@ -419,7 +466,11 @@ internal sealed class CraftInventory
 				num = num * 31 + craftItem.Liquids[k].Amount.GetHashCode();
 			}
 		}
-		return (num == 0) ? 1 : num;
+		if (num != 0)
+		{
+			return num;
+		}
+		return 1;
 	}
 
 	private static int StableHash(string value)

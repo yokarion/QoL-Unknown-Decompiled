@@ -18,8 +18,8 @@ internal sealed class ModKeybindDefinition
 
 	public ModKeybindDefinition(string action, string displayNameKey, string descriptionKey, KeyCode defaultKey)
 	{
+		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
 		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
 		Action = action;
 		DisplayNameKey = displayNameKey;
 		DescriptionKey = descriptionKey;

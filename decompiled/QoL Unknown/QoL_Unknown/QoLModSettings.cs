@@ -30,6 +30,12 @@ internal static class QoLModSettings
 
 	private const string StartIntPrefKey = "StartINT";
 
+	private const int StartingStatUnset = -1;
+
+	private const string StartingStatLegacyMigratedPrefKey = "qol.startingstat.legacy.migrated";
+
+	private static readonly List<KeyValuePair<string, int>> LegacyStartingStats = new List<KeyValuePair<string, int>>();
+
 	private const string SelectedEntityDensityPrefKey = "SelectedEntityDensityTarget";
 
 	private const string SelectedStructureDensityPrefKey = "SelectedStructureDensityTarget";
@@ -37,6 +43,14 @@ internal static class QoLModSettings
 	private const string SelectedLayerModifierFrequencyPrefKey = "SelectedLayerModifierFrequencyTarget";
 
 	internal const string ExperimentalFeaturesPrefKey = "ExperimentalFeatures";
+
+	internal const string StackLiquidContainersPrefKey = "qol.game.stackliquidcontainers";
+
+	private const string StackExpandEnabledPrefKey = "qol.game.stackexpandenabled";
+
+	private const string StackExpandKeyPrefKey = "qol.game.stackexpandkey";
+
+	private const string StackExpandSettingId = "qol.game.stackexpand";
 
 	private const float UiScaleMin = 0.75f;
 
@@ -55,9 +69,9 @@ internal static class QoLModSettings
 		{
 			initialized = true;
 			ModOptionsMenu.Initialize(logger);
-			ModManagementSettings.Initialize(logger);
 			RegisterStandardSettings();
 			RegisterCustomSettings();
+			ModManagementSettings.Initialize(logger);
 			ModManagementSettings.RegisterSettings();
 		}
 	}
@@ -78,6 +92,10 @@ internal static class QoLModSettings
 		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.video.antiepilepsy", "Anti-Epilepsy", "Reduces flashing and strobing effects.", (SettingCategory)0, defaultValue: false, delegate(bool value)
 		{
 			AntiGlarePatcher.SetAntiEpilepsyEnabled(value);
+		}));
+		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.video.camerazoom", "Enable zoom in/out", "Hold + or - to smoothly zoom the camera in or out (numpad supported). Disables pixel snapping.", (SettingCategory)0, defaultValue: false, delegate(bool value)
+		{
+			CameraZoomPatcher.SetEnabled(value);
 		}));
 		ModOptionsMenu.Register(ModOptionDefinition.Float("qol.video.uiscale", "UI Scale", "Adjusts UI scale across menus and overlays.", (SettingCategory)0, 1f, 0.75f, 1.5f, delegate(float value)
 		{
@@ -120,9 +138,13 @@ internal static class QoLModSettings
 		{
 			LineOfSightPatcher.SetLineOfSightDisabled(value);
 		}));
-		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.game.etomophobia", "Etomophobia", "Prevents vomit and blood vomit visuals, particles, and text. Stat loss is preserved.", (SettingCategory)2, defaultValue: false, delegate(bool value)
+		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.game.emetophobia", "Emetophobia", "Prevents vomit and blood vomit visuals, particles, and text. Stat loss is preserved.", (SettingCategory)2, defaultValue: false, delegate(bool value)
 		{
-			EtomophobiaPatcher.SetEnabled(value);
+			EmetophobiaPatcher.SetEnabled(value);
+		}));
+		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.game.achievementswithcheats", "Keep achievements with console commands", "Allows achievements to keep unlocking after using console/cheat commands, instead of disabling them for the rest of the session.", (SettingCategory)2, defaultValue: false, delegate(bool value)
+		{
+			AchievementCheatsPatcher.SetEnabled(value);
 		}));
 		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.game.minigameqol", "Faster minigames", "Makes lockpicking faster and shortens keypad codes to 5-9 digits.", (SettingCategory)2, defaultValue: false, delegate(bool value)
 		{
@@ -149,77 +171,319 @@ internal static class QoLModSettings
 			PlayerPrefs.SetInt("qol_ui_scroll", value ? 1 : 0);
 			PlayerPrefs.Save();
 		}));
+		ModOptionsMenu.Register(ModOptionDefinition.Bool("qol.game.categorytint", "Automatically color-code items by type", "Tints inventory slots a light color based on item category (tool, medicine, food, etc.). Manual color-codes and favourites keep their color.", (SettingCategory)2, defaultValue: false, delegate(bool value)
+		{
+			PlayerPrefs.SetInt("qol.game.categorytint", value ? 1 : 0);
+			PlayerPrefs.Save();
+		}));
+		ModOptionsMenu.Register(ModOptionDefinition.Dropdown("qol.game.preventcreaturegriefing", "Prevent Creature Griefing", "Prevents certain creatures from causing world damage, excluding the elder thornback.", (SettingCategory)2, 0, new ModDropdownChoice[4]
+		{
+			new ModDropdownChoice("off", "Off"),
+			new ModDropdownChoice("items", "Items"),
+			new ModDropdownChoice("blocks", "Blocks"),
+			new ModDropdownChoice("both", "Items and Blocks")
+		}, delegate(int value)
+		{
+			PlayerPrefs.SetInt("qol.game.preventcreaturegriefing", value);
+			PlayerPrefs.Save();
+		}));
 		RegisterStartingStat("qol.game.skillallocation.str", "Starting STR", "StartSTR", 9);
 		RegisterStartingStat("qol.game.skillallocation.res", "Starting RES", "StartRES", 8);
 		RegisterStartingStat("qol.game.skillallocation.int", "Starting INT", "StartINT", 7);
+		ModOptionsMenu.SettingsLoaded += MigrateLegacyStartingStats;
+		MigrateLegacyStartingStats();
 	}
 
-	private static void RegisterStartingStat(string id, string label, string prefKey, int defaultValue)
+	private static void RegisterStartingStat(string id, string label, string prefKey, int legacyDefault)
 	{
-		ModOptionsMenu.Register(ModOptionDefinition.Int(id, label, "Sets the starting stat value used by the QoL skill allocation patch.", (SettingCategory)2, defaultValue, 0, 20, delegate(int value)
+		ModOptionDefinition modOptionDefinition = ModOptionDefinition.Int(id, label, "Sets the starting stat value used by the QoL skill allocation patch. Leave blank to use the character's default stats.", (SettingCategory)2, -1, -1, 20, delegate(int value)
 		{
-			PlayerPrefs.SetInt(prefKey, Mathf.Clamp(value, 0, 20));
+			if (value < 0)
+			{
+				PlayerPrefs.DeleteKey(prefKey);
+			}
+			else
+			{
+				PlayerPrefs.SetInt(prefKey, Mathf.Clamp(value, 0, 20));
+			}
 			PlayerPrefs.Save();
-		}));
+		});
+		modOptionDefinition.IntRowBinder = ModOptionsMenu.BindBlankAwareIntInput;
+		LegacyStartingStats.Add(new KeyValuePair<string, int>(id, legacyDefault));
+		ModOptionsMenu.Register(modOptionDefinition);
+	}
+
+	private static void MigrateLegacyStartingStats()
+	{
+		if (Settings.settings == null || PlayerPrefs.GetInt("qol.startingstat.legacy.migrated", 0) == 1)
+		{
+			return;
+		}
+		PlayerPrefs.SetInt("qol.startingstat.legacy.migrated", 1);
+		PlayerPrefs.Save();
+		bool flag = false;
+		for (int i = 0; i < LegacyStartingStats.Count; i++)
+		{
+			SettingInt val = Settings.Get<SettingInt>(LegacyStartingStats[i].Key);
+			if (val != null && val.value == LegacyStartingStats[i].Value)
+			{
+				((Setting)val).SetValue((object)(-1));
+				((Setting)val).Apply();
+				flag = true;
+			}
+		}
+		if (flag)
+		{
+			Settings.SaveSettings();
+		}
 	}
 
 	private static void RegisterCustomSettings()
 	{
-		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0120: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0172: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c4: Unknown result type (might be due to invalid IL or missing references)
-		ModCustomSettingDefinition modCustomSettingDefinition = new ModCustomSettingDefinition();
-		modCustomSettingDefinition.Id = "qol.game.downloadlocale";
-		modCustomSettingDefinition.Label = "Download Locale";
-		modCustomSettingDefinition.Description = "Downloads and installs additional locale files from the locale repository. Warning: WILL RESET THE LAYER IF USED IN-GAME";
-		modCustomSettingDefinition.Category = (SettingCategory)4;
-		modCustomSettingDefinition.TemplateResourcePath = "Special/GameSettingFloat";
-		modCustomSettingDefinition.Binder = BindLocaleRow;
-		ModOptionsMenu.RegisterCustom(modCustomSettingDefinition);
-		modCustomSettingDefinition = new ModCustomSettingDefinition();
-		modCustomSettingDefinition.Id = "qol.game.entitydensity";
-		modCustomSettingDefinition.Label = "Individual Entity Density";
-		modCustomSettingDefinition.Description = "Adjust any entity's spawn multiplier.";
-		modCustomSettingDefinition.Category = (SettingCategory)2;
-		modCustomSettingDefinition.TemplateResourcePath = "Special/GameSettingFloat";
-		modCustomSettingDefinition.Binder = BindEntityDensityRow;
-		ModOptionsMenu.RegisterCustom(modCustomSettingDefinition);
-		modCustomSettingDefinition = new ModCustomSettingDefinition();
-		modCustomSettingDefinition.Id = "qol.game.structuredensity";
-		modCustomSettingDefinition.Label = "Individual Structure Density";
-		modCustomSettingDefinition.Description = "Adjust any structure's spawn multiplier.";
-		modCustomSettingDefinition.Category = (SettingCategory)2;
-		modCustomSettingDefinition.TemplateResourcePath = "Special/GameSettingFloat";
-		modCustomSettingDefinition.Binder = BindStructureDensityRow;
-		ModOptionsMenu.RegisterCustom(modCustomSettingDefinition);
-		modCustomSettingDefinition = new ModCustomSettingDefinition();
-		modCustomSettingDefinition.Id = "qol.game.layermodifierdensity";
-		modCustomSettingDefinition.Label = "Layer Modifier Frequency";
-		modCustomSettingDefinition.Description = "Adjust the frequency of layer modifiers.";
-		modCustomSettingDefinition.Category = (SettingCategory)2;
-		modCustomSettingDefinition.TemplateResourcePath = "Special/GameSettingFloat";
-		modCustomSettingDefinition.Binder = BindLayerModifierFrequencyRow;
-		ModOptionsMenu.RegisterCustom(modCustomSettingDefinition);
-		modCustomSettingDefinition = new ModCustomSettingDefinition();
-		modCustomSettingDefinition.Id = "qol.audio.soundoverride";
-		modCustomSettingDefinition.Label = "Individual Sound Overrides";
-		modCustomSettingDefinition.Description = "Adjust the volume of any specific sound";
-		modCustomSettingDefinition.Category = (SettingCategory)1;
-		modCustomSettingDefinition.TemplateResourcePath = "Special/GameSettingFloat";
-		modCustomSettingDefinition.Binder = BindSoundOverrideRow;
-		ModOptionsMenu.RegisterCustom(modCustomSettingDefinition);
-		modCustomSettingDefinition = new ModCustomSettingDefinition();
-		modCustomSettingDefinition.Id = "qol.game.discordpresence";
-		modCustomSettingDefinition.Label = "Discord Presence";
-		modCustomSettingDefinition.Description = "Edit Discord Rich Presence templates for details, state, and image tooltips.";
-		modCustomSettingDefinition.Category = (SettingCategory)2;
-		modCustomSettingDefinition.TemplateResourcePath = "Special/GameSettingInput";
-		modCustomSettingDefinition.Binder = BindDiscordPresenceRow;
-		modCustomSettingDefinition.IsVisible = AreExperimentalFeaturesEnabled;
-		ModOptionsMenu.RegisterCustom(modCustomSettingDefinition);
+		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0168: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01b8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_021a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_027c: Unknown result type (might be due to invalid IL or missing references)
+		ModOptionsMenu.RegisterCustom(new ModCustomSettingDefinition
+		{
+			Id = "qol.game.downloadlocale",
+			Label = "Download Locale",
+			Description = "Downloads and installs additional locale files from the locale repository. Warning: WILL RESET THE LAYER IF USED IN-GAME",
+			Category = (SettingCategory)4,
+			TemplateResourcePath = "Special/GameSettingFloat",
+			Binder = BindLocaleRow
+		});
+		ModOptionsMenu.RegisterCustom(new ModCustomSettingDefinition
+		{
+			Id = "qol.game.entitydensity",
+			Label = "Individual Entity Density",
+			Description = "Adjust any entity's spawn multiplier.",
+			Category = (SettingCategory)2,
+			TemplateResourcePath = "Special/GameSettingFloat",
+			Binder = BindEntityDensityRow
+		});
+		ModOptionsMenu.RegisterCustom(new ModCustomSettingDefinition
+		{
+			Id = "qol.game.structuredensity",
+			Label = "Individual Structure Density",
+			Description = "Adjust any structure's spawn multiplier.",
+			Category = (SettingCategory)2,
+			TemplateResourcePath = "Special/GameSettingFloat",
+			Binder = BindStructureDensityRow
+		});
+		ModOptionsMenu.RegisterCustom(new ModCustomSettingDefinition
+		{
+			Id = "qol.game.layermodifierdensity",
+			Label = "Layer Modifier Frequency",
+			Description = "Adjust the frequency of layer modifiers.",
+			Category = (SettingCategory)2,
+			TemplateResourcePath = "Special/GameSettingFloat",
+			Binder = BindLayerModifierFrequencyRow
+		});
+		ModOptionsMenu.RegisterCustom(new ModCustomSettingDefinition
+		{
+			Id = "qol.audio.soundoverride",
+			Label = "Individual Sound Overrides",
+			Description = "Adjust the volume of any specific sound",
+			Category = (SettingCategory)1,
+			TemplateResourcePath = "Special/GameSettingFloat",
+			Binder = BindSoundOverrideRow
+		});
+		ModOptionsMenu.RegisterCustom(new ModCustomSettingDefinition
+		{
+			Id = "qol.game.discordpresence",
+			Label = "Discord Presence",
+			Description = "Edit Discord Rich Presence templates for details, state, and image tooltips.",
+			Category = (SettingCategory)2,
+			TemplateResourcePath = "Special/GameSettingInput",
+			Binder = BindDiscordPresenceRow,
+			IsVisible = AreExperimentalFeaturesEnabled
+		});
+		ModOptionsMenu.RegisterCustom(new ModCustomSettingDefinition
+		{
+			Id = "qol.game.stackliquidcontainers",
+			Label = "Stack Liquid Containers",
+			Description = "Groups same-type bottles and canteens into a single container slot even when their fill levels differ. Hover the stack to reveal each container.",
+			Category = (SettingCategory)2,
+			TemplateResourcePath = "Special/GameSettingBool",
+			Binder = BindStackLiquidContainersRow,
+			IsVisible = IsContainerStackingEnabled
+		});
+		ModOptionsMenu.RegisterCustom(new ModCustomSettingDefinition
+		{
+			Id = "qol.game.stackexpand",
+			Label = "Hold Key to Expand Stacks",
+			Description = "Adds a checkbox and a keybind. With the checkbox on, a stack only opens while you hold that key instead of on plain hover.",
+			Category = (SettingCategory)2,
+			TemplateResourcePath = "Special/GameSettingInput",
+			Binder = BindStackExpandRow,
+			IsVisible = IsContainerStackingEnabled
+		});
+	}
+
+	internal static bool StackExpandEnabled()
+	{
+		return PlayerPrefs.GetInt("qol.game.stackexpandenabled", 0) == 1;
+	}
+
+	internal static KeyCode StackExpandKey()
+	{
+		return (KeyCode)PlayerPrefs.GetInt("qol.game.stackexpandkey", 306);
+	}
+
+	internal static bool StackExpandAllowed()
+	{
+		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
+		if (StackExpandEnabled())
+		{
+			return ModKeybinds.Held(StackExpandKey());
+		}
+		return true;
+	}
+
+	private static void BindStackExpandRow(GameObject row)
+	{
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005b: Expected O, but got Unknown
+		//IL_010e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0123: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0149: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0153: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0168: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ad: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01ba: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01c4: Expected O, but got Unknown
+		//IL_01ee: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0203: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0218: Unknown result type (might be due to invalid IL or missing references)
+		//IL_022d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0241: Unknown result type (might be due to invalid IL or missing references)
+		Button val = ((row.transform.childCount > 1) ? ((Component)row.transform.GetChild(1)).GetComponent<Button>() : null);
+		if ((Object)(object)val == (Object)null)
+		{
+			return;
+		}
+		SettingKeybind keybind = new SettingKeybind
+		{
+			name = "qol.game.stackexpand",
+			category = (SettingCategory)2,
+			value = StackExpandKey()
+		};
+		((Setting)keybind).apply = delegate
+		{
+			//IL_000b: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0015: Expected I4, but got Unknown
+			PlayerPrefs.SetInt("qol.game.stackexpandkey", (int)keybind.value);
+			PlayerPrefs.Save();
+		};
+		RectTransform component = ((Component)row.transform.GetChild(0)).GetComponent<RectTransform>();
+		if ((Object)(object)component != (Object)null)
+		{
+			component.anchorMin = new Vector2(0f, 0.5f);
+			component.anchorMax = new Vector2(0f, 0.5f);
+			component.pivot = new Vector2(0f, 0.5f);
+			component.sizeDelta = new Vector2(320f, component.sizeDelta.y);
+			component.anchoredPosition = new Vector2(14f, 0f);
+		}
+		RectTransform component2 = ((Component)val).GetComponent<RectTransform>();
+		component2.anchorMin = new Vector2(1f, 0.5f);
+		component2.anchorMax = new Vector2(1f, 0.5f);
+		component2.pivot = new Vector2(1f, 0.5f);
+		component2.sizeDelta = new Vector2(120f, component2.sizeDelta.y);
+		component2.anchoredPosition = new Vector2(-20f, 0f);
+		TextMeshProUGUI keyText = ((Component)val).GetComponentInChildren<TextMeshProUGUI>();
+		if ((Object)(object)keyText != (Object)null)
+		{
+			((TMP_Text)keyText).text = keybind.GetDisplayString();
+		}
+		((UnityEventBase)val.onClick).RemoveAllListeners();
+		((UnityEvent)val.onClick).AddListener((UnityAction)delegate
+		{
+			SharedCoroutineStarter.StartCoroutine(KeybindCombos.Capture(keybind, keyText));
+		});
+		Toggle val2 = CreateInlineToggle(row.transform);
+		if (!((Object)(object)val2 == (Object)null))
+		{
+			RectTransform component3 = ((Component)val2).GetComponent<RectTransform>();
+			component3.anchorMin = new Vector2(1f, 0.5f);
+			component3.anchorMax = new Vector2(1f, 0.5f);
+			component3.pivot = new Vector2(1f, 0.5f);
+			component3.sizeDelta = new Vector2(30f, 30f);
+			component3.anchoredPosition = new Vector2(-152f, 0f);
+			TextMeshProUGUI componentInChildren = ((Component)val2).GetComponentInChildren<TextMeshProUGUI>(true);
+			if ((Object)(object)componentInChildren != (Object)null)
+			{
+				((TMP_Text)componentInChildren).text = string.Empty;
+			}
+			((UnityEventBase)val2.onValueChanged).RemoveAllListeners();
+			val2.SetIsOnWithoutNotify(StackExpandEnabled());
+			((UnityEvent<bool>)(object)val2.onValueChanged).AddListener((UnityAction<bool>)delegate(bool isOn)
+			{
+				PlayerPrefs.SetInt("qol.game.stackexpandenabled", isOn ? 1 : 0);
+				PlayerPrefs.Save();
+			});
+		}
+	}
+
+	private static Toggle CreateInlineToggle(Transform parent)
+	{
+		GameObject val = Utils.Create("Special/GameSettingBool", parent);
+		if ((Object)(object)val == (Object)null)
+		{
+			return null;
+		}
+		((Component)val.transform.GetChild(0)).gameObject.SetActive(false);
+		Transform child = val.transform.GetChild(1);
+		child.SetParent(parent, false);
+		Object.Destroy((Object)(object)val);
+		return ((Component)child).GetComponent<Toggle>();
+	}
+
+	internal static bool StackLiquidContainersEnabled()
+	{
+		return PlayerPrefs.GetInt("qol.game.stackliquidcontainers", 0) == 1;
+	}
+
+	private static bool IsContainerStackingEnabled()
+	{
+		return QoLModuleManager.IsEnabled("qol_inv_stacking");
+	}
+
+	private static void BindStackLiquidContainersRow(GameObject row)
+	{
+		Toggle component = ((Component)row.transform.GetChild(1)).GetComponent<Toggle>();
+		if ((Object)(object)component == (Object)null)
+		{
+			return;
+		}
+		((UnityEventBase)component.onValueChanged).RemoveAllListeners();
+		component.SetIsOnWithoutNotify(StackLiquidContainersEnabled());
+		((UnityEvent<bool>)(object)component.onValueChanged).AddListener((UnityAction<bool>)delegate(bool isOn)
+		{
+			PlayerPrefs.SetInt("qol.game.stackliquidcontainers", isOn ? 1 : 0);
+			PlayerPrefs.Save();
+			PlayerCamera main = PlayerCamera.main;
+			if ((Object)(object)main != (Object)null && (Object)(object)main.containerMenu != (Object)null && main.containerMenu.activeSelf && (Object)(object)main.currentContainer != (Object)null)
+			{
+				main.RepopulateContainer();
+			}
+		});
 	}
 
 	internal static bool AreExperimentalFeaturesEnabled()
@@ -240,6 +504,10 @@ internal static class QoLModSettings
 		PlayerPrefs.DeleteKey("SelectedEntityDensityTarget");
 		PlayerPrefs.DeleteKey("SelectedStructureDensityTarget");
 		PlayerPrefs.DeleteKey("SelectedLayerModifierFrequencyTarget");
+		PlayerPrefs.DeleteKey("qol.game.stackliquidcontainers");
+		PlayerPrefs.DeleteKey("qol.game.stackexpandenabled");
+		PlayerPrefs.DeleteKey("qol.game.stackexpandkey");
+		PlayerPrefs.DeleteKey("qol.game.preventcreaturegriefing");
 		EntitySpawnManager.ResetMultipliers();
 		StructureSpawnManager.ResetMultipliers();
 		LayerModifierPatcher.ResetMultipliers();
@@ -249,22 +517,22 @@ internal static class QoLModSettings
 
 	private static void BindDiscordPresenceRow(GameObject row)
 	{
-		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0123: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0155: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01bf: Expected O, but got Unknown
+		//IL_0012: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ab: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ec: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0101: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0116: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0127: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0131: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0146: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0186: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0190: Expected O, but got Unknown
 		RectTransform component = row.GetComponent<RectTransform>();
 		if ((Object)(object)component != (Object)null)
 		{
@@ -487,13 +755,13 @@ internal static class QoLModSettings
 
 	private static void BindSoundOverrideRow(GameObject row)
 	{
-		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01cc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d6: Expected O, but got Unknown
-		//IL_016e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0178: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0110: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0124: Unknown result type (might be due to invalid IL or missing references)
+		//IL_019e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a8: Expected O, but got Unknown
+		//IL_0145: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0164: Unknown result type (might be due to invalid IL or missing references)
 		Slider slider = ((Component)row.transform.GetChild(1)).GetComponent<Slider>();
 		if ((Object)(object)slider == (Object)null)
 		{
@@ -502,11 +770,11 @@ internal static class QoLModSettings
 		PrepareInlineSelectorRow(row);
 		SoundLibrary.Load();
 		List<string> clipNames = SoundLibrary.AllClipNames.ToList();
-		TMP_Dropdown val = CreateInlineDropdown(row.transform);
-		val.ClearOptions();
+		TMP_Dropdown obj = CreateInlineDropdown(row.transform);
+		obj.ClearOptions();
 		List<string> list = new List<string> { "Select..." };
 		list.AddRange(clipNames);
-		val.AddOptions(list);
+		obj.AddOptions(list);
 		slider.minValue = 0f;
 		slider.maxValue = 1.2f;
 		((Selectable)slider).interactable = false;
@@ -520,7 +788,7 @@ internal static class QoLModSettings
 		RectTransform component = ((Component)playButton).GetComponent<RectTransform>();
 		component.sizeDelta = new Vector2(76f, 26f);
 		component.anchoredPosition = new Vector2(-20f, 0f);
-		RectTransform component2 = ((Component)val).GetComponent<RectTransform>();
+		RectTransform component2 = ((Component)obj).GetComponent<RectTransform>();
 		if ((Object)(object)component2 != (Object)null)
 		{
 			component2.sizeDelta = new Vector2(180f, component2.sizeDelta.y);
@@ -531,7 +799,7 @@ internal static class QoLModSettings
 		((UnityEventBase)playButton.onClick).RemoveAllListeners();
 		((UnityEvent)playButton.onClick).AddListener((UnityAction)delegate
 		{
-			//IL_002c: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0024: Unknown result type (might be due to invalid IL or missing references)
 			if (!string.IsNullOrEmpty(currentSoundOriginal))
 			{
 				AudioClip previewClip = SoundLibrary.GetPreviewClip(currentSoundOriginal);
@@ -541,8 +809,8 @@ internal static class QoLModSettings
 				}
 			}
 		});
-		((UnityEventBase)val.onValueChanged).RemoveAllListeners();
-		((UnityEvent<int>)(object)val.onValueChanged).AddListener((UnityAction<int>)delegate(int index)
+		((UnityEventBase)obj.onValueChanged).RemoveAllListeners();
+		((UnityEvent<int>)(object)obj.onValueChanged).AddListener((UnityAction<int>)delegate(int index)
 		{
 			((UnityEventBase)slider.onValueChanged).RemoveAllListeners();
 			if (index <= 0 || index - 1 >= clipNames.Count)
@@ -583,24 +851,24 @@ internal static class QoLModSettings
 
 	private static void PrepareInlineSelectorRow(GameObject row)
 	{
-		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00f4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0120: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0183: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0199: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ab: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01cb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0109: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0163: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0178: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0189: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0193: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a8: Unknown result type (might be due to invalid IL or missing references)
 		RectTransform component = row.GetComponent<RectTransform>();
 		component.sizeDelta = new Vector2(component.sizeDelta.x, 48f);
 		RectTransform component2 = ((Component)row.transform.GetChild(0)).GetComponent<RectTransform>();
@@ -634,12 +902,12 @@ internal static class QoLModSettings
 
 	private static TMP_Dropdown CreateInlineDropdown(Transform parent)
 	{
-		//IL_0090: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ba: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = Utils.Create("Special/GameSettingDropdown", parent);
 		if ((Object)(object)val == (Object)null)
 		{
@@ -675,15 +943,16 @@ internal static class QoLModSettings
 
 	private static TextMeshProUGUI CreateAttachedText(Transform parent, string name, string initialText, Vector2? anchoredPosition = null, TextAlignmentOptions alignment = (TextAlignmentOptions)4097)
 	{
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Expected O, but got Unknown
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ac: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ab: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject(name, new Type[2]
 		{
 			typeof(RectTransform),
@@ -711,20 +980,21 @@ internal static class QoLModSettings
 
 	private static Button CreatePlayButton(Transform parent)
 	{
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Expected O, but got Unknown
-		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0113: Expected O, but got Unknown
-		//IL_0130: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0038: Expected O, but got Unknown
+		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ff: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0104: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0116: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0133: Unknown result type (might be due to invalid IL or missing references)
 		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0157: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject("QoLSoundOverridePlay", new Type[3]
 		{
 			typeof(RectTransform),
@@ -778,29 +1048,30 @@ internal static class QoLModSettings
 
 	private static void EnsureDropdownScrollbar(TMP_Dropdown dropdown, ScrollRect scrollRect)
 	{
-		//IL_011e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0125: Expected O, but got Unknown
-		//IL_014e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0165: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0193: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_020b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0212: Expected O, but got Unknown
-		//IL_0232: Unknown result type (might be due to invalid IL or missing references)
-		//IL_023f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0256: Unknown result type (might be due to invalid IL or missing references)
-		//IL_026d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_029d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02a4: Expected O, but got Unknown
-		//IL_02ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02e5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02fc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0313: Unknown result type (might be due to invalid IL or missing references)
-		//IL_035d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fe: Expected O, but got Unknown
+		//IL_0123: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0162: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01ab: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01cd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d4: Expected O, but got Unknown
+		//IL_01f0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01fb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0210: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0224: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0253: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0258: Unknown result type (might be due to invalid IL or missing references)
+		//IL_026b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_027f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0295: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02ab: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02c1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0306: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)dropdown == (Object)null || (Object)(object)scrollRect == (Object)null || (Object)(object)dropdown.template == (Object)null)
 		{
 			return;

@@ -12,19 +12,16 @@ internal class ContainerTransferPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.containertransfer");
-		val.PatchAll(typeof(ContainerTransferPatcher));
+		new Harmony("org.bepinex.plugins.qol.containertransfer").PatchAll(typeof(ContainerTransferPatcher));
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "TryPerformInventoryAction")]
 	[HarmonyPrefix]
 	private static bool TryPerformInventoryAction_Prefix(PlayerCamera __instance, RaycastResult hit, List<RaycastResult> uiCasts, ref bool __result)
 	{
-		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c5: Expected O, but got Unknown
+		//IL_0090: Unknown result type (might be due to invalid IL or missing references)
 		if (!ModKeybinds.VanillaBindHeld("expanddesc"))
 		{
 			return true;
@@ -48,8 +45,7 @@ internal class ContainerTransferPatcher
 			List<Item> list = new List<Item>();
 			foreach (Transform item2 in ((Component)component2).transform)
 			{
-				Transform val = item2;
-				Item component4 = ((Component)val).GetComponent<Item>();
+				Item component4 = ((Component)item2).GetComponent<Item>();
 				if ((Object)(object)component4 != (Object)null)
 				{
 					list.Add(component4);

@@ -25,8 +25,8 @@ internal class PreRunScriptPatcher
 
 		public void OnPointerClick(PointerEventData eventData)
 		{
-			//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-			//IL_000b: Invalid comparison between Unknown and I4
+			//IL_0004: Unknown result type (might be due to invalid IL or missing references)
+			//IL_000a: Invalid comparison between Unknown and I4
 			if (eventData != null && (int)eventData.button == 1)
 			{
 				DeletePreset(presetIndex);
@@ -67,9 +67,8 @@ internal class PreRunScriptPatcher
 
 		public void OnPointerClick(PointerEventData eventData)
 		{
-			//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-			//IL_000b: Invalid comparison between Unknown and I4
-			if (eventData != null && (int)eventData.button <= 0)
+			//IL_0004: Unknown result type (might be due to invalid IL or missing references)
+			if (eventData != null && (int)eventData.button == 0)
 			{
 				BeginRename();
 			}
@@ -77,8 +76,8 @@ internal class PreRunScriptPatcher
 
 		private void EnsureInput()
 		{
-			//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00cb: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
 			if (!((Object)(object)input != (Object)null) && !((Object)(object)headerText == (Object)null))
 			{
 				input = ((Component)this).gameObject.GetComponent<TMP_InputField>();
@@ -172,11 +171,9 @@ internal class PreRunScriptPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.prerun");
-		val.PatchAll(typeof(PreRunScriptPatcher));
+		new Harmony("org.bepinex.plugins.qol.prerun").PatchAll(typeof(PreRunScriptPatcher));
 		alwaysSkipLore = PlayerPrefs.GetInt("AlwaysSkipLore", 0) == 1;
 	}
 
@@ -208,10 +205,10 @@ internal class PreRunScriptPatcher
 	[HarmonyPrefix]
 	private static bool TryLore_Prefix()
 	{
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = GameObject.Find("GlobalDark(Clone)/betabuild");
 		if ((Object)(object)val != (Object)null)
 		{
@@ -340,7 +337,11 @@ internal class PreRunScriptPatcher
 	private static string GetCurrentCustomSettingsHeader(PreRunScript context)
 	{
 		TextMeshProUGUI val = FindCustomSettingsHeaderText(context);
-		return ((Object)(object)val != (Object)null) ? ((TMP_Text)val).text : "Custom settings";
+		if (!((Object)(object)val != (Object)null))
+		{
+			return "Custom settings";
+		}
+		return ((TMP_Text)val).text;
 	}
 
 	private static string NormalizePresetName(string presetName, int index)
@@ -356,12 +357,7 @@ internal class PreRunScriptPatcher
 	private static void EnsureEditableCustomSettingsHeader(PreRunScript context)
 	{
 		TextMeshProUGUI val = FindCustomSettingsHeaderText(context);
-		if ((Object)(object)val == (Object)null)
-		{
-			return;
-		}
-		RectTransform component = ((Component)val).GetComponent<RectTransform>();
-		if (!((Object)(object)component == (Object)null))
+		if (!((Object)(object)val == (Object)null) && !((Object)(object)((Component)val).GetComponent<RectTransform>() == (Object)null))
 		{
 			CustomSettingsHeaderRenameHandler customSettingsHeaderRenameHandler = ((Component)val).GetComponent<CustomSettingsHeaderRenameHandler>();
 			if ((Object)(object)customSettingsHeaderRenameHandler == (Object)null)
@@ -388,13 +384,13 @@ internal class PreRunScriptPatcher
 
 	private static void RebuildCustomPresetButtons(PreRunScript context)
 	{
-		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a3: Expected O, but got Unknown
-		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0127: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0081: Expected O, but got Unknown
+		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)context == (Object)null || (Object)(object)context.customSettingsMenu == (Object)null)
 		{
 			return;
@@ -463,13 +459,13 @@ internal class PreRunScriptPatcher
 
 	private static float GetCustomSettingsPresetColumnCenterX(PreRunScript context)
 	{
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
 		RectTransform customSettingsMenu = context.customSettingsMenu;
 		Transform obj = ((Transform)context.customSettingsMenu).Find("Panel/Arrow");
 		object obj2 = ((obj is RectTransform) ? obj : null);
@@ -523,26 +519,26 @@ internal class PreRunScriptPatcher
 
 	private static void CreatePresetControl(PreRunScript context, Transform parent, Sprite buttonSprite, TMP_FontAsset font, int row, string text, int presetIndex, bool isPageControl)
 	{
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004e: Expected O, but got Unknown
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f7: Expected O, but got Unknown
-		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0148: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0193: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0207: Unknown result type (might be due to invalid IL or missing references)
-		//IL_021e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_023a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0247: Unknown result type (might be due to invalid IL or missing references)
-		//IL_029e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02a8: Expected O, but got Unknown
-		//IL_027e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0288: Expected O, but got Unknown
+		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004d: Expected O, but got Unknown
+		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ed: Expected O, but got Unknown
+		//IL_0112: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0132: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01b6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01cb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01fa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0204: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0249: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0253: Expected O, but got Unknown
+		//IL_0231: Unknown result type (might be due to invalid IL or missing references)
+		//IL_023b: Expected O, but got Unknown
 		GameObject val = new GameObject("QoLCustomSettingsPresetButton", new Type[3]
 		{
 			typeof(RectTransform),
@@ -579,8 +575,7 @@ internal class PreRunScriptPatcher
 		((Graphic)component3).raycastTarget = false;
 		if (!isPageControl)
 		{
-			SaveSlotButtonTextEnforcer saveSlotButtonTextEnforcer = val2.AddComponent<SaveSlotButtonTextEnforcer>();
-			saveSlotButtonTextEnforcer.textToEnforce = text;
+			val2.AddComponent<SaveSlotButtonTextEnforcer>().textToEnforce = text;
 		}
 		RectTransform component4 = val.GetComponent<RectTransform>();
 		component4.anchorMin = new Vector2(0.5f, 1f);

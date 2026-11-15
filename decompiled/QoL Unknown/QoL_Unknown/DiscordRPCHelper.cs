@@ -22,19 +22,21 @@ internal class DiscordRPCHelper
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001d: Expected O, but got Unknown
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Expected O, but got Unknown
+		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003f: Expected O, but got Unknown
 		if (!initialized)
 		{
 			initialized = true;
-			Harmony val = new Harmony("org.bepinex.plugins.qol.discordrpc");
-			val.PatchAll(typeof(DiscordRPCHelper));
-			GameObject val2 = new GameObject("DiscordManager_Persistent");
-			((Object)val2).hideFlags = (HideFlags)61;
-			Object.DontDestroyOnLoad((Object)(object)val2);
-			DiscordManager discordManager = val2.AddComponent<DiscordManager>();
+			new Harmony("org.bepinex.plugins.qol.discordrpc").PatchAll(typeof(DiscordRPCHelper));
+			GameObject val = new GameObject("DiscordManager_Persistent")
+			{
+				hideFlags = (HideFlags)61
+			};
+			Object.DontDestroyOnLoad((Object)val);
+			val.AddComponent<DiscordManager>();
 		}
 	}
 

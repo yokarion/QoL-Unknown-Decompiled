@@ -29,9 +29,9 @@ public class DiscordManager : MonoBehaviour
 
 	private DiscordRpcClient client;
 
-	private float updateTimer = 0f;
+	private float updateTimer;
 
-	private float invokeTimer = 0f;
+	private float invokeTimer;
 
 	private const float UpdateInterval = 5f;
 
@@ -93,14 +93,13 @@ public class DiscordManager : MonoBehaviour
 
 	public void Initialize()
 	{
-		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Expected O, but got Unknown
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004f: Expected O, but got Unknown
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0075: Expected O, but got Unknown
+		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0032: Expected O, but got Unknown
+		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0042: Expected O, but got Unknown
+		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0061: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0067: Expected O, but got Unknown
 		try
 		{
 			if ((Object)(object)Instance == (Object)null)
@@ -109,10 +108,7 @@ public class DiscordManager : MonoBehaviour
 			}
 			sessionStartTime = DateTime.UtcNow;
 			client = new DiscordRpcClient("1453021186689859757", -1, (ILogger)null, false, (INamedPipeClient)null);
-			client.Logger = (ILogger)new ConsoleLogger
-			{
-				Level = (LogLevel)3
-			};
+			client.Logger = (ILogger)new NullLogger();
 			DiscordRpcClient obj = client;
 			object obj2 = _003C_003Ec._003C_003E9__17_0;
 			if (obj2 == null)
@@ -171,8 +167,11 @@ public class DiscordManager : MonoBehaviour
 
 	public static string LimbToName(string id)
 	{
-		string value;
-		return limbNameMap.TryGetValue(id, out value) ? value : id;
+		if (!limbNameMap.TryGetValue(id, out var value))
+		{
+			return id;
+		}
+		return value;
 	}
 
 	internal static float GetBodyFloatCompat(Body body, float fallbackValue, params string[] fieldNames)
@@ -192,9 +191,9 @@ public class DiscordManager : MonoBehaviour
 			if (!(cachedBodyField == null))
 			{
 				object value = cachedBodyField.GetValue(body);
-				if (value is float result)
+				if (value is float)
 				{
-					return result;
+					return (float)value;
 				}
 				if (value is double num)
 				{
@@ -226,9 +225,9 @@ public class DiscordManager : MonoBehaviour
 			if (cachedBodyField != null)
 			{
 				object value = cachedBodyField.GetValue(body);
-				if (value is bool result)
+				if (value is bool)
 				{
-					return result;
+					return (bool)value;
 				}
 				if (value is int num)
 				{
@@ -239,9 +238,9 @@ public class DiscordManager : MonoBehaviour
 			if (!(cachedBodyProperty == null) && cachedBodyProperty.CanRead)
 			{
 				object value2 = cachedBodyProperty.GetValue(body, null);
-				if (value2 is bool result2)
+				if (value2 is bool)
 				{
-					return result2;
+					return (bool)value2;
 				}
 				if (value2 is int num2)
 				{
@@ -483,17 +482,20 @@ public class DiscordManager : MonoBehaviour
 
 	private static bool IsTutorialRun(WorldGeneration world)
 	{
-		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Invalid comparison between Unknown and I4
-		return (Object)(object)world != (Object)null && world.worldExists && (int)world.biomeOverride == 1;
+		//IL_0012: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0018: Invalid comparison between Unknown and I4
+		if ((Object)(object)world != (Object)null && world.worldExists)
+		{
+			return (int)world.biomeOverride == 1;
+		}
+		return false;
 	}
 
 	private static string BuildTutorialState()
 	{
 		TutorialHandler main = TutorialHandler.main;
 		TutorialCourse val = (((Object)(object)main != (Object)null) ? main.activeCourse : null);
-		string text = (((Object)(object)val != (Object)null) ? val.LocaleName() : null);
-		return (text ?? string.Empty).ToLowerInvariant() switch
+		return ((((Object)(object)val != (Object)null) ? val.LocaleName() : null) ?? string.Empty).ToLowerInvariant() switch
 		{
 			"sandbox" => "In the sandbox", 
 			"craftingcourse" => "Currently attempting the crafting course", 
@@ -736,17 +738,17 @@ public class DiscordManager : MonoBehaviour
 
 	public void UpdatePresence()
 	{
-		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005d: Expected O, but got Unknown
+		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004d: Expected O, but got Unknown
+		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
 		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Expected O, but got Unknown
-		//IL_0083: Expected O, but got Unknown
+		//IL_006e: Expected O, but got Unknown
+		//IL_006f: Expected O, but got Unknown
 		if (suppressPresenceUpdates || client == null || !client.IsInitialized)
 		{
 			return;

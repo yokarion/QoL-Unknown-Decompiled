@@ -34,11 +34,8 @@ internal static class ModKeybinds
 
 	public static KeyCode GetKey(string action)
 	{
-		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
 		ModKeybindDefinition modKeybindDefinition = definitions.FirstOrDefault((ModKeybindDefinition def) => string.Equals(def.Action, action, StringComparison.OrdinalIgnoreCase));
 		if (modKeybindDefinition == null)
 		{
@@ -49,11 +46,10 @@ internal static class ModKeybinds
 
 	public static string GetKeyName(string action)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000a: Invalid comparison between Unknown and I4
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
 		KeyCode key = GetKey(action);
 		if ((int)key == 0)
 		{
@@ -64,23 +60,17 @@ internal static class ModKeybinds
 
 	public static bool GetActionDown(string action)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Expected I4, but got Unknown
-		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0032: Expected I4, but got Unknown
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
 		KeyCode key = GetKey(action);
-		KeyCode val = key;
-		KeyCode val2 = val;
-		if ((int)val2 != 0)
+		if ((int)key != 0)
 		{
-			return (val2 - 323) switch
+			return (key - 323) switch
 			{
 				0 => Input.GetMouseButtonDown(0), 
 				1 => Input.GetMouseButtonDown(1), 
@@ -97,32 +87,28 @@ internal static class ModKeybinds
 
 	public static bool GetAction(string action)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		return Held(GetKey(action));
 	}
 
 	public static bool VanillaBindHeld(string action)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		return Held(KeyBinds.GetBind(action));
 	}
 
-	private static bool Held(KeyCode key)
+	public static bool Held(KeyCode key)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0003: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0004: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Expected I4, but got Unknown
-		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002b: Expected I4, but got Unknown
+		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0061: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
 		if ((int)key != 0)
 		{
 			switch (key - 323)
@@ -144,7 +130,15 @@ internal static class ModKeybinds
 			default:
 			{
 				KeyCode val = OppositeModifierSide(key);
-				return Input.GetKey(key) || ((int)val != 0 && Input.GetKey(val));
+				if (!Input.GetKey(key))
+				{
+					if ((int)val != 0)
+					{
+						return Input.GetKey(val);
+					}
+					return false;
+				}
+				return true;
 			}
 			}
 		}
@@ -153,21 +147,9 @@ internal static class ModKeybinds
 
 	private static KeyCode OppositeModifierSide(KeyCode key)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0003: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0004: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0029: Expected I4, but got Unknown
-		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0024: Expected I4, but got Unknown
 		return (KeyCode)((key - 303) switch
 		{
 			1 => 303, 
@@ -190,7 +172,7 @@ internal static class ModKeybinds
 
 	public static void ResetModDefaults()
 	{
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
 		foreach (ModKeybindDefinition definition in definitions)
 		{
 			SettingKeybind val = Settings.Get<SettingKeybind>(GetSettingId(definition.Action));
@@ -211,7 +193,7 @@ internal static class ModKeybinds
 
 	private static void EnsureSettingRegistered(ModKeybindDefinition definition)
 	{
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
 		string settingId = GetSettingId(definition.Action);
 		if (FindSetting(settingId) != null)
 		{
@@ -219,7 +201,7 @@ internal static class ModKeybinds
 		}
 		ModOptionsMenu.Register(ModOptionDefinition.Keybind(settingId, definition.DisplayName, definition.Description, (SettingCategory)3, definition.DefaultKey, delegate(KeyCode key)
 		{
-			//IL_001c: Unknown result type (might be due to invalid IL or missing references)
+			//IL_001b: Unknown result type (might be due to invalid IL or missing references)
 			ManualLogSource logger = Logger;
 			if (logger != null)
 			{

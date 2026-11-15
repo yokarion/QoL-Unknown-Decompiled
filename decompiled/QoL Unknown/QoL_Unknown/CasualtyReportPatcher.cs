@@ -50,11 +50,9 @@ internal class CasualtyReportPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.casualtyreports");
-		val.PatchAll(typeof(CasualtyReportPatcher));
+		new Harmony("org.bepinex.plugins.qol.casualtyreports").PatchAll(typeof(CasualtyReportPatcher));
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "Update")]
@@ -131,23 +129,23 @@ internal class CasualtyReportPatcher
 
 	private static Button CreateArrowButton(RectTransform parent, string objectName, string label, TMP_FontAsset font, Action onClick)
 	{
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0064: Expected O, but got Unknown
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0146: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0150: Expected O, but got Unknown
-		//IL_01be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01cb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0195: Expected O, but got Unknown
-		//IL_022d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005c: Expected O, but got Unknown
+		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0136: Expected O, but got Unknown
+		//IL_0194: Unknown result type (might be due to invalid IL or missing references)
+		//IL_019f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01aa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01b4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0173: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01f1: Unknown result type (might be due to invalid IL or missing references)
 		Transform val = ((Transform)parent).Find(objectName);
 		GameObject val2;
 		if ((Object)(object)val != (Object)null)
@@ -211,14 +209,14 @@ internal class CasualtyReportPatcher
 
 	private static TextMeshProUGUI CreatePageIndicator(RectTransform parent, TMP_FontAsset font)
 	{
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0051: Expected O, but got Unknown
-		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0116: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0049: Expected O, but got Unknown
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fc: Unknown result type (might be due to invalid IL or missing references)
 		Transform val = ((Transform)parent).Find("ReportPageIndicator");
 		GameObject val2;
 		if ((Object)(object)val != (Object)null)
@@ -254,48 +252,48 @@ internal class CasualtyReportPatcher
 
 	private static void UpdateNavigationLayout(RectTransform deathStats)
 	{
-		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cb: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00cc: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00d1: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00d6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00da: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ec: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ee: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0135: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00db: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ea: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ef: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0108: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0115: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0150: Unknown result type (might be due to invalid IL or missing references)
 		//IL_015d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0177: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_017e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0185: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0192: Unknown result type (might be due to invalid IL or missing references)
 		object obj;
 		if (!((Object)(object)navigationRoot != (Object)null))
 		{

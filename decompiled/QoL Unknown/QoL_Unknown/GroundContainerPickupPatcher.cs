@@ -23,25 +23,25 @@ internal class GroundContainerPickupPatcher
 	[HarmonyPrefix]
 	private static bool DoPickupCheck_Prefix(Body __instance, Item item, bool noAlerts, ref bool __result)
 	{
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0146: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0147: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
 		if (!TryGetOpenedGroundContainerItem(__instance, item, out var containerItem))
 		{
 			return true;
@@ -113,25 +113,18 @@ internal class GroundContainerPickupPatcher
 
 	private static Vector2 GetPickupTarget(Item item)
 	{
-		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0035: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
 		Collider2D val = (((Object)(object)item != (Object)null) ? ((Component)item).GetComponent<Collider2D>() : null);
-		Vector2 result;
 		if (!((Object)(object)val != (Object)null))
 		{
-			result = Vector2.op_Implicit(((Component)item).transform.position);
+			return Vector2.op_Implicit(((Component)item).transform.position);
 		}
-		else
-		{
-			Bounds bounds = val.bounds;
-			result = Vector2.op_Implicit(((Bounds)(ref bounds)).center);
-		}
-		return result;
+		Bounds bounds = val.bounds;
+		return Vector2.op_Implicit(((Bounds)(ref bounds)).center);
 	}
 }

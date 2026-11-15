@@ -339,8 +339,7 @@ internal static class DiscordPresenceSettings
 
 	public static string GetTemplate(DiscordPresenceField field)
 	{
-		string prefKey = GetPrefKey(field);
-		return PlayerPrefs.GetString(prefKey, GetDefaultTemplate(field));
+		return PlayerPrefs.GetString(GetPrefKey(field), GetDefaultTemplate(field));
 	}
 
 	public static void SetTemplate(DiscordPresenceField field, string template)
@@ -410,7 +409,11 @@ internal static class DiscordPresenceSettings
 	{
 		string value = ExpandTokens(template ?? string.Empty, context);
 		value = ClampField(value);
-		return string.IsNullOrWhiteSpace(value) ? ClampField(fallback) : value;
+		if (!string.IsNullOrWhiteSpace(value))
+		{
+			return value;
+		}
+		return ClampField(fallback);
 	}
 
 	public static string RenderStateTemplate(string template, DiscordPresenceContext context, string fallback, out string ruleError)
@@ -480,7 +483,7 @@ internal static class DiscordPresenceSettings
 		{
 			return string.Empty;
 		}
-		Dictionary<string, string> dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+		Dictionary<string, string> obj = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 		{
 			["{depth}"] = context.Depth.ToString(),
 			["{layer}"] = context.LayerName ?? "Depth: Unknown..",
@@ -496,7 +499,7 @@ internal static class DiscordPresenceSettings
 			["{tutorialCourse}"] = context.TutorialCourse ?? string.Empty
 		};
 		string text = template;
-		foreach (KeyValuePair<string, string> item in dictionary)
+		foreach (KeyValuePair<string, string> item in obj)
 		{
 			text = text.Replace(item.Key, item.Value);
 		}
@@ -594,7 +597,11 @@ internal static class DiscordPresenceSettings
 	{
 		if (value.IsBoolean)
 		{
-			return value.Boolean ? "true" : "false";
+			if (!value.Boolean)
+			{
+				return "false";
+			}
+			return "true";
 		}
 		if (value.IsString)
 		{

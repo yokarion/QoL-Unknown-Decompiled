@@ -53,6 +53,10 @@ internal static class CraftingModule
 
 	private static PlayerCamera refreshScheduledFor;
 
+	private static Recipe resolvedRecipe;
+
+	private static List<Item> resolvedItems;
+
 	private static readonly Color FavouriteBorderDim = new Color(0.45f, 0.42f, 0.2f);
 
 	private static readonly Color FavouriteBorderBright = CraftFavourites.BookmarkColor;
@@ -61,9 +65,7 @@ internal static class CraftingModule
 	{
 		Logger = logger;
 		CraftRunner.Logger = logger;
-		if (!RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.bulkcrafting", typeof(CraftingModule), logger))
-		{
-		}
+		RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.bulkcrafting", typeof(CraftingModule), logger);
 	}
 
 	public static void ScheduleRefresh(PlayerCamera camera)
@@ -159,12 +161,12 @@ internal static class CraftingModule
 	[HarmonyPriority(800)]
 	private static bool TryCraft_Prefix(PlayerCamera __instance)
 	{
-		bool flag = HandleCraftClick(__instance);
-		if (!flag)
+		bool num = HandleCraftClick(__instance);
+		if (!num)
 		{
 			MultiplayerCompat.MarkCraftHandled();
 		}
-		return flag;
+		return num;
 	}
 
 	private static bool HandleCraftClick(PlayerCamera __instance)
@@ -261,15 +263,15 @@ internal static class CraftingModule
 
 	private static void RebuildRecipeList(PlayerCamera camera)
 	{
-		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ea: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ff: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02f4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00eb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0268: Unknown result type (might be due to invalid IL or missing references)
+		//IL_026a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02a5: Unknown result type (might be due to invalid IL or missing references)
 		if (RecipeObjectsField?.GetValue(camera) is List<GameObject> list)
 		{
 			foreach (GameObject item in list)
@@ -337,48 +339,48 @@ internal static class CraftingModule
 
 	private static GameObject CreateRecipeRow(PlayerCamera camera, Recipe recipe, int row, Color availableColor, Color unavailableColor)
 	{
-		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0102: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0139: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0173: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017d: Expected O, but got Unknown
+		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ea: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0120: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0155: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015f: Expected O, but got Unknown
 		bool flag = CraftPlanner.IsCraftable(recipe, LiveInventory(camera.body));
 		bool flag2 = CraftFavourites.IsFavourited(recipe);
-		GameObject val = Utils.Create("Special/RecipeBox", (Transform)(object)camera.recipeListContent);
-		val.GetComponent<RectTransform>().anchoredPosition = new Vector2(-9f, (float)(-row * 64));
-		TextMeshProUGUI component = ((Component)val.transform.GetChild(0)).GetComponent<TextMeshProUGUI>();
+		GameObject obj = Utils.Create("Special/RecipeBox", (Transform)(object)camera.recipeListContent);
+		obj.GetComponent<RectTransform>().anchoredPosition = new Vector2(-9f, (float)(-row * 64));
+		TextMeshProUGUI component = ((Component)obj.transform.GetChild(0)).GetComponent<TextMeshProUGUI>();
 		((TMP_Text)component).text = recipe.fullName;
 		((Graphic)component).color = (flag ? availableColor : unavailableColor);
-		TextMeshProUGUI component2 = ((Component)val.transform.GetChild(1)).GetComponent<TextMeshProUGUI>();
+		TextMeshProUGUI component2 = ((Component)obj.transform.GetChild(1)).GetComponent<TextMeshProUGUI>();
 		((TMP_Text)component2).text = recipe.INT.ToString();
 		((Graphic)component2).color = camera.RecipeINTToColor(recipe.INT);
 		ValueTuple<Sprite, Color> resultSprite = recipe.resultSprite;
 		Sprite item = resultSprite.Item1;
 		Color item2 = resultSprite.Item2;
-		Image component3 = ((Component)val.transform.GetChild(2)).GetComponent<Image>();
+		Image component3 = ((Component)obj.transform.GetChild(2)).GetComponent<Image>();
 		component3.sprite = item;
 		((Graphic)component3).color = item2;
 		((Component)component3).GetComponent<RectTransform>().sizeDelta = PlayerCamera.ImageSizeDelta((Texture)(object)item.texture, 3f, 42f);
-		((Graphic)val.GetComponent<Image>()).color = ((!flag2) ? (flag ? availableColor : unavailableColor) : (flag ? FavouriteBorderBright : FavouriteBorderDim));
+		((Graphic)obj.GetComponent<Image>()).color = ((!flag2) ? (flag ? availableColor : unavailableColor) : (flag ? FavouriteBorderBright : FavouriteBorderDim));
 		int recipeIndex = recipe.index;
-		((UnityEvent)val.GetComponent<Button>().onClick).AddListener((UnityAction)delegate
+		((UnityEvent)obj.GetComponent<Button>().onClick).AddListener((UnityAction)delegate
 		{
 			camera.SelectRecipe(recipeIndex);
 		});
-		UITooltip val2 = val.AddComponent<UITooltip>();
-		val2.skipLocale = true;
-		val2.tipName = recipe.simpleName;
-		val2.tipDesc = recipe.description;
-		return val;
+		UITooltip obj2 = obj.AddComponent<UITooltip>();
+		obj2.skipLocale = true;
+		obj2.tipName = recipe.simpleName;
+		obj2.tipDesc = recipe.description;
+		return obj;
 	}
 
 	private static string BuildIngredientText(Recipe recipe, List<Item> its)
@@ -390,11 +392,13 @@ internal static class CraftingModule
 			its = recipe.GetItemsForRecipeThorough();
 		}
 		string text = "";
+		List<Item> list = new List<Item>(recipe.items.Count);
 		for (int i = 0; i < recipe.items.Count; i++)
 		{
 			RecipeItem ingredient = recipe.items[i];
 			text += "<color=#FFFFFF>";
-			text += AvailabilityMarker(ingredient, working, coveredAutoCrafts);
+			text += AvailabilityMarker(ingredient, working, coveredAutoCrafts, out var used);
+			list.Add(used);
 			text = ((!ingredient.specific) ? ((!ingredient.isLiquid) ? (text + Locale.GetOther((ingredient.quality.id == "hammering" || ingredient.quality.id == "cutting") ? "craftanytool" : "craftanyitem") + "\n") : (text + Locale.GetOther("craftanyliquid") + "\n")) : ((!ingredient.isLiquid) ? (text + Locale.GetItem(ingredient.specificId) + "\n") : (text + Locale.GetOther(ingredient.specificId) + "\n")));
 			text += "<color=#666666>";
 			if (ingredient.isLiquid)
@@ -424,12 +428,25 @@ internal static class CraftingModule
 				text = text + Locale.GetOther("craftcondition").Replace("<>", (ingredient.minimumCondition * 100f).ToString("0.#")) + "\n";
 			}
 		}
+		resolvedRecipe = recipe;
+		resolvedItems = list;
 		return text;
 	}
 
-	private static string AvailabilityMarker(RecipeItem ingredient, CraftInventory working, HashSet<string> coveredAutoCrafts)
+	internal static bool TryGetResolvedItems(Recipe recipe, out List<Item> items)
 	{
-		switch (CraftPlanner.InspectIngredient(ingredient, working, coveredAutoCrafts))
+		if (recipe != null && recipe == resolvedRecipe && resolvedItems != null)
+		{
+			items = resolvedItems;
+			return true;
+		}
+		items = null;
+		return false;
+	}
+
+	private static string AvailabilityMarker(RecipeItem ingredient, CraftInventory working, HashSet<string> coveredAutoCrafts, out Item used)
+	{
+		switch (CraftPlanner.InspectIngredient(ingredient, working, coveredAutoCrafts, out used))
 		{
 		case CraftIngredientStatus.Available:
 			return "<sprite index=23>";
@@ -438,7 +455,11 @@ internal static class CraftingModule
 		case CraftIngredientStatus.AutoCraftableButBlocked:
 		{
 			string text = CraftPlanner.AutoCraftKey(ingredient);
-			return (!string.IsNullOrEmpty(text) && coveredAutoCrafts.Contains(text)) ? "<color=#ff4500><sprite index=17 tint=1></color>" : "<sprite index=24>";
+			if (string.IsNullOrEmpty(text) || !coveredAutoCrafts.Contains(text))
+			{
+				return "<sprite index=24>";
+			}
+			return "<color=#ff4500><sprite index=17 tint=1></color>";
 		}
 		default:
 			return "<sprite index=24>";
@@ -455,15 +476,19 @@ internal static class CraftingModule
 			selectedAmount = Mathf.Clamp(selectedAmount, 1, num);
 			Transform transform = camera.craftingPanel.transform;
 			UpdateFillerCraftText(transform, selectedAmount);
-			GameObject val = EnsureAmountControls(transform);
-			val.SetActive(num > 1);
-			UpdateButtons(val, num);
+			GameObject obj = EnsureAmountControls(transform);
+			obj.SetActive(num > 1);
+			UpdateButtons(obj, num);
 		}
 	}
 
 	private static bool IsRecipeSelected(PlayerCamera camera)
 	{
-		return camera.selectedRecipe >= 0 && Recipes.recipes != null && camera.selectedRecipe < Recipes.recipes.Count;
+		if (camera.selectedRecipe >= 0 && Recipes.recipes != null)
+		{
+			return camera.selectedRecipe < Recipes.recipes.Count;
+		}
+		return false;
 	}
 
 	private static void EnsureAmountBelongsToRecipe(int recipeIndex)
@@ -477,21 +502,26 @@ internal static class CraftingModule
 
 	private static GameObject EnsureAmountControls(Transform panel)
 	{
-		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0078: Expected O, but got Unknown
+		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d5: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e7: Expected O, but got Unknown
-		//IL_0101: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0125: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0132: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0165: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0174: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0183: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0100: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0114: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0162: Unknown result type (might be due to invalid IL or missing references)
+		//IL_017c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_018b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_019a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01b1: Expected O, but got Unknown
 		Transform val = panel.Find("Filler1/QoL_BulkCraftTextControls");
 		if ((Object)(object)val != (Object)null)
 		{
@@ -531,14 +561,17 @@ internal static class CraftingModule
 
 	private static void CreateTextButton(Transform parent, string name, string label, Vector2 anchorMin, Vector2 anchorMax, Vector2 anchoredPosition, Action<bool> onClick)
 	{
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Expected O, but got Unknown
-		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0109: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject(name, new Type[4]
 		{
 			typeof(RectTransform),

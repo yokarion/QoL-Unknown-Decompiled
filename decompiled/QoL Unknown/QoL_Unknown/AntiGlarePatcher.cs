@@ -91,13 +91,11 @@ internal class AntiGlarePatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001e: Expected O, but got Unknown
+		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
 		LoadSavedSettings();
 		RecalculateFromSettings();
-		Harmony val = new Harmony("org.bepinex.plugins.qol.antiglare");
-		val.PatchAll(typeof(AntiGlarePatcher));
+		new Harmony("org.bepinex.plugins.qol.antiglare").PatchAll(typeof(AntiGlarePatcher));
 		SceneManager.sceneLoaded += delegate
 		{
 			JumpPadLightIds.Clear();
@@ -247,10 +245,10 @@ internal class AntiGlarePatcher
 
 	private static void ApplyBrainFlashOpacity(PlayerCamera cam)
 	{
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004a: Unknown result type (might be due to invalid IL or missing references)
 		if (AntiEpilepsyEnabled && !((Object)(object)cam == (Object)null) && !((Object)(object)cam.brainFlash == (Object)null))
 		{
 			Color color = ((Graphic)cam.brainFlash).color;
@@ -288,9 +286,8 @@ internal class AntiGlarePatcher
 		if (!flag)
 		{
 			value *= MasterLightScale * 0.01f;
-			if (!(value > MaxLightIntensity))
-			{
-			}
+			_ = value;
+			_ = MaxLightIntensity;
 		}
 	}
 
@@ -306,7 +303,11 @@ internal class AntiGlarePatcher
 			return 0f;
 		}
 		float num2 = value / num;
-		return (value >= 0f && num2 <= MaxLightIntensity + 0.0001f) ? num2 : value;
+		if (!(value >= 0f) || !(num2 <= MaxLightIntensity + 0.0001f))
+		{
+			return value;
+		}
+		return num2;
 	}
 
 	public static void SweepAllLights()

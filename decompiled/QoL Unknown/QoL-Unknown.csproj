@@ -20,6 +20,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="Unity.RenderPipelines.Universal.Runtime" />
     <Reference Include="Unity.TextMeshPro" />
+    <Reference Include="UnityEngine.AnimationModule" />
     <Reference Include="UnityEngine.AssetBundleModule" />
     <Reference Include="UnityEngine.AudioModule" />
     <Reference Include="UnityEngine.CoreModule" />

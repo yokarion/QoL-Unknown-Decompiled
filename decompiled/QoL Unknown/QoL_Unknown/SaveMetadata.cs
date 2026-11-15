@@ -26,6 +26,8 @@ public class SaveMetadata
 
 	public bool RadLineActive;
 
+	public float? RadLineRemainingSeconds;
+
 	public float IGTSeconds;
 
 	public float RTASeconds;

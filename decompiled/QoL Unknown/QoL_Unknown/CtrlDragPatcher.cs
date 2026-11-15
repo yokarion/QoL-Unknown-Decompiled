@@ -33,14 +33,12 @@ internal class CtrlDragPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Expected O, but got Unknown
+		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
 		if (!initialized)
 		{
 			initialized = true;
 			Logger = logger;
-			Harmony val = new Harmony("org.bepinex.plugins.qol.liquidquicktransfer");
-			val.PatchAll(typeof(CtrlDragPatcher));
+			new Harmony("org.bepinex.plugins.qol.liquidquicktransfer").PatchAll(typeof(CtrlDragPatcher));
 		}
 	}
 
@@ -48,8 +46,7 @@ internal class CtrlDragPatcher
 	[HarmonyPrefix]
 	private static bool ShiftDrag_Prefix(PlayerCamera __instance, RaycastResult hit, List<RaycastResult> uiCasts, ref bool __result)
 	{
-		//IL_01b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b7: Expected O, but got Unknown
+		//IL_0145: Unknown result type (might be due to invalid IL or missing references)
 		if (!ModKeybinds.VanillaBindHeld("expanddesc"))
 		{
 			return true;
@@ -89,15 +86,13 @@ internal class CtrlDragPatcher
 		}
 		if ((Object)(object)component4 != (Object)null && (Object)(object)component5 != (Object)null)
 		{
-			Item val2 = default(Item);
+			Item val = default(Item);
 			foreach (Transform item2 in ((Component)component4).transform)
 			{
-				Transform val = item2;
-				if (!((Component)val).TryGetComponent<Item>(ref val2) || !component5.CanHoldItem(val2))
+				if (((Component)item2).TryGetComponent<Item>(ref val) && component5.CanHoldItem(val))
 				{
-					continue;
+					return true;
 				}
-				return true;
 			}
 			__result = true;
 			return false;
@@ -125,10 +120,10 @@ internal class CtrlDragPatcher
 			return true;
 		}
 		Body body = __instance.body;
-		bool flag = (Object)(object)((Component)dragItem).GetComponent<Container>() != (Object)null || (Object)(object)((Component)dragItem).GetComponent<WaterContainerItem>() != (Object)null;
-		bool flag2 = (Object)(object)((Component)item).GetComponent<Container>() != (Object)null || (Object)(object)((Component)item).GetComponent<WaterContainerItem>() != (Object)null;
+		bool num = (Object)(object)((Component)dragItem).GetComponent<Container>() != (Object)null || (Object)(object)((Component)dragItem).GetComponent<WaterContainerItem>() != (Object)null;
+		bool flag = (Object)(object)((Component)item).GetComponent<Container>() != (Object)null || (Object)(object)((Component)item).GetComponent<WaterContainerItem>() != (Object)null;
 		Container component2 = ((Component)item).GetComponent<Container>();
-		if (flag && flag2)
+		if (num && flag)
 		{
 			ItemLocation itemLocation = GetItemLocation(body, dragItem);
 			ItemLocation itemLocation2 = GetItemLocation(body, item);
@@ -182,9 +177,9 @@ internal class CtrlDragPatcher
 	[HarmonyPrefix]
 	private static bool WorldActions_Prefix(PlayerCamera __instance)
 	{
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
 		if (!ModKeybinds.GetAction("inventoryinteraction"))
 		{
 			return true;
@@ -254,9 +249,9 @@ internal class CtrlDragPatcher
 	[HarmonyPrefix]
 	private static bool TryPerformSpecialUIAction_Prefix(PlayerCamera __instance, RaycastResult hit, ref bool __result)
 	{
-		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
 		if (!IsLiquidDrainTarget(__instance, ((RaycastResult)(ref hit)).gameObject))
 		{
 			return true;
@@ -323,7 +318,11 @@ internal class CtrlDragPatcher
 		}
 		Transform transform = hitObject.transform;
 		Transform transform2 = val.transform;
-		return (Object)(object)hitObject == (Object)(object)val || (Object)(object)transform == (Object)(object)transform2 || transform.IsChildOf(transform2);
+		if (!((Object)(object)hitObject == (Object)(object)val) && !((Object)(object)transform == (Object)(object)transform2))
+		{
+			return transform.IsChildOf(transform2);
+		}
+		return true;
 	}
 
 	private static ItemLocation GetItemLocation(Body body, Item item)
@@ -367,21 +366,13 @@ internal class CtrlDragPatcher
 
 	private static bool CanPlaceAtLocation(Item item, ItemLocation loc)
 	{
-		LocationKind kind = loc.kind;
-		if (1 == 0)
-		{
-		}
-		bool result = kind switch
+		return loc.kind switch
 		{
 			LocationKind.BodySlot => true, 
 			LocationKind.Wearable => item.Stats.wearable && item.Stats.wearSlotId == loc.wearSlotId, 
 			LocationKind.Container => loc.container.CanHoldItem(item), 
 			_ => false, 
 		};
-		if (1 == 0)
-		{
-		}
-		return result;
 	}
 
 	private static void DetachItem(Body body, Item item)

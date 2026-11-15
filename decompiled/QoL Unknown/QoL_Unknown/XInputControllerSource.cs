@@ -8,7 +8,7 @@ internal sealed class XInputControllerSource : IControllerInputSource
 
 	private const float DisconnectedScanInterval = 0.5f;
 
-	private int activeIndex = 0;
+	private int activeIndex;
 
 	private float nextDisconnectedScanTime;
 
@@ -16,10 +16,10 @@ internal sealed class XInputControllerSource : IControllerInputSource
 
 	public bool TryRead(out RawControllerState rawState, out string deviceName)
 	{
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
 		rawState = default(RawControllerState);
 		deviceName = "Xbox Controller";
 		if (!TryGetConnectedState(activeIndex, out var state))

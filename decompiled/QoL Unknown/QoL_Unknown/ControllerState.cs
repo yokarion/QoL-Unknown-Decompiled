@@ -14,8 +14,8 @@ internal sealed class ControllerState
 
 	public void BeginFrame()
 	{
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
 		previousMask = currentMask;
 		currentMask = 0uL;
 		LeftStick = Vector2.zero;
@@ -35,8 +35,8 @@ internal sealed class ControllerState
 
 	public void SetSticks(Vector2 left, Vector2 right)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
 		LeftStick = left;
 		RightStick = right;
 	}
@@ -49,19 +49,27 @@ internal sealed class ControllerState
 	public bool IsDown(ControllerButton button)
 	{
 		ulong num = (ulong)(1L << (int)button);
-		return (currentMask & num) != 0L && (previousMask & num) == 0;
+		if ((currentMask & num) != 0L)
+		{
+			return (previousMask & num) == 0;
+		}
+		return false;
 	}
 
 	public bool IsUp(ControllerButton button)
 	{
 		ulong num = (ulong)(1L << (int)button);
-		return (currentMask & num) == 0L && (previousMask & num) != 0;
+		if ((currentMask & num) == 0L)
+		{
+			return (previousMask & num) != 0;
+		}
+		return false;
 	}
 
 	public void ClearAll()
 	{
-		//IL_0012: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
 		currentMask = 0uL;
 		previousMask = 0uL;
 		LeftStick = Vector2.zero;

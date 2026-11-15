@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using BepInEx.Bootstrap;
 using BepInEx.Logging;
 using HarmonyLib;
 using TMPro;
@@ -40,11 +41,9 @@ internal class SpawnAutofill
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.spawnautofill");
-		val.PatchAll(typeof(SpawnAutofill));
+		new Harmony("org.bepinex.plugins.qol.spawnautofill").PatchAll(typeof(SpawnAutofill));
 	}
 
 	private static void EnsurePrefabLookup()
@@ -76,6 +75,10 @@ internal class SpawnAutofill
 			return;
 		}
 		cuCoreReflectionInitialized = true;
+		if (!Chainloader.PluginInfos.ContainsKey("net.cucorelib"))
+		{
+			return;
+		}
 		try
 		{
 			cuCoreItemRegistryType = AccessTools.TypeByName("CUCoreLib.Registries.ItemRegistry");
@@ -138,12 +141,13 @@ internal class SpawnAutofill
 		try
 		{
 			object[] array = new object[2] { itemId, null };
-			if (!(cuCoreTryGetIconMethod.Invoke(null, array) is bool flag) || !flag)
+			object obj = cuCoreTryGetIconMethod.Invoke(null, array);
+			if (!(obj is bool) || !(bool)obj)
 			{
 				return false;
 			}
-			object obj = array[1];
-			sprite = (Sprite)((obj is Sprite) ? obj : null);
+			object obj2 = array[1];
+			sprite = (Sprite)((obj2 is Sprite) ? obj2 : null);
 			return (Object)(object)sprite != (Object)null;
 		}
 		catch (Exception ex)
@@ -211,25 +215,27 @@ internal class SpawnAutofill
 
 	private static void CreatePreviewImage(ConsoleScript console)
 	{
-		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0026: Expected O, but got Unknown
-		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b5: Expected O, but got Unknown
-		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ec: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0131: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0138: Expected O, but got Unknown
-		//IL_0165: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0189: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0196: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001e: Expected O, but got Unknown
+		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0068: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0105: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0114: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0119: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0140: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0155: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0160: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016a: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)previewImageObject != (Object)null)
 		{
 			return;
@@ -238,28 +244,27 @@ internal class SpawnAutofill
 		{
 			previewImageObject = new GameObject("SpawnPreviewImage");
 			previewImageObject.transform.SetParent(console.descriptionBack.transform.parent, false);
-			RectTransform val = previewImageObject.AddComponent<RectTransform>();
-			val.sizeDelta = new Vector2(64f, 64f);
-			val.anchorMin = new Vector2(0f, 0f);
-			val.anchorMax = new Vector2(0f, 0f);
-			val.pivot = new Vector2(0f, 1f);
-			GameObject val2 = new GameObject("Background");
+			RectTransform obj = previewImageObject.AddComponent<RectTransform>();
+			obj.sizeDelta = new Vector2(64f, 64f);
+			obj.anchorMin = new Vector2(0f, 0f);
+			obj.anchorMax = new Vector2(0f, 0f);
+			obj.pivot = new Vector2(0f, 1f);
+			GameObject val = new GameObject("Background");
+			val.transform.SetParent(previewImageObject.transform, false);
+			RectTransform obj2 = val.AddComponent<RectTransform>();
+			obj2.anchorMin = Vector2.zero;
+			obj2.anchorMax = Vector2.one;
+			obj2.offsetMin = Vector2.zero;
+			obj2.offsetMax = Vector2.zero;
+			((Graphic)val.AddComponent<Image>()).color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
+			GameObject val2 = new GameObject("ItemSprite");
 			val2.transform.SetParent(previewImageObject.transform, false);
-			RectTransform val3 = val2.AddComponent<RectTransform>();
-			val3.anchorMin = Vector2.zero;
-			val3.anchorMax = Vector2.one;
-			val3.offsetMin = Vector2.zero;
-			val3.offsetMax = Vector2.zero;
-			Image val4 = val2.AddComponent<Image>();
-			((Graphic)val4).color = new Color(0.1f, 0.1f, 0.1f, 0.9f);
-			GameObject val5 = new GameObject("ItemSprite");
-			val5.transform.SetParent(previewImageObject.transform, false);
-			RectTransform val6 = val5.AddComponent<RectTransform>();
-			val6.anchorMin = new Vector2(0.1f, 0.1f);
-			val6.anchorMax = new Vector2(0.9f, 0.9f);
-			val6.offsetMin = Vector2.zero;
-			val6.offsetMax = Vector2.zero;
-			previewImage = val5.AddComponent<Image>();
+			RectTransform obj3 = val2.AddComponent<RectTransform>();
+			obj3.anchorMin = new Vector2(0.1f, 0.1f);
+			obj3.anchorMax = new Vector2(0.9f, 0.9f);
+			obj3.offsetMin = Vector2.zero;
+			obj3.offsetMax = Vector2.zero;
+			previewImage = val2.AddComponent<Image>();
 			previewImage.preserveAspect = true;
 			previewImageObject.SetActive(false);
 		}
@@ -271,13 +276,13 @@ internal class SpawnAutofill
 
 	private static void UpdatePreviewImage(string itemName, Vector3 position)
 	{
-		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
 		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a3: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)previewImageObject == (Object)null) && !((Object)(object)previewImage == (Object)null))
 		{
 			if (string.IsNullOrEmpty(itemName) || !itemSprites.ContainsKey(itemName))
@@ -287,8 +292,7 @@ internal class SpawnAutofill
 			}
 			previewImage.sprite = itemSprites[itemName];
 			previewImageObject.SetActive(true);
-			RectTransform component = previewImageObject.GetComponent<RectTransform>();
-			((Transform)component).position = position + Vector3.right * 200f + Vector3.down * 32f;
+			((Transform)previewImageObject.GetComponent<RectTransform>()).position = position + Vector3.right * 200f + Vector3.down * 32f;
 		}
 	}
 
@@ -311,9 +315,9 @@ internal class SpawnAutofill
 	[HarmonyPostfix]
 	private static void HandleDescriptionText_Postfix(ConsoleScript __instance, string[] args)
 	{
-		//IL_00bf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e0: Unknown result type (might be due to invalid IL or missing references)
 		try
 		{
 			if ((Object)(object)previewImageObject == (Object)null)
@@ -322,15 +326,23 @@ internal class SpawnAutofill
 			}
 			if (args.Length >= 2 && (args[0].Equals("spawn", StringComparison.OrdinalIgnoreCase) || args[0].Equals("cuspawn", StringComparison.OrdinalIgnoreCase)))
 			{
-				string text = args[1];
+				string partialItemName = args[1];
 				Command val = ConsoleScript.SearchExact(args[0]);
 				if (val != null && val.argAutofill != null && val.argAutofill.TryGetValue(0, out var value))
 				{
-					List<string> list = ConsoleScript.SearchArgumentAutofill(text, value);
+					List<string> list = ConsoleScript.SearchArgumentAutofill(partialItemName, value);
 					if (list.Count > 0)
 					{
-						int index = Mathf.Clamp(ConsoleScriptPatcher.SelectedAutofillIndex, 0, list.Count - 1);
-						string itemName = list[index];
+						int num = Mathf.Clamp(ConsoleScriptPatcher.SelectedAutofillIndex, 0, list.Count - 1);
+						string itemName = list[num];
+						if (num == 0)
+						{
+							string text = list.FirstOrDefault((string name) => name.Equals(partialItemName, StringComparison.OrdinalIgnoreCase));
+							if (text != null)
+							{
+								itemName = text;
+							}
+						}
 						Vector3 position = ((TMP_Text)__instance.descriptionText).transform.position;
 						UpdatePreviewImage(itemName, position);
 						return;

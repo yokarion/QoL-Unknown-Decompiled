@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -52,7 +51,11 @@ internal static class MultiplayerSaveBundle
 	public static bool HasBundle(string saveFolder, string slotFileName)
 	{
 		string bundlePath = GetBundlePath(saveFolder, slotFileName);
-		return Directory.Exists(bundlePath) && File.Exists(Path.Combine(bundlePath, "save.sv")) && File.Exists(Path.Combine(bundlePath, "mp_rules.json"));
+		if (Directory.Exists(bundlePath) && File.Exists(Path.Combine(bundlePath, "save.sv")))
+		{
+			return File.Exists(Path.Combine(bundlePath, "mp_rules.json"));
+		}
+		return false;
 	}
 
 	public static void DeleteSlotExtras(string saveFolder, string slotFileName)
@@ -133,7 +136,11 @@ internal static class MultiplayerSaveBundle
 		{
 			MultiplayerCompat.ClearPendingHostWorldgenStatePayload();
 		}
-		return File.Exists(Path.Combine(liveMpSavePath, "save.sv")) && File.Exists(Path.Combine(liveMpSavePath, "mp_rules.json"));
+		if (File.Exists(Path.Combine(liveMpSavePath, "save.sv")))
+		{
+			return File.Exists(Path.Combine(liveMpSavePath, "mp_rules.json"));
+		}
+		return false;
 	}
 
 	public static bool StageSingleplayerSlotAsHostBundle(string saveFolder, string slotFileName, SaveMetadata meta)
@@ -225,6 +232,7 @@ internal static class MultiplayerSaveBundle
 		{
 			RemoveInventoryItems(body);
 			ApplySavedItems(body, save);
+			CuCoreLibTransitionCompat.RestoreBodyState(body, save);
 			return true;
 		}
 		catch (Exception ex2)
@@ -260,14 +268,19 @@ internal static class MultiplayerSaveBundle
 
 	public static SaveMetadata BuildBaseMetadata()
 	{
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
 		float radLinePosY = 0f;
 		bool radLineActive = false;
 		if ((Object)(object)RadiationLine.line != (Object)null)
 		{
 			radLinePosY = ((Component)RadiationLine.line).transform.position.y;
 			radLineActive = RadiationLine.line.active;
+		}
+		float? radLineRemainingSeconds = null;
+		if ((Object)(object)WorldGeneration.world != (Object)null && WorldGeneration.world.maxTimePerLayer > 0f)
+		{
+			radLineRemainingSeconds = Mathf.Max(0f, WorldGeneration.world.maxTimePerLayer - WorldGeneration.world.layerTimeSpent);
 		}
 		return new SaveMetadata
 		{
@@ -281,6 +294,7 @@ internal static class MultiplayerSaveBundle
 			BiomeIndex = WorldGeneration.world.biomeDepth,
 			RadLinePosY = radLinePosY,
 			RadLineActive = radLineActive,
+			RadLineRemainingSeconds = radLineRemainingSeconds,
 			IGTSeconds = TimerMenuPatcher.GetIGT(),
 			RTASeconds = (float)TimerMenuPatcher.GetRTA().TotalSeconds,
 			LoadedFromMenu = SaveSystemPatcher.LoadedFromMenu,
@@ -292,7 +306,7 @@ internal static class MultiplayerSaveBundle
 
 	public static void ApplyMetadataForLoad(SaveMetadata meta)
 	{
-		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
 		if (meta == null)
 		{
 			SeedManager.SetSeed("");
@@ -314,6 +328,7 @@ internal static class MultiplayerSaveBundle
 		}
 		SaveSystemPatcher.PendingRadLineY = meta.RadLinePosY;
 		SaveSystemPatcher.PendingRadLineActive = meta.RadLineActive;
+		SaveSystemPatcher.PendingRadLineRemainingSeconds = meta.RadLineRemainingSeconds;
 		SaveSystemPatcher.PendingLoadPosition = (meta.UseVanillaLayerSpawn ? ((Vector3?)null) : new Vector3?(meta.PlayerPosition.ToVector3()));
 		SaveSystemPatcher.PendingIGTSeconds = meta.IGTSeconds;
 		SaveSystemPatcher.PendingRTASeconds = meta.RTASeconds;
@@ -339,7 +354,9 @@ internal static class MultiplayerSaveBundle
 			{
 				return null;
 			}
-			return SaveSystem.Unzip(File.ReadAllBytes(text));
+			JObject val = JObject.Parse(SaveSystem.Unzip(File.ReadAllBytes(text)));
+			CuCoreLibTransitionCompat.CaptureBodyState(PlayerCamera.main.body, val);
+			return ((JToken)val).ToString((Formatting)0, Array.Empty<JsonConverter>());
 		}
 		finally
 		{
@@ -378,21 +395,21 @@ internal static class MultiplayerSaveBundle
 
 	private static void WriteImportedSingleplayerRules(string rulesPath, SaveMetadata meta, string hostId)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0068: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d2: Expected O, but got Unknown
-		//IL_00d4: Expected O, but got Unknown
-		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0100: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013d: Expected O, but got Unknown
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cb: Expected O, but got Unknown
+		//IL_00cc: Expected O, but got Unknown
+		//IL_00ea: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ef: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012a: Expected O, but got Unknown
 		JObject val = new JObject
 		{
 			["hello"] = JToken.op_Implicit("QoL Unknown imported singleplayer slot for Together host"),
@@ -422,23 +439,22 @@ internal static class MultiplayerSaveBundle
 	{
 		Directory.CreateDirectory(destination);
 		string[] directories = Directory.GetDirectories(source, "*", SearchOption.AllDirectories);
-		foreach (string text in directories)
+		for (int i = 0; i < directories.Length; i++)
 		{
-			Directory.CreateDirectory(text.Replace(source, destination));
+			Directory.CreateDirectory(directories[i].Replace(source, destination));
 		}
-		string[] files = Directory.GetFiles(source, "*", SearchOption.AllDirectories);
-		foreach (string text2 in files)
+		directories = Directory.GetFiles(source, "*", SearchOption.AllDirectories);
+		foreach (string obj in directories)
 		{
-			File.Copy(text2, text2.Replace(source, destination), overwrite: true);
+			File.Copy(obj, obj.Replace(source, destination), overwrite: true);
 		}
 	}
 
 	private static void RemoveInventoryItems(Body body)
 	{
-		List<Item> list = (from item in ((Component)body).GetComponentsInChildren<Item>(true)
+		foreach (Item item in (from item in ((Component)body).GetComponentsInChildren<Item>(true)
 			where (Object)(object)item != (Object)null && ((Component)item).transform.IsChildOf(((Component)body).transform)
-			select item).ToList();
-		foreach (Item item in list)
+			select item).ToList())
 		{
 			Object.DestroyImmediate((Object)(object)((Component)item).gameObject);
 		}
@@ -446,8 +462,8 @@ internal static class MultiplayerSaveBundle
 
 	private static void ApplySavedItems(Body body, JObject save)
 	{
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
 		JToken obj = save["items"];
 		SavedItem[] array = (SavedItem[])(((object)((obj != null) ? obj.ToObject<SavedItem[]>() : null)) ?? ((object)new SavedItem[0]));
 		JToken obj2 = save["itemComponents"];
@@ -508,10 +524,10 @@ internal static class MultiplayerSaveBundle
 
 	private static void ApplyItemComponents(GameObject gameObject, JObject components)
 	{
-		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)gameObject == (Object)null || components == null)
 		{
 			return;

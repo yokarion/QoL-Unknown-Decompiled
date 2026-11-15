@@ -13,12 +13,10 @@ internal class KeybindsPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Expected O, but got Unknown
+		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
 		ModKeybinds.Initialize(logger);
-		Harmony val = new Harmony("org.bepinex.plugins.qol.keybinds");
-		val.PatchAll(typeof(KeybindsPatcher));
+		new Harmony("org.bepinex.plugins.qol.keybinds").PatchAll(typeof(KeybindsPatcher));
 	}
 
 	[HarmonyPatch(typeof(Settings), "LoadSettings")]
@@ -32,8 +30,8 @@ internal class KeybindsPatcher
 	[HarmonyPrefix]
 	private static bool GetKey_Prefix(KeyCode key, ref bool __result)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		if (!KeybindCombos.IsCombo(key))
 		{
 			return true;
@@ -46,8 +44,8 @@ internal class KeybindsPatcher
 	[HarmonyPrefix]
 	private static bool GetKeyDown_Prefix(KeyCode key, ref bool __result)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		if (!KeybindCombos.IsCombo(key))
 		{
 			return true;
@@ -60,8 +58,8 @@ internal class KeybindsPatcher
 	[HarmonyPrefix]
 	private static bool GetKeyUp_Prefix(KeyCode key, ref bool __result)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		if (!KeybindCombos.IsCombo(key))
 		{
 			return true;
@@ -74,8 +72,8 @@ internal class KeybindsPatcher
 	[HarmonyPostfix]
 	private static void GetDisplayString_Postfix(SettingKeybind __instance, ref string __result)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
 		if (KeybindCombos.IsCombo(__instance.value))
 		{
 			__result = KeybindCombos.Format(__instance.value);
@@ -86,10 +84,10 @@ internal class KeybindsPatcher
 	[HarmonyPrefix]
 	private static bool GetBindName_Prefix(string action, ref string __result)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0012: Unknown result type (might be due to invalid IL or missing references)
 		KeyCode bind = KeyBinds.GetBind(action);
 		if (!KeybindCombos.IsCombo(bind))
 		{

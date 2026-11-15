@@ -83,59 +83,59 @@ internal static class DiscordPresenceEditor
 
 	private static void BuildPanel(Transform parent)
 	{
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003b: Expected O, but got Unknown
-		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0115: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0191: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01cf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01de: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0240: Unknown result type (might be due to invalid IL or missing references)
-		//IL_024f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0298: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02cd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02e9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0305: Unknown result type (might be due to invalid IL or missing references)
-		//IL_032f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_033e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0372: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0381: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03b4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03c3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0406: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0415: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0444: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0453: Unknown result type (might be due to invalid IL or missing references)
-		//IL_048b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_049a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04b1: Expected O, but got Unknown
-		//IL_04d0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04ec: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04f6: Expected O, but got Unknown
-		//IL_0515: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0524: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0531: Unknown result type (might be due to invalid IL or missing references)
-		//IL_053b: Expected O, but got Unknown
-		//IL_055a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0569: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0269: Unknown result type (might be due to invalid IL or missing references)
-		//IL_026e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0274: Expected O, but got Unknown
-		//IL_0583: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0588: Unknown result type (might be due to invalid IL or missing references)
-		//IL_058e: Expected O, but got Unknown
+		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0039: Expected O, but got Unknown
+		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ad: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0105: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0180: Unknown result type (might be due to invalid IL or missing references)
+		//IL_018f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01be: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01cd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_022d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_023c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0285: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0294: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02ba: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02d5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02f0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0319: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0328: Unknown result type (might be due to invalid IL or missing references)
+		//IL_035c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_036b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_039e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03ad: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03f0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03ff: Unknown result type (might be due to invalid IL or missing references)
+		//IL_042e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_043d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0475: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0484: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0491: Unknown result type (might be due to invalid IL or missing references)
+		//IL_049b: Expected O, but got Unknown
+		//IL_04ba: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04c9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04d6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04e0: Expected O, but got Unknown
+		//IL_04ff: Unknown result type (might be due to invalid IL or missing references)
+		//IL_050e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_051b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0525: Expected O, but got Unknown
+		//IL_0544: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0553: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0256: Unknown result type (might be due to invalid IL or missing references)
+		//IL_025b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0261: Expected O, but got Unknown
+		//IL_056d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0572: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0578: Expected O, but got Unknown
 		Inputs.Clear();
 		panel = new GameObject("QoLDiscordPresenceEditor", new Type[2]
 		{
@@ -208,20 +208,20 @@ internal static class DiscordPresenceEditor
 
 	private static void CreateCompactInputRow(DiscordPresenceField field, string label, Vector2 anchoredPosition, TMP_FontAsset font)
 	{
-		//IL_0035: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0125: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0131: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0137: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0146: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0153: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015d: Expected O, but got Unknown
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0090: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0134: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0150: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015a: Expected O, but got Unknown
 		CreateText(panel.transform, label + "Label", label, new Vector2(anchoredPosition.x - 255f, anchoredPosition.y), new Vector2(130f, 26f), 14f, (TextAlignmentOptions)4100, font);
 		TMP_InputField val = CreateInput(panel.transform, field.ToString() + "Input", new Vector2(anchoredPosition.x + 45f, anchoredPosition.y), new Vector2(450f, 42f), font);
 		((UnityEvent<string>)(object)val.onValueChanged).AddListener((UnityAction<string>)delegate
@@ -250,40 +250,40 @@ internal static class DiscordPresenceEditor
 
 	private static TMP_InputField CreateInput(Transform parent, string name, Vector2 anchoredPosition, Vector2 size, TMP_FontAsset font)
 	{
-		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0035: Expected O, but got Unknown
-		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0034: Expected O, but got Unknown
+		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
 		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ee: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ff: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0104: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0134: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013a: Expected O, but got Unknown
-		//IL_0157: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0164: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0192: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ad: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ef: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01fc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0209: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0127: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012d: Expected O, but got Unknown
+		//IL_0147: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0152: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0167: Unknown result type (might be due to invalid IL or missing references)
+		//IL_017c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0196: Unknown result type (might be due to invalid IL or missing references)
+		//IL_019b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01bb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01c6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01db: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0211: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0216: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0236: Unknown result type (might be due to invalid IL or missing references)
-		//IL_023b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_025e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_026b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0278: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0285: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02a6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_031e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0334: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0241: Unknown result type (might be due to invalid IL or missing references)
+		//IL_024c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0256: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0276: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02db: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02ed: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject(name, new Type[3]
 		{
 			typeof(RectTransform),
@@ -349,15 +349,16 @@ internal static class DiscordPresenceEditor
 
 	private static TextMeshProUGUI CreateText(Transform parent, string name, string text, Vector2 anchoredPosition, Vector2 size, float fontSize, TextAlignmentOptions alignment, TMP_FontAsset font)
 	{
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Expected O, but got Unknown
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0074: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject(name, new Type[2]
 		{
 			typeof(RectTransform),
@@ -386,21 +387,23 @@ internal static class DiscordPresenceEditor
 
 	private static TextMeshProUGUI CreatePanelText(Transform parent, string name, string text, Vector2 anchoredPosition, Vector2 size, float fontSize, TMP_FontAsset font)
 	{
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Expected O, but got Unknown
-		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0068: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
 		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0105: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0112: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0129: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0140: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0160: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0090: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0111: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0125: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0144: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject(name + "Panel", new Type[2]
 		{
 			typeof(RectTransform),
@@ -417,38 +420,42 @@ internal static class DiscordPresenceEditor
 		component2.sprite = ResourceLookupCache.FindSpriteContains("uiBlockNano");
 		component2.type = (Type)1;
 		((Graphic)component2).color = new Color(0f, 0f, 0f, 0.26f);
-		TextMeshProUGUI val2 = CreateText(val.transform, name, text, Vector2.zero, Vector2.zero, fontSize, (TextAlignmentOptions)257, font);
-		RectTransform component3 = ((Component)val2).GetComponent<RectTransform>();
+		TextMeshProUGUI obj = CreateText(val.transform, name, text, Vector2.zero, Vector2.zero, fontSize, (TextAlignmentOptions)257, font);
+		RectTransform component3 = ((Component)obj).GetComponent<RectTransform>();
 		component3.anchorMin = Vector2.zero;
 		component3.anchorMax = Vector2.one;
 		component3.offsetMin = new Vector2(12f, 10f);
 		component3.offsetMax = new Vector2(-12f, -10f);
-		((Graphic)val2).color = new Color(0.9f, 0.94f, 1f, 1f);
-		((TMP_Text)val2).enableWordWrapping = true;
-		return val2;
+		((Graphic)obj).color = new Color(0.9f, 0.94f, 1f, 1f);
+		((TMP_Text)obj).enableWordWrapping = true;
+		return obj;
 	}
 
 	private static Button CreateButton(Transform parent, string name, string label, Vector2 anchoredPosition, Vector2 size, TMP_FontAsset font, UnityAction onClick)
 	{
-		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0035: Expected O, but got Unknown
-		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
 		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ba: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0102: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0107: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0123: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0144: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0151: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0177: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0113: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0130: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0146: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0150: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015a: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject(name, new Type[3]
 		{
 			typeof(RectTransform),
@@ -467,13 +474,13 @@ internal static class DiscordPresenceEditor
 		component2.type = (Type)1;
 		((Graphic)component2).color = Color.white;
 		CreateOpaqueInset(val.transform, "Fill", new Vector2(Mathf.Max(0f, size.x - 8f), Mathf.Max(0f, size.y - 8f)), Color.black);
-		TextMeshProUGUI val2 = CreateText(val.transform, "Label", label, Vector2.zero, Vector2.zero, 16f, (TextAlignmentOptions)514, font);
-		RectTransform component3 = ((Component)val2).GetComponent<RectTransform>();
+		TextMeshProUGUI obj = CreateText(val.transform, "Label", label, Vector2.zero, Vector2.zero, 16f, (TextAlignmentOptions)514, font);
+		RectTransform component3 = ((Component)obj).GetComponent<RectTransform>();
 		component3.anchorMin = Vector2.zero;
 		component3.anchorMax = Vector2.one;
 		component3.offsetMin = Vector2.zero;
 		component3.offsetMax = Vector2.zero;
-		((Graphic)val2).color = Color.white;
+		((Graphic)obj).color = Color.white;
 		Button component4 = val.GetComponent<Button>();
 		((UnityEventBase)component4.onClick).RemoveAllListeners();
 		((UnityEvent)component4.onClick).AddListener(onClick);
@@ -482,14 +489,16 @@ internal static class DiscordPresenceEditor
 
 	private static void CreateOpaqueInset(Transform parent, string name, Vector2 size, Color color)
 	{
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Expected O, but got Unknown
-		//IL_0054: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009a: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject(name, new Type[2]
 		{
 			typeof(RectTransform),
@@ -564,8 +573,11 @@ internal static class DiscordPresenceEditor
 
 	private static string GetInputText(DiscordPresenceField field)
 	{
-		TMP_InputField value;
-		return Inputs.TryGetValue(field, out value) ? value.text : DiscordPresenceSettings.GetTemplate(field);
+		if (!Inputs.TryGetValue(field, out var value))
+		{
+			return DiscordPresenceSettings.GetTemplate(field);
+		}
+		return value.text;
 	}
 
 	private static void SetStatus(string message)

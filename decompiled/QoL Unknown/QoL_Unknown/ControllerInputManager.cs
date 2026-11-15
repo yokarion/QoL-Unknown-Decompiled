@@ -118,8 +118,9 @@ public class ControllerInputManager : MonoBehaviour
 
 	internal static ControllerInputManager EnsureInstance()
 	{
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Expected O, but got Unknown
+		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Expected O, but got Unknown
 		if ((Object)(object)Instance != (Object)null)
 		{
 			return Instance;
@@ -131,14 +132,14 @@ public class ControllerInputManager : MonoBehaviour
 			return controllerInputManager;
 		}
 		GameObject val = new GameObject("ControllerManager");
-		Object.DontDestroyOnLoad((Object)(object)val);
+		Object.DontDestroyOnLoad((Object)val);
 		return val.AddComponent<ControllerInputManager>();
 	}
 
 	private void Awake()
 	{
-		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)Instance != (Object)null && (Object)(object)Instance != (Object)(object)this)
 		{
 			Object.Destroy((Object)(object)((Component)this).gameObject);
@@ -160,9 +161,9 @@ public class ControllerInputManager : MonoBehaviour
 
 	private void Update()
 	{
-		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
 		state.BeginFrame();
 		if (TryReadFromSources(out var raw, out var sourceName, out var deviceName))
 		{
@@ -222,10 +223,10 @@ public class ControllerInputManager : MonoBehaviour
 
 	private bool HasControllerActivity()
 	{
-		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
 		Vector2 val = state.LeftStick;
 		if (!(((Vector2)(ref val)).sqrMagnitude > 0.01f))
 		{

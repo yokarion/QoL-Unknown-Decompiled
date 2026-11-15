@@ -16,6 +16,8 @@ internal sealed class CraftItem
 
 	public bool Favourited;
 
+	public bool DestroyAtZeroCondition;
+
 	public int ContainerItemCount;
 
 	public bool IsLiquidContainer;
@@ -26,14 +28,15 @@ internal sealed class CraftItem
 
 	public static CraftItem FromItem(Item item)
 	{
-		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Expected O, but got Unknown
+		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0092: Expected O, but got Unknown
 		CraftItem craftItem = new CraftItem
 		{
 			Actual = item,
 			Id = item.id,
 			Condition = item.condition,
-			Favourited = item.favourited
+			Favourited = item.favourited,
+			DestroyAtZeroCondition = (item.Stats != null && item.Stats.destroyAtZeroCondition)
 		};
 		List<CraftingQuality> list = item.Stats?.qualities;
 		if (list != null)
@@ -63,18 +66,22 @@ internal sealed class CraftItem
 
 	public static CraftItem FromResult(string id, float condition)
 	{
-		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006c: Expected O, but got Unknown
+		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006d: Expected O, but got Unknown
 		CraftItem craftItem = new CraftItem
 		{
 			Id = id,
 			Condition = condition
 		};
-		if (Item.GlobalItems.TryGetValue(id, out var value) && value.qualities != null)
+		if (Item.GlobalItems.TryGetValue(id, out var value))
 		{
-			for (int i = 0; i < value.qualities.Count; i++)
+			craftItem.DestroyAtZeroCondition = value.destroyAtZeroCondition;
+			if (value.qualities != null)
 			{
-				craftItem.Qualities.Add(new CraftingQuality(value.qualities[i].id, value.qualities[i].amount));
+				for (int i = 0; i < value.qualities.Count; i++)
+				{
+					craftItem.Qualities.Add(new CraftingQuality(value.qualities[i].id, value.qualities[i].amount));
+				}
 			}
 		}
 		return craftItem;
@@ -97,8 +104,8 @@ internal sealed class CraftItem
 
 	public CraftItem Clone()
 	{
-		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Expected O, but got Unknown
+		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Expected O, but got Unknown
 		CraftItem craftItem = new CraftItem
 		{
 			Actual = Actual,
@@ -106,6 +113,7 @@ internal sealed class CraftItem
 			Condition = Condition,
 			Consumed = Consumed,
 			Favourited = Favourited,
+			DestroyAtZeroCondition = DestroyAtZeroCondition,
 			ContainerItemCount = ContainerItemCount,
 			IsLiquidContainer = IsLiquidContainer
 		};
@@ -124,7 +132,7 @@ internal sealed class CraftItem
 	{
 		for (int i = 0; i < Liquids.Count; i++)
 		{
-			if (string.Equals(Liquids[i].Id, id, StringComparison.OrdinalIgnoreCase))
+			if (Liquids[i].Id == id)
 			{
 				return Liquids[i].Amount;
 			}

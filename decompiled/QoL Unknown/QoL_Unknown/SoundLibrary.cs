@@ -30,17 +30,15 @@ public static class SoundLibrary
 			try
 			{
 				AudioClip[] array = Resources.LoadAll<AudioClip>("Sounds");
-				AudioClip[] array2 = array;
-				foreach (AudioClip val in array2)
+				foreach (AudioClip val in array)
 				{
 					if ((Object)(object)val != (Object)null && !IsIntegerClipName(((Object)val).name))
 					{
 						AllClipNames.Add(((Object)val).name);
 					}
 				}
-				AudioClip[] array3 = Resources.LoadAll<AudioClip>("Sounds/music");
-				AudioClip[] array4 = array3;
-				foreach (AudioClip val2 in array4)
+				array = Resources.LoadAll<AudioClip>("Sounds/music");
+				foreach (AudioClip val2 in array)
 				{
 					if ((Object)(object)val2 != (Object)null && !IsIntegerClipName(((Object)val2).name) && !AllClipNames.Contains(((Object)val2).name))
 					{
@@ -86,7 +84,11 @@ public static class SoundLibrary
 				cuCoreLibAudioCacheField = AccessTools.Field(AccessTools.TypeByName("CUCoreLib.Helpers.AssetLoader"), "AudioClipCache");
 			}
 		}
-		return (cuCoreLibAudioCacheField?.GetValue(null) is Dictionary<string, AudioClip> dictionary) ? dictionary.Values.ToList() : new List<AudioClip>();
+		if (!(cuCoreLibAudioCacheField?.GetValue(null) is Dictionary<string, AudioClip> dictionary))
+		{
+			return new List<AudioClip>();
+		}
+		return dictionary.Values.ToList();
 	}
 
 	private static bool IsIntegerClipName(string clipName)

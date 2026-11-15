@@ -41,10 +41,10 @@ internal class FontPatcher
 			byte[] array = new byte[stream.Length];
 			stream.Read(array, 0, array.Length);
 			AssetBundle val = AssetBundle.LoadFromMemory(array);
-			TMP_FontAsset val2 = val.LoadAllAssets<TMP_FontAsset>().FirstOrDefault();
-			Object.DontDestroyOnLoad((Object)(object)val2);
+			TMP_FontAsset? obj = val.LoadAllAssets<TMP_FontAsset>().FirstOrDefault();
+			Object.DontDestroyOnLoad((Object)(object)obj);
 			val.Unload(false);
-			return val2;
+			return obj;
 		}
 		catch (Exception)
 		{
@@ -79,8 +79,7 @@ internal class FontPatcher
 			{
 				val.fallbackFontAssetTable = new List<TMP_FontAsset>();
 			}
-			List<TMP_FontAsset> list = BuildPerFontChain(val, retroNormal, globalFallbackChain);
-			foreach (TMP_FontAsset item2 in list)
+			foreach (TMP_FontAsset item2 in BuildPerFontChain(val, retroNormal, globalFallbackChain))
 			{
 				if (!val.fallbackFontAssetTable.Contains(item2))
 				{

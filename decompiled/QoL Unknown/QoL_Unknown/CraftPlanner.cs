@@ -14,6 +14,8 @@ internal static class CraftPlanner
 
 	private static readonly Dictionary<string, List<Recipe>> RecipesByResultId = new Dictionary<string, List<Recipe>>(StringComparer.OrdinalIgnoreCase);
 
+	private static readonly Dictionary<string, List<Recipe>> RecipesByResultQuality = new Dictionary<string, List<Recipe>>(StringComparer.Ordinal);
+
 	private static readonly HashSet<string> NonAutoCraftableResults = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 	private static readonly Dictionary<int, bool> CraftableByRecipe = new Dictionary<int, bool>();
@@ -23,6 +25,8 @@ internal static class CraftPlanner
 	private static int cachedRevision = -1;
 
 	private static int recipeIndexCacheCount = -1;
+
+	private static List<Recipe> recipeIndexCacheSource;
 
 	public static CraftPlan Build(Recipe recipe, int requestedAmount, CraftInventory inventory)
 	{
@@ -104,19 +108,20 @@ internal static class CraftPlanner
 		return craftPlan.MaxCraftable;
 	}
 
-	public static CraftIngredientStatus InspectIngredient(RecipeItem ingredient, CraftInventory working, HashSet<string> coveredAutoCrafts)
+	public static CraftIngredientStatus InspectIngredient(RecipeItem ingredient, CraftInventory working, HashSet<string> coveredAutoCrafts, out Item usedItem)
 	{
+		usedItem = null;
 		if (ingredient == null || working == null)
 		{
 			return CraftIngredientStatus.Missing;
 		}
-		if (working.TryConsume(ingredient))
+		if (working.TryConsume(ingredient, out var used))
 		{
-			return CraftIngredientStatus.Available;
+			return ClassifyConsumed(ingredient, used, coveredAutoCrafts, out usedItem);
 		}
-		if (working.TryRepairInto(ingredient, null) && working.TryConsume(ingredient))
+		if (working.TryRepairInto(ingredient, null) && working.TryConsume(ingredient, out used))
 		{
-			return CraftIngredientStatus.Available;
+			return ClassifyConsumed(ingredient, used, coveredAutoCrafts, out usedItem);
 		}
 		string text = AutoCraftKey(ingredient);
 		if (string.IsNullOrEmpty(text))
@@ -126,6 +131,23 @@ internal static class CraftPlanner
 		if (!TryPlanSource(ingredient, text, working, new HashSet<string>(StringComparer.OrdinalIgnoreCase) { text }, 1, null, null))
 		{
 			return CraftIngredientStatus.AutoCraftableButBlocked;
+		}
+		coveredAutoCrafts?.Add(text);
+		return CraftIngredientStatus.AutoCraftable;
+	}
+
+	private static CraftIngredientStatus ClassifyConsumed(RecipeItem ingredient, Item consumed, HashSet<string> coveredAutoCrafts, out Item usedItem)
+	{
+		if ((Object)(object)consumed != (Object)null)
+		{
+			usedItem = consumed;
+			return CraftIngredientStatus.Available;
+		}
+		usedItem = null;
+		string text = AutoCraftKey(ingredient);
+		if (string.IsNullOrEmpty(text))
+		{
+			return CraftIngredientStatus.Available;
 		}
 		coveredAutoCrafts?.Add(text);
 		return CraftIngredientStatus.AutoCraftable;
@@ -142,7 +164,11 @@ internal static class CraftPlanner
 		{
 			return null;
 		}
-		return IsExcludedFromAutoCraft(text) ? null : text;
+		if (!IsExcludedFromAutoCraft(text))
+		{
+			return text;
+		}
+		return null;
 	}
 
 	public static string SelfCheck()
@@ -152,8 +178,8 @@ internal static class CraftPlanner
 		{
 			return "Craft self-check: no player body loaded.";
 		}
+		CraftInventory craftInventory = CraftInventory.Capture(val);
 		CraftInventory inventory = CraftInventory.Capture(val);
-		CraftInventory inventory2 = CraftInventory.Capture(val);
 		int num = 0;
 		int num2 = 0;
 		int num3 = 0;
@@ -163,11 +189,18 @@ internal static class CraftPlanner
 			if (val2 != null && val2.visible)
 			{
 				num++;
-				bool flag = IsCraftable(val2, inventory);
-				int num4 = MaxCraftable(val2, inventory);
-				bool flag2 = IsCraftable(val2, inventory);
-				bool flag3 = IsCraftable(val2, inventory2);
-				CraftPlan craftPlan = Build(val2, num4 + 5, inventory);
+				bool flag = IsCraftable(val2, craftInventory);
+				int num4 = MaxCraftable(val2, craftInventory);
+				bool flag2 = IsCraftable(val2, craftInventory);
+				bool flag3 = IsCraftable(val2, inventory);
+				CraftPlan craftPlan = Build(val2, num4 + 5, craftInventory);
+				bool flag4 = craftInventory.MatchesDirectly(val2);
+				bool flag5 = ReachableItems.MatchIngredients(val2, val, tolerateMissing: false) != null;
+				if (flag4 != flag5)
+				{
+					num3++;
+					Debug.Log((object)$"[CraftCheck] {val2.simpleName}: plannerDirect={flag4} liveMatch={flag5}");
+				}
 				if (flag != num4 >= 1 || flag2 != flag || flag3 != flag || craftPlan.CanCraft != flag || (flag && craftPlan.RequestedAmount != num4))
 				{
 					num3++;
@@ -230,7 +263,12 @@ internal static class CraftPlanner
 			return false;
 		}
 		RebuildRecipeIndexIfNeeded();
-		if (!RecipesByResultId.TryGetValue(resultId, out var value))
+		List<Recipe> value = null;
+		if (!ingredient.specific)
+		{
+			RecipesByResultQuality.TryGetValue(resultId, out value);
+		}
+		if (value == null && !RecipesByResultId.TryGetValue(resultId, out value))
 		{
 			return false;
 		}
@@ -303,29 +341,48 @@ internal static class CraftPlanner
 
 	private static void RebuildRecipeIndexIfNeeded()
 	{
-		int num = Recipes.recipes?.Count ?? 0;
-		if (recipeIndexCacheCount == num)
+		List<Recipe> recipes = Recipes.recipes;
+		int num = recipes?.Count ?? 0;
+		if (recipeIndexCacheSource == recipes && recipeIndexCacheCount == num)
 		{
 			return;
 		}
 		RecipesByResultId.Clear();
+		RecipesByResultQuality.Clear();
+		recipeIndexCacheSource = recipes;
 		recipeIndexCacheCount = num;
-		if (Recipes.recipes == null)
+		if (recipes == null)
 		{
 			return;
 		}
-		for (int i = 0; i < Recipes.recipes.Count; i++)
+		for (int i = 0; i < recipes.Count; i++)
 		{
-			Recipe val = Recipes.recipes[i];
-			if (val?.result != null && !string.IsNullOrEmpty(val.result.id))
+			Recipe val = recipes[i];
+			if (val?.result == null || string.IsNullOrEmpty(val.result.id))
 			{
-				if (!RecipesByResultId.TryGetValue(val.result.id, out var value))
-				{
-					value = new List<Recipe>();
-					RecipesByResultId.Add(val.result.id, value);
-				}
-				value.Add(val);
+				continue;
 			}
+			IndexRecipe(RecipesByResultId, val.result.id, val);
+			if (!val.result.isLiquid && Item.GlobalItems != null && Item.GlobalItems.TryGetValue(val.result.id, out var value) && value?.qualities != null)
+			{
+				for (int j = 0; j < value.qualities.Count; j++)
+				{
+					IndexRecipe(RecipesByResultQuality, value.qualities[j].id, val);
+				}
+			}
+		}
+	}
+
+	private static void IndexRecipe(Dictionary<string, List<Recipe>> index, string key, Recipe recipe)
+	{
+		if (!string.IsNullOrEmpty(key))
+		{
+			if (!index.TryGetValue(key, out var value))
+			{
+				value = new List<Recipe>();
+				index.Add(key, value);
+			}
+			value.Add(recipe);
 		}
 	}
 

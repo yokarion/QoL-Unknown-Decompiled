@@ -26,15 +26,15 @@ internal class WaterPusherPatcher
 	[HarmonyPrefix]
 	private static bool OnTriggerStay2D_Prefix(WaterPusher __instance, Collider2D collision)
 	{
-		//IL_0199: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0116: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0162: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0168: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0178: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ee: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)collision == (Object)null || (Object)(object)collision.attachedRigidbody == (Object)null || (Object)(object)__instance == (Object)null)
 		{
 			return false;
@@ -93,7 +93,7 @@ internal class WaterPusherPatcher
 				ManualLogSource logger2 = Logger;
 				if (logger2 != null)
 				{
-					logger2.LogWarning((object)("Could not read WaterPusher.desiredSpeed; using the fallback speed. " + ex.Message));
+					logger2.LogWarning((object)("Could not read WaterPusher.desiredSpeed... " + ex.Message));
 				}
 			}
 			return 15f;

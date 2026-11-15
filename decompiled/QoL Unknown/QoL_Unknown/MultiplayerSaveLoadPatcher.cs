@@ -14,10 +14,8 @@ internal static class MultiplayerSaveLoadPatcher
 
 	public static void Initialize()
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000c: Expected O, but got Unknown
-		Harmony val = new Harmony("org.bepinex.plugins.qol.multiplayer_save_load");
-		val.PatchAll(typeof(MultiplayerSaveLoadPatcher));
+		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
+		new Harmony("org.bepinex.plugins.qol.multiplayer_save_load").PatchAll(typeof(MultiplayerSaveLoadPatcher));
 	}
 
 	public static void MarkMultiplayerSlotLoad()
@@ -32,8 +30,12 @@ internal static class MultiplayerSaveLoadPatcher
 
 	private static GameObject CreateUnlessLoadingMultiplayerSlot(string id, Vector2 position, float rotation)
 	{
-		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
-		return ShouldSkipEmergencyLight(id) ? null : Utils.Create(id, position, rotation);
+		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
+		if (!ShouldSkipEmergencyLight(id))
+		{
+			return Utils.Create(id, position, rotation);
+		}
+		return null;
 	}
 
 	private static bool ShouldSkipEmergencyLight(string id)
@@ -46,12 +48,20 @@ internal static class MultiplayerSaveLoadPatcher
 		{
 			return false;
 		}
-		return SaveSystem.loadedRun || MultiplayerCompat.IsServer;
+		if (!SaveSystem.loadedRun)
+		{
+			return MultiplayerCompat.IsServer;
+		}
+		return true;
 	}
 
 	private static Item GetItemUnlessNull(GameObject gameObject)
 	{
-		return ((Object)(object)gameObject == (Object)null) ? null : gameObject.GetComponent<Item>();
+		if (!((Object)(object)gameObject == (Object)null))
+		{
+			return gameObject.GetComponent<Item>();
+		}
+		return null;
 	}
 
 	private static void PickUpUnlessNull(Body body, Item item, int slot, bool force)
@@ -66,12 +76,12 @@ internal static class MultiplayerSaveLoadPatcher
 	[HarmonyTranspiler]
 	private static IEnumerable<CodeInstruction> WorldPlacePlayer_Transpiler(IEnumerable<CodeInstruction> instructions)
 	{
-		//IL_019b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a5: Expected O, but got Unknown
-		//IL_01c8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d2: Expected O, but got Unknown
-		//IL_01f6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0200: Expected O, but got Unknown
+		//IL_0183: Unknown result type (might be due to invalid IL or missing references)
+		//IL_018d: Expected O, but got Unknown
+		//IL_01a9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01b3: Expected O, but got Unknown
+		//IL_01d0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01da: Expected O, but got Unknown
 		List<CodeInstruction> list = instructions.ToList();
 		MethodInfo methodInfo = AccessTools.Method(typeof(Utils), "Create", new Type[3]
 		{

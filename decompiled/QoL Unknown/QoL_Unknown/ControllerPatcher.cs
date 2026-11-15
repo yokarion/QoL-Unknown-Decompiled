@@ -13,20 +13,18 @@ internal class ControllerPatcher
 		Logger = logger;
 		ControllerBindings.Initialize(logger);
 		ControllerInputManager.EnsureInstance();
-		if (!RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.controller", typeof(ControllerPatcher), logger))
-		{
-		}
+		RuntimePatchRegistry.PatchAllOnce("org.bepinex.plugins.qol.controller", typeof(ControllerPatcher), logger);
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "HandleInput")]
 	[HarmonyPostfix]
 	private static void HandleInput_Postfix(PlayerCamera __instance)
 	{
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
 		ControllerInputManager instance = ControllerInputManager.Instance;
 		if ((Object)(object)instance == (Object)null || !instance.IsControllerActive || !Object.op_Implicit((Object)(object)__instance.body))
 		{

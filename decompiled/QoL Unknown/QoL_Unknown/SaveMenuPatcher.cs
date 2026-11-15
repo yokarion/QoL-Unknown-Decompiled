@@ -21,14 +21,12 @@ internal class SaveMenuPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Expected O, but got Unknown
+		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
 		if (!initialized)
 		{
 			Logger = logger;
 			MainMenuSavePanel.Logger = logger;
-			Harmony val = new Harmony("org.bepinex.plugins.qol.savemenu");
-			val.PatchAll(typeof(SaveMenuPatcher));
+			new Harmony("org.bepinex.plugins.qol.savemenu").PatchAll(typeof(SaveMenuPatcher));
 			initialized = true;
 		}
 	}
@@ -57,59 +55,70 @@ internal class SaveMenuPatcher
 
 	private static void CreateQuickLoadButtons(PreRunScript context)
 	{
-		//IL_0109: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0113: Expected O, but got Unknown
-		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012c: Expected O, but got Unknown
-		GameObject val = GameObject.Find("Canvas");
+		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Expected O, but got Unknown
+		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0092: Expected O, but got Unknown
+		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0123: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0133: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0148: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0152: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0167: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0172: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0186: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a5: Unknown result type (might be due to invalid IL or missing references)
+		Canvas val = (((Object)(object)context != (Object)null) ? context.mainCanvas : null);
 		if ((Object)(object)val == (Object)null)
 		{
-			ManualLogSource logger = Logger;
-			if (logger != null)
-			{
-				logger.LogWarning((object)"[SaveMenuPatcher] Canvas not found; skipping quick load button creation.");
-			}
 			return;
 		}
-		Transform val2 = val.transform.Find("RunSettings");
+		Transform val2 = ((Component)val).transform.Find("RunSettings");
 		if ((Object)(object)val2 == (Object)null)
 		{
-			ManualLogSource logger2 = Logger;
-			if (logger2 != null)
-			{
-				logger2.LogWarning((object)"[SaveMenuPatcher] RunSettings container not found; skipping quick load button creation.");
-			}
 			return;
 		}
-		Transform val3 = FindQuickLoadTemplate(val2);
-		if ((Object)(object)val3 == (Object)null)
+		RemoveExistingQuickLoadButtons(val2);
+		CreateSeedInput(((Component)val).transform);
+		Button val3 = PreRunScript.instance?.loadButton;
+		if (!((Object)(object)val3 == (Object)null))
 		{
-			ManualLogSource logger3 = Logger;
-			if (logger3 != null)
+			((UnityEventBase)val3.onClick).RemoveAllListeners();
+			val3.onClick = new ButtonClickedEvent();
+			((UnityEvent)val3.onClick).AddListener(new UnityAction(MainMenuSavePanel.Show));
+			((Selectable)val3).interactable = true;
+			Image val4 = PreRunScript.instance?.loadButtonImage;
+			if ((Object)(object)val4 != (Object)null)
 			{
-				logger3.LogWarning((object)"[SaveMenuPatcher] Source quick load button template not found; skipping quick load button creation.");
+				((Behaviour)val4).enabled = true;
 			}
-			return;
-		}
-		GameObject gameObject = ((Component)val3).gameObject;
-		RectTransform component = gameObject.GetComponent<RectTransform>();
-		if ((Object)(object)component == (Object)null)
-		{
-			ManualLogSource logger4 = Logger;
-			if (logger4 != null)
+			Sprite val5 = Helper.LoadEmbeddedSprite("expand");
+			if ((Object)(object)val5 != (Object)null)
 			{
-				logger4.LogWarning((object)"[SaveMenuPatcher] Source quick load button has no RectTransform; skipping quick load button creation.");
+				GameObject val6 = new GameObject("ExpandIcon", new Type[3]
+				{
+					typeof(RectTransform),
+					typeof(CanvasRenderer),
+					typeof(Image)
+				});
+				val6.transform.SetParent(((Component)val3).transform, false);
+				RectTransform val7 = (RectTransform)val6.transform;
+				val7.sizeDelta = new Vector2(24f, 24f);
+				val7.anchorMin = new Vector2(1f, 0.5f);
+				val7.anchorMax = new Vector2(1f, 0.5f);
+				val7.pivot = new Vector2(1f, 0.5f);
+				val7.anchoredPosition = new Vector2(-16f, 0f);
+				Image component = val6.GetComponent<Image>();
+				component.sprite = val5;
+				component.preserveAspect = true;
+				((Graphic)component).color = Color.white;
+				((Graphic)component).raycastTarget = false;
 			}
-		}
-		else
-		{
-			RemoveExistingQuickLoadButtons(gameObject.transform.parent);
-			CreateSeedInput(val.transform);
-			Button component2 = gameObject.GetComponent<Button>();
-			((UnityEventBase)component2.onClick).RemoveAllListeners();
-			component2.onClick = new ButtonClickedEvent();
-			((UnityEvent)component2.onClick).AddListener(new UnityAction(MainMenuSavePanel.Show));
-			((Selectable)component2).interactable = true;
 		}
 	}
 
@@ -137,15 +146,15 @@ internal class SaveMenuPatcher
 
 	private static void ApplyQuickLoadLayerIcon(GameObject buttonObject, Sprite layerSprite, bool saveExists)
 	{
-		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0117: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0110: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00da: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ff: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
 		Image val = EnsureQuickLoadLayerIcon(buttonObject);
 		if ((Object)(object)val == (Object)null)
 		{
@@ -173,16 +182,16 @@ internal class SaveMenuPatcher
 		((Graphic)val).color = (Color)((!((Object)(object)layerSprite != (Object)null)) ? Color.clear : (saveExists ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.5f)));
 		transform.SetAsLastSibling();
 		TextMeshProUGUI[] componentsInChildren = buttonObject.GetComponentsInChildren<TextMeshProUGUI>(true);
-		foreach (TextMeshProUGUI val2 in componentsInChildren)
+		for (int i = 0; i < componentsInChildren.Length; i++)
 		{
-			((TMP_Text)val2).transform.SetAsLastSibling();
+			((TMP_Text)componentsInChildren[i]).transform.SetAsLastSibling();
 		}
 	}
 
 	private static Image EnsureQuickLoadLayerIcon(GameObject buttonObject)
 	{
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b6: Expected O, but got Unknown
+		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
 		Transform val = buttonObject.transform.Find("LayerIcon");
 		Image val2 = (((Object)(object)val != (Object)null) ? ((Component)val).GetComponent<Image>() : null);
 		if ((Object)(object)val2 == (Object)null)
@@ -207,8 +216,7 @@ internal class SaveMenuPatcher
 		}
 		for (int i = 0; i < buttonObject.transform.childCount; i++)
 		{
-			Transform child = buttonObject.transform.GetChild(i);
-			Image component = ((Component)child).GetComponent<Image>();
+			Image component = ((Component)buttonObject.transform.GetChild(i)).GetComponent<Image>();
 			if ((Object)(object)component != (Object)null && (Object)(object)component != (Object)(object)val2)
 			{
 				((Behaviour)component).enabled = false;
@@ -220,142 +228,134 @@ internal class SaveMenuPatcher
 
 	private static void CreateSeedInput(Transform canvas)
 	{
-		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c1: Expected O, but got Unknown
-		//IL_0168: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0198: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019f: Expected O, but got Unknown
+		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009e: Expected O, but got Unknown
+		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_017b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0180: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0192: Unknown result type (might be due to invalid IL or missing references)
+		//IL_019c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a8: Unknown result type (might be due to invalid IL or missing references)
 		//IL_01be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01cb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_023b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_026e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02d3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02e0: Unknown result type (might be due to invalid IL or missing references)
-		Transform val = FindExistingSeedInput(canvas);
-		if ((Object)(object)val != (Object)null)
+		//IL_01d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01f3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0214: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0245: Unknown result type (might be due to invalid IL or missing references)
+		//IL_029b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02a6: Unknown result type (might be due to invalid IL or missing references)
+		if (!((Object)(object)FindExistingSeedInput(canvas) != (Object)null))
 		{
-			Object.Destroy((Object)(object)((Component)val).gameObject);
-		}
-		Button val2 = FindButtonByText(canvas, "start");
-		RectTransform val3 = (((Object)(object)val2 != (Object)null) ? ((Component)val2).GetComponent<RectTransform>() : null);
-		if ((Object)(object)val3 == (Object)null || (Object)(object)((Transform)val3).parent == (Object)null)
-		{
-			ManualLogSource logger = Logger;
-			if (logger != null)
+			Transform val = canvas.Find("RunSettings/CharSelect/Bottom/Start");
+			Button val2 = (((Object)(object)val != (Object)null) ? ((Component)val).GetComponent<Button>() : null);
+			RectTransform val3 = (((Object)(object)val2 != (Object)null) ? ((Component)val2).GetComponent<RectTransform>() : null);
+			if (!((Object)(object)val3 == (Object)null) && !((Object)(object)((Transform)val3).parent == (Object)null))
 			{
-				logger.LogWarning((object)"[SaveMenuPatcher] Start button not found; skipping seed input creation.");
+				GameObject val4 = new GameObject("SeedInput", new Type[4]
+				{
+					typeof(RectTransform),
+					typeof(Image),
+					typeof(TMP_InputField),
+					typeof(UITooltip)
+				});
+				val4.transform.SetParent(((Transform)val3).parent, false);
+				RectTransform component = val4.GetComponent<RectTransform>();
+				SeedInputLayoutFollower seedInputLayoutFollower = val4.AddComponent<SeedInputLayoutFollower>();
+				seedInputLayoutFollower.sourceRect = val3;
+				seedInputLayoutFollower.originalOffsetMin = val3.offsetMin;
+				seedInputLayoutFollower.widthFactor = 0.32f;
+				seedInputLayoutFollower.maxWidth = 175f;
+				seedInputLayoutFollower.spacingFactor = 0.16f;
+				ConfigureSeedInputRect(component, val3, seedInputLayoutFollower.originalOffsetMin, 0.32f, 175f, 0.16f);
+				Image component2 = val4.GetComponent<Image>();
+				Image component3 = ((Component)val2).GetComponent<Image>();
+				component2.sprite = ((component3 != null) ? component3.sprite : null) ?? ResourceLookupCache.FindSpriteContains("uiBlockNano");
+				component2.type = (Type)1;
+				((Graphic)component2).color = Color.white;
+				GameObject val5 = new GameObject("Text Area", new Type[2]
+				{
+					typeof(RectTransform),
+					typeof(RectMask2D)
+				});
+				val5.transform.SetParent(val4.transform, false);
+				RectTransform component4 = val5.GetComponent<RectTransform>();
+				component4.anchorMin = Vector2.zero;
+				component4.anchorMax = Vector2.one;
+				component4.offsetMin = new Vector2(12f, 5f);
+				component4.offsetMax = new Vector2(-12f, -5f);
+				TextMeshProUGUI componentInChildren = ((Component)val2).GetComponentInChildren<TextMeshProUGUI>(true);
+				TMP_FontAsset font = ((componentInChildren != null) ? ((TMP_Text)componentInChildren).font : null);
+				TextMeshProUGUI textComponent = CreateSeedInputText(val5.transform, "Text", string.Empty, font, new Color(0.33f, 0.7f, 1f));
+				TextMeshProUGUI placeholder = CreateSeedInputText(val5.transform, "Placeholder", "Seed", font, new Color(1f, 1f, 1f, 0.45f));
+				TMP_InputField component5 = val4.GetComponent<TMP_InputField>();
+				component5.textViewport = component4;
+				component5.textComponent = (TMP_Text)(object)textComponent;
+				component5.placeholder = (Graphic)(object)placeholder;
+				component5.lineType = (LineType)0;
+				component5.characterLimit = 64;
+				((Selectable)component5).targetGraphic = (Graphic)(object)component2;
+				component5.selectionColor = new Color(0.35f, 0.62f, 1f, 0.45f);
+				component5.caretColor = Color.white;
+				component5.SetTextWithoutNotify(SeedManager.InputString ?? string.Empty);
+				SeedManager.SetSeed(component5.text);
+				((UnityEvent<string>)(object)component5.onValueChanged).AddListener((UnityAction<string>)SeedManager.SetSeed);
+				UITooltip component6 = val4.GetComponent<UITooltip>();
+				component6.skipLocale = true;
+				component6.tipName = "Seed";
+				component6.tipDesc = "Start a deterministic seeded run";
 			}
-			return;
 		}
-		GameObject val4 = new GameObject("SeedInput", new Type[4]
-		{
-			typeof(RectTransform),
-			typeof(Image),
-			typeof(TMP_InputField),
-			typeof(UITooltip)
-		});
-		val4.transform.SetParent(((Transform)val3).parent, false);
-		RectTransform component = val4.GetComponent<RectTransform>();
-		RectTransform sourceRect = val3;
-		ConfigureSeedInputRect(component, sourceRect, 0.32f, 175f, 0.16f);
-		SeedInputLayoutFollower seedInputLayoutFollower = val4.AddComponent<SeedInputLayoutFollower>();
-		seedInputLayoutFollower.sourceRect = sourceRect;
-		seedInputLayoutFollower.widthFactor = 0.32f;
-		seedInputLayoutFollower.maxWidth = 175f;
-		seedInputLayoutFollower.spacingFactor = 0.16f;
-		Image component2 = val4.GetComponent<Image>();
-		Image component3 = ((Component)val2).GetComponent<Image>();
-		component2.sprite = ((component3 != null) ? component3.sprite : null) ?? ResourceLookupCache.FindSpriteContains("uiBlockNano");
-		component2.type = (Type)1;
-		((Graphic)component2).color = Color.white;
-		GameObject val5 = new GameObject("Text Area", new Type[2]
-		{
-			typeof(RectTransform),
-			typeof(RectMask2D)
-		});
-		val5.transform.SetParent(val4.transform, false);
-		RectTransform component4 = val5.GetComponent<RectTransform>();
-		component4.anchorMin = Vector2.zero;
-		component4.anchorMax = Vector2.one;
-		component4.offsetMin = new Vector2(12f, 5f);
-		component4.offsetMax = new Vector2(-12f, -5f);
-		TextMeshProUGUI componentInChildren = ((Component)val2).GetComponentInChildren<TextMeshProUGUI>(true);
-		TMP_FontAsset font = ((componentInChildren != null) ? ((TMP_Text)componentInChildren).font : null);
-		TextMeshProUGUI textComponent = CreateSeedInputText(val5.transform, "Text", string.Empty, font, new Color(0.33f, 0.7f, 1f));
-		TextMeshProUGUI placeholder = CreateSeedInputText(val5.transform, "Placeholder", "Seed", font, new Color(1f, 1f, 1f, 0.45f));
-		TMP_InputField component5 = val4.GetComponent<TMP_InputField>();
-		component5.textViewport = component4;
-		component5.textComponent = (TMP_Text)(object)textComponent;
-		component5.placeholder = (Graphic)(object)placeholder;
-		component5.lineType = (LineType)0;
-		component5.characterLimit = 64;
-		((Selectable)component5).targetGraphic = (Graphic)(object)component2;
-		component5.selectionColor = new Color(0.35f, 0.62f, 1f, 0.45f);
-		component5.caretColor = Color.white;
-		component5.SetTextWithoutNotify(SeedManager.InputString ?? string.Empty);
-		SeedManager.SetSeed(component5.text);
-		((UnityEvent<string>)(object)component5.onValueChanged).AddListener((UnityAction<string>)SeedManager.SetSeed);
-		UITooltip component6 = val4.GetComponent<UITooltip>();
-		component6.skipLocale = true;
-		component6.tipName = "Seed";
-		component6.tipDesc = "Start a deterministic seeded run";
 	}
 
-	internal static void ConfigureSeedInputRect(RectTransform rect, RectTransform sourceRect, float widthFactor, float maxWidth, float spacingFactor)
+	internal static void ConfigureSeedInputRect(RectTransform rect, RectTransform sourceRect, Vector2 originalOffsetMin, float widthFactor, float maxWidth, float spacingFactor)
 	{
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0101: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0119: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0133: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)rect == (Object)null) && !((Object)(object)sourceRect == (Object)null) && !((Object)(object)((Transform)sourceRect).parent == (Object)null))
 		{
-			Vector3[] array = (Vector3[])(object)new Vector3[4];
-			sourceRect.GetWorldCorners(array);
-			Transform parent = ((Transform)sourceRect).parent;
-			Vector3 val = parent.InverseTransformPoint(array[0]);
-			Vector3 val2 = parent.InverseTransformPoint(array[2]);
-			float num = val2.y - val.y;
-			float num2 = Mathf.Min((val2.x - val.x) * widthFactor, maxWidth);
-			float num3 = num * spacingFactor;
-			((Transform)rect).SetParent(parent, false);
-			rect.anchorMin = new Vector2(0.5f, 0.5f);
-			rect.anchorMax = new Vector2(0.5f, 0.5f);
-			rect.pivot = new Vector2(0.5f, 0.5f);
-			rect.sizeDelta = new Vector2(num2, num);
-			((Transform)rect).localPosition = new Vector3(val.x - num3 - num2 * 0.5f, (val.y + val2.y) * 0.5f, ((Transform)sourceRect).localPosition.z);
+			Rect rect2 = sourceRect.rect;
+			float num = Mathf.Min((((Rect)(ref rect2)).width + sourceRect.offsetMin.x - originalOffsetMin.x) * widthFactor, maxWidth);
+			rect2 = sourceRect.rect;
+			float num2 = ((Rect)(ref rect2)).height * spacingFactor;
+			rect.anchorMin = sourceRect.anchorMin;
+			rect.anchorMax = new Vector2(sourceRect.anchorMin.x, sourceRect.anchorMax.y);
+			rect.offsetMin = originalOffsetMin;
+			rect.offsetMax = new Vector2(originalOffsetMin.x + num, sourceRect.offsetMax.y);
 			((Transform)rect).localRotation = ((Transform)sourceRect).localRotation;
 			((Transform)rect).localScale = ((Transform)sourceRect).localScale;
+			sourceRect.offsetMin = originalOffsetMin + new Vector2(num + num2, 0f);
 		}
 	}
 
 	private static TextMeshProUGUI CreateSeedInputText(Transform parent, string name, string value, TMP_FontAsset font, Color color)
 	{
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Expected O, but got Unknown
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ad: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject(name, new Type[2]
 		{
 			typeof(RectTransform),
@@ -377,22 +377,6 @@ internal class SaveMenuPatcher
 		((Graphic)component2).color = color;
 		((Graphic)component2).raycastTarget = false;
 		return component2;
-	}
-
-	private static Button FindButtonByText(Transform parent, string expectedText)
-	{
-		Button[] componentsInChildren = ((Component)parent).GetComponentsInChildren<Button>(true);
-		Button[] array = componentsInChildren;
-		foreach (Button val in array)
-		{
-			TextMeshProUGUI componentInChildren = ((Component)val).GetComponentInChildren<TextMeshProUGUI>(true);
-			string text = (((Object)(object)componentInChildren != (Object)null) ? ((TMP_Text)componentInChildren).text.Replace("\n", " ").Trim().ToLowerInvariant() : string.Empty);
-			if (text == expectedText)
-			{
-				return val;
-			}
-		}
-		return null;
 	}
 
 	private static Transform FindExistingSeedInput(Transform parent)
@@ -435,23 +419,21 @@ internal class SaveMenuPatcher
 
 	internal static void ConfigureQuickLoadRect(GameObject buttonObject, RectTransform sourceRect, int index, float width, float height, float spacing)
 	{
-		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0061: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0068: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bf: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ec: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0104: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0111: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011e: Unknown result type (might be due to invalid IL or missing references)
 		RectTransform component = buttonObject.GetComponent<RectTransform>();
 		if (!((Object)(object)component == (Object)null) && !((Object)(object)sourceRect == (Object)null) && !((Object)(object)((Transform)sourceRect).parent == (Object)null))
 		{
@@ -510,8 +492,7 @@ internal class SaveMenuPatcher
 			return val2;
 		}
 		Button[] componentsInChildren = ((Component)runSettings).GetComponentsInChildren<Button>(true);
-		Button[] array = componentsInChildren;
-		foreach (Button val3 in array)
+		foreach (Button val3 in componentsInChildren)
 		{
 			if ((Object)(object)val3 == (Object)null)
 			{

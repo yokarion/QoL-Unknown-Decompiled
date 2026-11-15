@@ -8,24 +8,22 @@ internal class TutorialSelectionPatcher
 {
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000c: Expected O, but got Unknown
-		Harmony val = new Harmony("org.bepinex.plugins.qol.tutorialselection");
-		val.PatchAll(typeof(TutorialSelectionPatcher));
+		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
+		new Harmony("org.bepinex.plugins.qol.tutorialselection").PatchAll(typeof(TutorialSelectionPatcher));
 	}
 
 	[HarmonyPatch(typeof(TutorialHandler), "Update")]
 	[HarmonyPrefix]
 	private static bool Update_Prefix(TutorialHandler __instance)
 	{
-		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)__instance.courseSelectScreen == (Object)null || !__instance.courseSelectScreen.activeSelf)
 		{
 			return true;

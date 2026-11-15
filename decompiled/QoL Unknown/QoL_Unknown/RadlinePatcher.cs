@@ -18,20 +18,22 @@ internal static class RadlinePatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0024: Expected O, but got Unknown
+		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
 		if (!initialized)
 		{
 			initialized = true;
-			Harmony val = new Harmony("org.bepinex.plugins.qol.radline");
-			val.PatchAll(typeof(RadlinePatcher));
+			new Harmony("org.bepinex.plugins.qol.radline").PatchAll(typeof(RadlinePatcher));
 		}
 	}
 
 	internal static bool IsDisabled()
 	{
-		return PlayerPrefs.GetInt("DisableRadline", 0) == 1 || PlayerPrefs.GetInt("radlinedisable", 0) == 1;
+		if (PlayerPrefs.GetInt("DisableRadline", 0) != 1)
+		{
+			return PlayerPrefs.GetInt("radlinedisable", 0) == 1;
+		}
+		return true;
 	}
 
 	internal static void SetDisabled(bool disabled)
@@ -45,13 +47,13 @@ internal static class RadlinePatcher
 
 	internal static void ApplyCurrentState()
 	{
-		bool flag = IsDisabled();
+		bool num = IsDisabled();
 		if ((Object)(object)WorldGeneration.world != (Object)null && WorldGeneration.world.maxTimePerLayer <= 0f)
 		{
-			float num = WorldGeneration.GetRunSettingFloat("timelimit") * 60f;
-			WorldGeneration.world.maxTimePerLayer = ((num > 0f) ? num : 3600f);
+			float num2 = WorldGeneration.GetRunSettingFloat("timelimit") * 60f;
+			WorldGeneration.world.maxTimePerLayer = ((num2 > 0f) ? num2 : 3600f);
 		}
-		if (flag && (Object)(object)RadiationLine.line != (Object)null)
+		if (num && (Object)(object)RadiationLine.line != (Object)null)
 		{
 			RadiationLine.line.Deactivate();
 		}

@@ -81,19 +81,23 @@ internal sealed class ContainerStackingView : MonoBehaviour
 
 	internal bool IsShowing(Container value)
 	{
-		return (Object)(object)container != (Object)null && (Object)(object)container == (Object)(object)value;
+		if ((Object)(object)container != (Object)null)
+		{
+			return (Object)(object)container == (Object)(object)value;
+		}
+		return false;
 	}
 
 	internal void Rebuild(PlayerCamera owner)
 	{
-		//IL_0270: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0275: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0241: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0246: Unknown result type (might be due to invalid IL or missing references)
+		//IL_024e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0253: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0278: Unknown result type (might be due to invalid IL or missing references)
 		//IL_027d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0282: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02b4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02f5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02b5: Unknown result type (might be due to invalid IL or missing references)
 		bool flag = (Object)(object)container != (Object)null && (Object)(object)container == (Object)(object)owner.currentContainer;
 		Dictionary<string, StackGroup> dictionary = new Dictionary<string, StackGroup>(groupsById, StringComparer.Ordinal);
 		Dictionary<Item, Slot> dictionary2 = new Dictionary<Item, Slot>(slotsByItem);
@@ -129,7 +133,7 @@ internal sealed class ContainerStackingView : MonoBehaviour
 			}
 			string text = refItem.id ?? string.Empty;
 			string baseId = text;
-			if ((Object)(object)((Component)refItem).GetComponent<WaterContainerItem>() != (Object)null)
+			if (!QoLModSettings.StackLiquidContainersEnabled() && (Object)(object)((Component)refItem).GetComponent<WaterContainerItem>() != (Object)null)
 			{
 				text = text + "#" + ((Object)refItem).GetInstanceID();
 			}
@@ -187,20 +191,20 @@ internal sealed class ContainerStackingView : MonoBehaviour
 
 	private TextMeshProUGUI CreateCount(StackGroup group)
 	{
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002c: Expected O, but got Unknown
-		//IL_00a8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0143: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0134: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0135: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013c: Unknown result type (might be due to invalid IL or missing references)
 		//IL_014d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0156: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0169: Unknown result type (might be due to invalid IL or missing references)
-		//IL_017f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0161: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject("StackCount", new Type[2]
 		{
 			typeof(RectTransform),
@@ -261,6 +265,10 @@ internal sealed class ContainerStackingView : MonoBehaviour
 				}
 			}
 		}
+		if (!QoLModSettings.StackExpandAllowed())
+		{
+			stackGroup = null;
+		}
 		float unscaledTime = Time.unscaledTime;
 		if (stackGroup != null || PointerInsideMenu())
 		{
@@ -310,14 +318,14 @@ internal sealed class ContainerStackingView : MonoBehaviour
 
 	private bool PointerInsideMenu()
 	{
-		//IL_0016: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
 		if (raycasts.Count > 0)
 		{
 			RaycastResult val = raycasts[0];
@@ -330,17 +338,12 @@ internal sealed class ContainerStackingView : MonoBehaviour
 		Canvas componentInParent = ((Component)this).GetComponentInParent<Canvas>();
 		Camera val2 = (((Object)(object)componentInParent != (Object)null && (int)componentInParent.renderMode != 0) ? componentInParent.worldCamera : null);
 		Vector2 val3 = default(Vector2);
-		int result;
 		if ((Object)(object)component != (Object)null && RectTransformUtility.ScreenPointToLocalPointInRectangle(component, Vector2.op_Implicit(Input.mousePosition), val2, ref val3))
 		{
 			Rect rect = component.rect;
-			result = (((Rect)(ref rect)).Contains(val3) ? 1 : 0);
+			return ((Rect)(ref rect)).Contains(val3);
 		}
-		else
-		{
-			result = 0;
-		}
-		return (byte)result != 0;
+		return false;
 	}
 
 	private bool ContentsChanged()
@@ -371,12 +374,12 @@ internal sealed class ContainerStackingView : MonoBehaviour
 
 	private StackGroup HoveredGroup()
 	{
-		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Expected O, but got Unknown
-		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Expected O, but got Unknown
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
 		EventSystem current = EventSystem.current;
 		if ((Object)(object)current == (Object)null)
 		{
@@ -396,20 +399,23 @@ internal sealed class ContainerStackingView : MonoBehaviour
 		}
 		RaycastResult val = raycasts[0];
 		InvButton componentInParent = ((RaycastResult)(ref val)).gameObject.GetComponentInParent<InvButton>();
-		StackGroup value;
-		return ((Object)(object)componentInParent != (Object)null && groupsByButton.TryGetValue(componentInParent, out value)) ? value : null;
+		if (!((Object)(object)componentInParent != (Object)null) || !groupsByButton.TryGetValue(componentInParent, out var value))
+		{
+			return null;
+		}
+		return value;
 	}
 
 	private bool ContainsPointer(StackGroup group)
 	{
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fe: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0176: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00da: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0145: Unknown result type (might be due to invalid IL or missing references)
 		if (raycasts.Count > 0)
 		{
 			RaycastResult val = raycasts[0];
@@ -444,23 +450,23 @@ internal sealed class ContainerStackingView : MonoBehaviour
 
 	private void Layout(bool immediate)
 	{
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_032b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ba: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00da: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0111: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0184: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0049: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02e1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ad: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ee: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0102: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0107: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0174: Unknown result type (might be due to invalid IL or missing references)
 		float num = (immediate ? 1f : (1f - Mathf.Exp(-25f * Time.unscaledDeltaTime)));
 		int index = 0;
 		float num2 = 0f;
@@ -521,17 +527,15 @@ internal sealed class ContainerStackingView : MonoBehaviour
 
 	private static Vector2 PositionAt(int index)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
 		return Origin + new Vector2((float)(index % 3) * 66f, (float)(-(index / 3)) * 66f);
 	}
 
 	private void Restore()
 	{
-		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
 		foreach (StackGroup group in groups)
 		{
 			if ((Object)(object)group.Count != (Object)null)

@@ -9,7 +9,7 @@ internal sealed class ModUILocalizer : MonoBehaviour
 
 	public string Fallback = string.Empty;
 
-	public bool Upper = false;
+	public bool Upper;
 
 	private TextMeshProUGUI text;
 

@@ -34,12 +34,12 @@ internal static class CuCoreLibSpawnCompat
 
 	public static void Initialize(Harmony harmony, ManualLogSource logger)
 	{
-		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f4: Expected O, but got Unknown
-		//IL_00f4: Expected O, but got Unknown
-		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0157: Expected O, but got Unknown
+		//IL_00c7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e9: Expected O, but got Unknown
+		//IL_00e9: Expected O, but got Unknown
+		//IL_013f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014c: Expected O, but got Unknown
 		Logger = logger;
 		if (!Chainloader.PluginInfos.ContainsKey("net.cucorelib"))
 		{
@@ -96,7 +96,11 @@ internal static class CuCoreLibSpawnCompat
 	private static object GetBuildingDefinition(string id)
 	{
 		object[] array = new object[2] { id, null };
-		return ((bool)tryGetBuildingDefinitionMethod.Invoke(null, array)) ? array[1] : null;
+		if (!(bool)tryGetBuildingDefinitionMethod.Invoke(null, array))
+		{
+			return null;
+		}
+		return array[1];
 	}
 
 	private static void DistributeInWorld_Prefix(string id, out float[] __state)

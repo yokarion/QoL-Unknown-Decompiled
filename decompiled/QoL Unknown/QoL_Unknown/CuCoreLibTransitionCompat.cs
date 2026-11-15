@@ -1,64 +1,45 @@
 using System;
-using System.Reflection;
-using BepInEx.Bootstrap;
-using BepInEx.Logging;
 using HarmonyLib;
+using Newtonsoft.Json.Linq;
 
 namespace QoL_Unknown;
 
 internal static class CuCoreLibTransitionCompat
 {
-	private const string CuCoreLibPluginGuid = "net.cucorelib";
-
-	private static ManualLogSource Logger;
-
-	private static bool patchAttempted;
-
-	public static bool SkipWorldRestore { get; internal set; }
-
-	public static void Initialize(Harmony harmony, ManualLogSource logger)
+	internal static void CaptureBodyState(Body body, JObject save)
 	{
-		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Expected O, but got Unknown
-		Logger = logger;
-		if (patchAttempted)
+		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
+		Type type = AccessTools.TypeByName("CUCoreLib.Saving.SaveCoordinator");
+		if (type == null)
 		{
 			return;
 		}
-		patchAttempted = true;
-		if (!Chainloader.PluginInfos.ContainsKey("net.cucorelib"))
+		object? obj = AccessTools.Method(type, "CaptureBodyState", (Type[])null, (Type[])null)?.Invoke(null, new object[1] { body });
+		JObject val = (JObject)((obj is JObject) ? obj : null);
+		if (val == null)
 		{
 			return;
 		}
-		try
+		JToken obj2 = save["CUCoreLib"];
+		JObject val2 = (JObject)(((object)((obj2 is JObject) ? obj2 : null)) ?? ((object)new JObject()));
+		foreach (JProperty item in val.Properties())
 		{
-			Type type = AccessTools.TypeByName("CUCoreLib.Saving.SaveCoordinator");
-			MethodInfo methodInfo = AccessTools.Method(type, "ApplyWorldProviders", (Type[])null, (Type[])null);
-			if (methodInfo == null)
-			{
-				Logger.LogWarning((object)"[LayerTransition] CUCoreLib SaveCoordinator.ApplyWorldProviders not found; world restore guard inactive.");
-				return;
-			}
-			MethodInfo method = typeof(CuCoreLibTransitionCompat).GetMethod("ApplyWorldProviders_Prefix", BindingFlags.Static | BindingFlags.NonPublic);
-			harmony.Patch((MethodBase)methodInfo, new HarmonyMethod(method), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
+			val2[item.Name] = item.Value.DeepClone();
 		}
-		catch (Exception ex)
-		{
-			Logger.LogWarning((object)("[LayerTransition] Failed to install CUCoreLib world-restore guard: " + ex.Message));
-		}
+		save["CUCoreLib"] = (JToken)(object)val2;
 	}
 
-	private static bool ApplyWorldProviders_Prefix()
+	internal static void RestoreBodyState(Body body, JObject save)
 	{
-		if (!SkipWorldRestore)
+		JToken obj = save["CUCoreLib"];
+		JObject val = (JObject)(object)((obj is JObject) ? obj : null);
+		if (val != null)
 		{
-			return true;
+			Type type = AccessTools.TypeByName("CUCoreLib.Saving.SaveCoordinator");
+			if (!(type == null))
+			{
+				AccessTools.Method(type, "RestoreBodyState", (Type[])null, (Type[])null)?.Invoke(null, new object[2] { body, val });
+			}
 		}
-		ManualLogSource logger = Logger;
-		if (logger != null)
-		{
-			logger.LogInfo((object)"[LayerTransition] Skipping CUCoreLib world-provider restore after layer transition.");
-		}
-		return false;
 	}
 }

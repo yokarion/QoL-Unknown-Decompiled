@@ -443,7 +443,17 @@ internal static class MultiplayerCompat
 		}
 	}
 
-	public static bool ShouldUseMultiplayerWorldgenAuthority => IsNetworkRunning && IsServer;
+	public static bool ShouldUseMultiplayerWorldgenAuthority
+	{
+		get
+		{
+			if (IsNetworkRunning)
+			{
+				return IsServer;
+			}
+			return false;
+		}
+	}
 
 	public static bool HasPendingHostWorldgenState => !string.IsNullOrEmpty(pendingHostWorldgenStatePayload);
 
@@ -496,18 +506,36 @@ internal static class MultiplayerCompat
 			{
 				return false;
 			}
-			return IsNetworkRunning || ReadStaticBool(mpPluginType, "SUCCESFULLY_INITIALIZED");
+			if (!IsNetworkRunning)
+			{
+				return ReadStaticBool(mpPluginType, "SUCCESFULLY_INITIALIZED");
+			}
+			return true;
 		}
 	}
 
-	public static bool CanImportSingleplayerSlotAsHostStart => IsNetworkRunning && IsServer && !IsWorldGenerated;
+	public static bool CanImportSingleplayerSlotAsHostStart
+	{
+		get
+		{
+			if (IsNetworkRunning && IsServer)
+			{
+				return !IsWorldGenerated;
+			}
+			return false;
+		}
+	}
 
 	internal static bool NativeCraftAvailable
 	{
 		get
 		{
 			EnsureResolved();
-			return craftRequestMethod != null && craftStepPendingField != null && craftStepAcceptedField != null;
+			if (craftRequestMethod != null && craftStepPendingField != null)
+			{
+				return craftStepAcceptedField != null;
+			}
+			return false;
 		}
 	}
 
@@ -550,8 +578,8 @@ internal static class MultiplayerCompat
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0016: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0015: Expected O, but got Unknown
 		Logger = logger;
 		harmony = new Harmony("org.bepinex.plugins.qol.together_compat");
 		EnsureResolved();
@@ -929,8 +957,7 @@ internal static class MultiplayerCompat
 		}
 		try
 		{
-			object value = firstWorldgenParamsField.GetValue(null);
-			return TrySerializeLastBeforeGenerationState(value, out payload);
+			return TrySerializeLastBeforeGenerationState(firstWorldgenParamsField.GetValue(null), out payload);
 		}
 		catch (Exception ex)
 		{
@@ -959,9 +986,9 @@ internal static class MultiplayerCompat
 		if (IsNetworkRunning && IsServer && !((Object)(object)item == (Object)null))
 		{
 			Item[] componentsInChildren = ((Component)item).GetComponentsInChildren<Item>(true);
-			foreach (Item val in componentsInChildren)
+			for (int i = 0; i < componentsInChildren.Length; i++)
 			{
-				RegisterAndSyncGameObject(((Component)val).gameObject);
+				RegisterAndSyncGameObject(((Component)componentsInChildren[i]).gameObject);
 			}
 		}
 	}
@@ -985,10 +1012,10 @@ internal static class MultiplayerCompat
 
 	private static void TryTeleportClientsToHost()
 	{
-		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ea: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
 		if (!IsNetworkRunning || !IsServer || (Object)(object)PlayerCamera.main == (Object)null || (Object)(object)PlayerCamera.main.body == (Object)null)
 		{
 			return;
@@ -1290,9 +1317,24 @@ internal static class MultiplayerCompat
 
 	private static void LogCompatibilityStatus()
 	{
-		bool flag = createNamedWriterMethod != null && registerCustomServerReceiverMethod != null && registerCustomClientReceiverMethod != null && clientSendMethod != null && serverSendToPlayerMethod != null && serverSendToClientsMethod != null && writerPutBytesMethod != null && readerGetRemainingBytesMethod != null && readerAvailableBytesProperty != null;
-		bool flag2 = itemSyncType != null && netObjectRegistryType != null && itemContainerChangedField != null;
-		bool flag3 = saveSystemPatchType != null && saveGamePatchType != null && lastBeforeGenerationStateType != null;
+		if (createNamedWriterMethod != null && registerCustomServerReceiverMethod != null && registerCustomClientReceiverMethod != null && clientSendMethod != null && serverSendToPlayerMethod != null && serverSendToClientsMethod != null && writerPutBytesMethod != null && readerGetRemainingBytesMethod != null)
+		{
+			_ = readerAvailableBytesProperty != null;
+		}
+		else
+			_ = 0;
+		if (itemSyncType != null && netObjectRegistryType != null)
+		{
+			_ = itemContainerChangedField != null;
+		}
+		else
+			_ = 0;
+		if (saveSystemPatchType != null && saveGamePatchType != null)
+		{
+			_ = lastBeforeGenerationStateType != null;
+		}
+		else
+			_ = 0;
 	}
 
 	public static int PrepareClientsForHostSaveLoad()
@@ -1539,7 +1581,7 @@ internal static class MultiplayerCompat
 		else if ((cachedNetworkRunning || !(Time.unscaledTime < nextInactiveNetworkRefreshTime)) && networkStateFrame != Time.frameCount)
 		{
 			networkStateFrame = Time.frameCount;
-			cachedNetworkRunning = ReadStaticBool(netType, "IsRunning");
+			cachedNetworkRunning = ReadStaticBool(netType, "IsRunning") && !ReadStaticBool(mpPluginType, "FORCE_DISABLE_MP_MOD");
 			if (!cachedNetworkRunning)
 			{
 				cachedIsClient = false;
@@ -1560,42 +1602,29 @@ internal static class MultiplayerCompat
 
 	private static void EnsureRuntimeHooksInstalled()
 	{
-		if (!pluginPresent || runtimeHooksAttempted)
+		if (pluginPresent && !runtimeHooksAttempted)
 		{
-			return;
-		}
-		if (!ReadStaticBool(mpPluginType, "SUCCESFULLY_INITIALIZED"))
-		{
-			AttachToMultiplayerInitialization();
-			return;
-		}
-		runtimeHooksAttempted = true;
-		RegisterSeedSyncReceiver();
-		RegisterSeedRequestReceiver();
-		RegisterClientInventoryRestoreRequestReceiver();
-		RegisterClientInventoryRestoreResultReceiver();
-		RegisterClientSpawnRequestReceiver();
-		RegisterClientSpawnResultReceiver();
-		RegisterClientHealRequestReceiver();
-		RegisterClientHealResultReceiver();
-		RegisterClientPrepareReconnectForHostLoadReceiver();
-		PatchSeedAnnouncementHooks();
-		PatchHostSaveLoadHooks();
-		PatchPingSuppressionHooks();
-		PatchCraftClickGuard();
-		runtimeHooksInstalled = seedSyncRegistered && seedRequestRegistered && clientInventoryRestoreRequestRegistered && clientInventoryRestoreResultRegistered && clientSpawnRequestRegistered && clientSpawnResultRegistered && clientHealRequestRegistered && clientHealResultRegistered && clientPrepareReconnectForHostLoadRegistered && seedAnnouncementHooksPatched && hostSaveLoadHooksPatched && pingSuppressionHooksPatched;
-		if (!runtimeHooksInstalled)
-		{
-			ManualLogSource logger = Logger;
-			if (logger != null)
+			if (!ReadStaticBool(mpPluginType, "SUCCESFULLY_INITIALIZED"))
 			{
-				logger.LogWarning((object)"[Together] One or more QoL named-message routes could not be registered; affected multiplayer features will fail closed.");
+				AttachToMultiplayerInitialization();
+				return;
 			}
-			ManualLogSource logger2 = Logger;
-			if (logger2 != null)
-			{
-				logger2.LogDebug((object)($"[Together] Hook status: seedSync={seedSyncRegistered} seedReq={seedRequestRegistered} " + $"invRestoreReq={clientInventoryRestoreRequestRegistered} invRestoreRes={clientInventoryRestoreResultRegistered} " + $"spawnReq={clientSpawnRequestRegistered} spawnRes={clientSpawnResultRegistered} " + $"healReq={clientHealRequestRegistered} healRes={clientHealResultRegistered} " + $"prepReconn={clientPrepareReconnectForHostLoadRegistered} seedAnnounce={seedAnnouncementHooksPatched} " + $"hostSaveLoad={hostSaveLoadHooksPatched} pingSuppress={pingSuppressionHooksPatched}"));
-			}
+			runtimeHooksAttempted = true;
+			RegisterSeedSyncReceiver();
+			RegisterSeedRequestReceiver();
+			RegisterClientInventoryRestoreRequestReceiver();
+			RegisterClientInventoryRestoreResultReceiver();
+			RegisterClientSpawnRequestReceiver();
+			RegisterClientSpawnResultReceiver();
+			RegisterClientHealRequestReceiver();
+			RegisterClientHealResultReceiver();
+			RegisterClientPrepareReconnectForHostLoadReceiver();
+			PatchSeedAnnouncementHooks();
+			PatchHostSaveLoadHooks();
+			PatchPingSuppressionHooks();
+			PatchCraftClickGuard();
+			runtimeHooksInstalled = seedSyncRegistered && seedRequestRegistered && clientInventoryRestoreRequestRegistered && clientInventoryRestoreResultRegistered && clientSpawnRequestRegistered && clientSpawnResultRegistered && clientHealRequestRegistered && clientHealResultRegistered && clientPrepareReconnectForHostLoadRegistered && seedAnnouncementHooksPatched && hostSaveLoadHooksPatched && pingSuppressionHooksPatched;
+			_ = runtimeHooksInstalled;
 		}
 	}
 
@@ -1641,7 +1670,11 @@ internal static class MultiplayerCompat
 
 	private static Type UnwrapByRef(Type type)
 	{
-		return (type != null && type.IsByRef) ? type.GetElementType() : type;
+		if (!(type != null) || !type.IsByRef)
+		{
+			return type;
+		}
+		return type.GetElementType();
 	}
 
 	private static MethodInfo FindClientRegisterReceiverMethod()
@@ -2009,8 +2042,7 @@ internal static class MultiplayerCompat
 		{
 			return 0u;
 		}
-		object senderClientId = ReadInstanceMemberValue(player, "playerId");
-		return ConvertSenderIdToUInt(senderClientId);
+		return ConvertSenderIdToUInt(ReadInstanceMemberValue(player, "playerId"));
 	}
 
 	private static uint ConvertSenderIdToUInt(object senderClientId)
@@ -2054,12 +2086,12 @@ internal static class MultiplayerCompat
 
 	private static void PatchSeedAnnouncementHooks()
 	{
-		//IL_010b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0119: Expected O, but got Unknown
-		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012f: Expected O, but got Unknown
-		//IL_013a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0147: Expected O, but got Unknown
+		//IL_00e7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f5: Expected O, but got Unknown
+		//IL_00fd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010b: Expected O, but got Unknown
+		//IL_0116: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0123: Expected O, but got Unknown
 		if (seedAnnouncementHooksPatched)
 		{
 			return;
@@ -2093,10 +2125,10 @@ internal static class MultiplayerCompat
 
 	private static void PatchPingSuppressionHooks()
 	{
-		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d7: Expected O, but got Unknown
-		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ed: Expected O, but got Unknown
+		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bc: Expected O, but got Unknown
+		//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d2: Expected O, but got Unknown
 		if (pingSuppressionHooksPatched || !pluginPresent)
 		{
 			return;
@@ -2123,12 +2155,12 @@ internal static class MultiplayerCompat
 
 	private static void PatchHostSaveLoadHooks()
 	{
-		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Expected O, but got Unknown
-		//IL_00d4: Expected O, but got Unknown
-		//IL_00e1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ee: Expected O, but got Unknown
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00af: Expected O, but got Unknown
+		//IL_00af: Expected O, but got Unknown
+		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c9: Expected O, but got Unknown
 		if (hostSaveLoadHooksPatched || harmony == null)
 		{
 			return;
@@ -2158,8 +2190,8 @@ internal static class MultiplayerCompat
 
 	private static void PatchCraftClickGuard()
 	{
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0064: Expected O, but got Unknown
+		//IL_0049: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0057: Expected O, but got Unknown
 		if (craftClickGuardPatched || !pluginPresent || craftTryClickMethod == null)
 		{
 			return;
@@ -2264,8 +2296,7 @@ internal static class MultiplayerCompat
 		try
 		{
 			uint clientId = ConvertSenderIdToUInt(__0);
-			Body bodyFromClientId = GetBodyFromClientId(clientId);
-			if ((Object)(object)bodyFromClientId == (Object)null)
+			if ((Object)(object)GetBodyFromClientId(clientId) == (Object)null)
 			{
 				return;
 			}
@@ -2306,10 +2337,10 @@ internal static class MultiplayerCompat
 	private static IEnumerator ApplyPostWorldgenClientInventoryRestoreCoroutine(uint clientId, string persistentId, string payload)
 	{
 		yield return (object)new WaitForSeconds(0.5f);
-		Body body = GetBodyFromClientId(clientId);
-		if (!((Object)(object)body == (Object)null) && pendingClientInventoryRestorePayloadsByPersistentId.TryGetValue(persistentId, out var currentPayload) && string.Equals(currentPayload, payload, StringComparison.Ordinal) && MultiplayerSaveBundle.TryApplyClientInventoryPayload(body, payload, out var _))
+		Body bodyFromClientId = GetBodyFromClientId(clientId);
+		if (!((Object)(object)bodyFromClientId == (Object)null) && pendingClientInventoryRestorePayloadsByPersistentId.TryGetValue(persistentId, out var value) && string.Equals(value, payload, StringComparison.Ordinal) && MultiplayerSaveBundle.TryApplyClientInventoryPayload(bodyFromClientId, payload, out var _))
 		{
-			SyncBodyInventory(body);
+			SyncBodyInventory(bodyFromClientId);
 			pendingClientInventoryRestorePayloadsByPersistentId.Remove(persistentId);
 			if (pendingClientInventoryRestorePayloadsByPersistentId.Count == 0)
 			{
@@ -2348,8 +2379,7 @@ internal static class MultiplayerCompat
 		}
 		try
 		{
-			int currentLayerSeed = SeededRunPatcher.GetCurrentLayerSeed();
-			Random.InitState(currentLayerSeed);
+			Random.InitState(SeededRunPatcher.GetCurrentLayerSeed());
 			if (firstWorldgenParamsField != null && lastBeforeGenerationStateType != null)
 			{
 				object obj = Activator.CreateInstance(lastBeforeGenerationStateType);
@@ -2856,14 +2886,16 @@ internal static class MultiplayerCompat
 		useSteam = ReadStaticBool(netType, "IsRunningSteam");
 		if (useSteam)
 		{
-			object value = ReadStaticMemberValue(kSteamType, "LobbyId");
-			if (TryConvertToUInt64(value, out lobbyId) && lobbyId != 0)
+			if (TryConvertToUInt64(ReadStaticMemberValue(kSteamType, "LobbyId"), out lobbyId) && lobbyId != 0L)
 			{
 				return true;
 			}
 			object obj = ReadStaticMemberValue(kSteamType, "CURRENT_LOBBY");
-			object value2 = obj?.GetType().GetField("lobby_steamID", BindingFlags.Instance | BindingFlags.Public)?.GetValue(obj);
-			return TryConvertToUInt64(value2, out lobbyId) && lobbyId != 0;
+			if (TryConvertToUInt64(obj?.GetType().GetField("lobby_steamID", BindingFlags.Instance | BindingFlags.Public)?.GetValue(obj), out lobbyId))
+			{
+				return lobbyId != 0;
+			}
+			return false;
 		}
 		ipPort = ReadStaticMemberValue(uiMainMenuType, "USERINPUT_IPPORT") as string;
 		return !string.IsNullOrWhiteSpace(ipPort);
@@ -2930,9 +2962,9 @@ internal static class MultiplayerCompat
 				break;
 			}
 			autoReconnectAfterHostLoadAttempts++;
-			bool started = TryStartPreparedReconnect();
+			bool num = TryStartPreparedReconnect();
 			autoReconnectAfterHostLoadNextAttemptTime = Time.realtimeSinceStartup + 3f;
-			if (!started)
+			if (!num)
 			{
 				autoReconnectAfterHostLoadAttemptInFlight = false;
 			}
@@ -2947,8 +2979,8 @@ internal static class MultiplayerCompat
 
 	private static bool IsMainMenuSceneActive()
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
 		try
 		{
 			Scene activeScene = SceneManager.GetActiveScene();
@@ -2981,7 +3013,7 @@ internal static class MultiplayerCompat
 			object obj;
 			if (autoReconnectAfterHostLoadUseSteam)
 			{
-				if (transportSteamJoinLobbyMethod == null || autoReconnectAfterHostLoadLobbyId == 0)
+				if (transportSteamJoinLobbyMethod == null || autoReconnectAfterHostLoadLobbyId == 0L)
 				{
 					return false;
 				}
@@ -2998,11 +3030,7 @@ internal static class MultiplayerCompat
 				{
 					num = 0;
 				}
-				bool flag2 = (byte)((uint)num & (flag ? 1u : 0u)) != 0;
-				if (flag2)
-				{
-				}
-				return flag2;
+				return (byte)((uint)num & (flag ? 1u : 0u)) != 0;
 			}
 			if (transportLiteConnectMethod == null || string.IsNullOrWhiteSpace(autoReconnectAfterHostLoadIpPort) || netType == null)
 			{
@@ -3015,22 +3043,18 @@ internal static class MultiplayerCompat
 			object obj2 = Enum.Parse(netNetTypeType, "Client");
 			multiplayerStatusLogMethod?.Invoke(null, new object[1] { "Client Connect clicked!" });
 			obj = transportLiteConnectMethod.Invoke(null, new object[2] { autoReconnectAfterHostLoadIpPort, obj2 });
-			bool flag3 = default(bool);
+			bool flag2 = default(bool);
 			int num2;
 			if (obj is bool)
 			{
-				flag3 = (bool)obj;
+				flag2 = (bool)obj;
 				num2 = 1;
 			}
 			else
 			{
 				num2 = 0;
 			}
-			bool flag4 = (byte)((uint)num2 & (flag3 ? 1u : 0u)) != 0;
-			if (flag4)
-			{
-			}
-			return flag4;
+			return (byte)((uint)num2 & (flag2 ? 1u : 0u)) != 0;
 		}
 		catch
 		{
@@ -3079,8 +3103,7 @@ internal static class MultiplayerCompat
 	{
 		try
 		{
-			string payload = ReadNamedUtf8Payload(reader);
-			if (TryParseSeedPayload(payload, out var seed, out var input))
+			if (TryParseSeedPayload(ReadNamedUtf8Payload(reader), out var seed, out var input))
 			{
 				SeedManager.SetNetworkSeed(seed, input);
 			}
@@ -3155,6 +3178,61 @@ internal static class MultiplayerCompat
 		{
 			return 0u;
 		}
+	}
+
+	public static List<KeyValuePair<string, Body>> GetConnectedPlayerBodies()
+	{
+		List<KeyValuePair<string, Body>> list = new List<KeyValuePair<string, Body>>();
+		if (!IsNetworkRunning)
+		{
+			return list;
+		}
+		EnsureResolved();
+		if (playerBodyToPlayerDictField == null)
+		{
+			return list;
+		}
+		try
+		{
+			if (!(playerBodyToPlayerDictField.GetValue(null) is IDictionary dictionary))
+			{
+				return list;
+			}
+			foreach (DictionaryEntry item in dictionary)
+			{
+				object key = item.Key;
+				Body val = (Body)((key is Body) ? key : null);
+				if (val != null && !((Object)(object)val == (Object)null))
+				{
+					string text = ReadInstanceMemberValue(item.Value, "playerName") as string;
+					if (!string.IsNullOrWhiteSpace(text))
+					{
+						list.Add(new KeyValuePair<string, Body>(text, val));
+					}
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)("Failed to list connected players: " + ex.Message));
+			}
+		}
+		list.Sort((KeyValuePair<string, Body> a, KeyValuePair<string, Body> b) => string.Compare(a.Key, b.Key, StringComparison.OrdinalIgnoreCase));
+		return list;
+	}
+
+	public static List<string> GetConnectedPlayerNames()
+	{
+		List<KeyValuePair<string, Body>> connectedPlayerBodies = GetConnectedPlayerBodies();
+		List<string> list = new List<string>(connectedPlayerBodies.Count);
+		for (int i = 0; i < connectedPlayerBodies.Count; i++)
+		{
+			list.Add(connectedPlayerBodies[i].Key);
+		}
+		return list;
 	}
 
 	private static Body GetBodyFromClientId(uint clientId)
@@ -3270,9 +3348,9 @@ internal static class MultiplayerCompat
 		{
 			Type type = null;
 			Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-			foreach (Assembly assembly in assemblies)
+			for (int i = 0; i < assemblies.Length; i++)
 			{
-				type = assembly.GetType("CUCoreLib.Helpers.CUCoreUtils");
+				type = assemblies[i].GetType("CUCoreLib.Helpers.CUCoreUtils");
 				if (type != null)
 				{
 					break;
@@ -3409,29 +3487,29 @@ internal static class MultiplayerCompat
 		if (!((Object)(object)body == (Object)null))
 		{
 			Item[] componentsInChildren = ((Component)body).GetComponentsInChildren<Item>(true);
-			foreach (Item item in componentsInChildren)
+			for (int i = 0; i < componentsInChildren.Length; i++)
 			{
-				RegisterAndSyncItemTree(item);
+				RegisterAndSyncItemTree(componentsInChildren[i]);
 			}
 		}
 	}
 
 	private static bool TryExecuteClientSpawnCommand(string commandString, Body requesterBody, out string resultMessage)
 	{
-		//IL_0167: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0175: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0183: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0191: Unknown result type (might be due to invalid IL or missing references)
-		//IL_019f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0223: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0334: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0288: Unknown result type (might be due to invalid IL or missing references)
-		//IL_028e: Invalid comparison between Unknown and I4
-		//IL_02b8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02bd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02c8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02cd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0134: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0147: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0199: Unknown result type (might be due to invalid IL or missing references)
+		//IL_027c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0211: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0216: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0221: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0226: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01ec: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01f2: Invalid comparison between Unknown and I4
 		resultMessage = null;
 		if (string.IsNullOrWhiteSpace(commandString) || (Object)(object)requesterBody == (Object)null)
 		{
@@ -3515,10 +3593,10 @@ internal static class MultiplayerCompat
 
 	private static bool TryParseSpawnPosition(string raw, out Vector2 position, out string errorMessage)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
 		position = Vector2.zero;
 		errorMessage = null;
 		string[] array = raw.Split(new char[1] { ',' });
@@ -3726,7 +3804,11 @@ internal static class MultiplayerCompat
 			return null;
 		}
 		object obj = CoerceClientIdObject(clientId);
-		return (obj != null && dictionary.Contains(obj)) ? dictionary[obj] : null;
+		if (obj == null || !dictionary.Contains(obj))
+		{
+			return null;
+		}
+		return dictionary[obj];
 	}
 
 	private static object ReadStaticMemberValue(Type type, string name)
@@ -4005,9 +4087,9 @@ internal static class MultiplayerCompat
 			{
 				num = 0;
 			}
-			bool result = (byte)((uint)num & (flag ? 1u : 0u)) != 0;
+			int result = num & (flag ? 1 : 0);
 			syncInfo = array[1];
-			return result;
+			return (byte)result != 0;
 		}
 		catch
 		{

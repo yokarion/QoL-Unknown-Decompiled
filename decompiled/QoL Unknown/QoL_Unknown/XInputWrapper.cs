@@ -97,8 +97,7 @@ public static class XInputWrapper
 				useXInput1_3 = true;
 				try
 				{
-					int num2 = XInputGetState_1_3(userIndex, ref state);
-					return num2 == 0;
+					return XInputGetState_1_3(userIndex, ref state) == 0;
 				}
 				catch
 				{
@@ -119,30 +118,24 @@ public static class XInputWrapper
 	{
 		if (value < -deadzone)
 		{
-			float num = (float)(value + deadzone) / (32768f - (float)deadzone);
-			return Mathf.Max(num, -1f);
+			return Mathf.Max((float)(value + deadzone) / (32768f - (float)deadzone), -1f);
 		}
 		if (value > deadzone)
 		{
-			float num2 = (float)(value - deadzone) / (32767f - (float)deadzone);
-			return Mathf.Min(num2, 1f);
+			return Mathf.Min((float)(value - deadzone) / (32767f - (float)deadzone), 1f);
 		}
 		return 0f;
 	}
 
 	public static Vector2 GetLeftStick(XINPUT_GAMEPAD gamepad)
 	{
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
 		return new Vector2(NormalizeThumbstick(gamepad.sThumbLX, 7849), NormalizeThumbstick(gamepad.sThumbLY, 7849));
 	}
 
 	public static Vector2 GetRightStick(XINPUT_GAMEPAD gamepad)
 	{
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
 		return new Vector2(NormalizeThumbstick(gamepad.sThumbRX, 8689), NormalizeThumbstick(gamepad.sThumbRY, 8689));
 	}
 

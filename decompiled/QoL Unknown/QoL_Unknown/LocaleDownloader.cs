@@ -19,13 +19,13 @@ public static class LocaleDownloader
 		public string FileName;
 	}
 
-	private const string API_URL = "https://api.github.com/repos/Orsoniks/scavgame-locale/contents/demo";
+	private const string API_URL = "https://api.github.com/repos/Orsoniks/scavgame-locale/contents/release";
 
 	public static List<RemoteLocaleInfo> AvailableLocales = new List<RemoteLocaleInfo>();
 
 	public static IEnumerator FetchLocaleList(Action<bool> onComplete)
 	{
-		UnityWebRequest www = UnityWebRequest.Get("https://api.github.com/repos/Orsoniks/scavgame-locale/contents/demo");
+		UnityWebRequest www = UnityWebRequest.Get("https://api.github.com/repos/Orsoniks/scavgame-locale/contents/release");
 		try
 		{
 			www.SetRequestHeader("User-Agent", "CasualtiesUnknown-Mod");
@@ -38,21 +38,19 @@ public static class LocaleDownloader
 			}
 			try
 			{
-				string json = www.downloadHandler.text;
-				JArray data = JArray.Parse(json);
+				JArray obj = JArray.Parse(www.downloadHandler.text);
 				AvailableLocales.Clear();
-				foreach (JObject item2 in data)
+				foreach (JObject item in obj)
 				{
-					JObject item = item2;
-					string name = (string)item["name"];
-					string type = (string)item["type"];
-					if (type == "file" && name.EndsWith(".json"))
+					JObject val = item;
+					string text = (string)val["name"];
+					if ((string)val["type"] == "file" && text.EndsWith(".json"))
 					{
 						AvailableLocales.Add(new RemoteLocaleInfo
 						{
-							Name = Path.GetFileNameWithoutExtension(name),
-							FileName = name,
-							DownloadUrl = (string)item["download_url"]
+							Name = Path.GetFileNameWithoutExtension(text),
+							FileName = text,
+							DownloadUrl = (string)val["download_url"]
 						});
 					}
 				}

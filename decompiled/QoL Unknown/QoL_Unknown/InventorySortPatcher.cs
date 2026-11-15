@@ -26,7 +26,17 @@ internal class InventorySortPatcher
 
 			public bool Assigned;
 
-			public float Weight => ((Object)(object)Item != (Object)null) ? Item.totalWeight : 0f;
+			public float Weight
+			{
+				get
+				{
+					if (!((Object)(object)Item != (Object)null))
+					{
+						return 0f;
+					}
+					return Item.totalWeight;
+				}
+			}
 		}
 
 		private sealed class ContainerInfo
@@ -39,7 +49,17 @@ internal class InventorySortPatcher
 
 			public float Mult => Container.encumberanceMult;
 
-			public bool IsSpecialized => Container.tagRestriction != null && Container.tagRestriction.Length != 0;
+			public bool IsSpecialized
+			{
+				get
+				{
+					if (Container.tagRestriction != null)
+					{
+						return Container.tagRestriction.Length != 0;
+					}
+					return false;
+				}
+			}
 
 			public float RemainingWeight => Container.maxWeight - ProjectedWeight;
 
@@ -58,7 +78,11 @@ internal class InventorySortPatcher
 					return false;
 				}
 				float totalWeight = item.totalWeight;
-				return totalWeight <= Container.maxWeightPerItem && ProjectedWeight + totalWeight <= Container.maxWeight && IsAllowedByTags(item);
+				if (totalWeight <= Container.maxWeightPerItem && ProjectedWeight + totalWeight <= Container.maxWeight)
+				{
+					return IsAllowedByTags(item);
+				}
+				return false;
 			}
 
 			public void Reserve(Item item)
@@ -78,7 +102,11 @@ internal class InventorySortPatcher
 					return true;
 				}
 				IEnumerable<string> tags = item.Stats.GetTags();
-				return tags != null && Container.tagRestriction.Intersect(tags).Any();
+				if (tags != null)
+				{
+					return Container.tagRestriction.Intersect(tags).Any();
+				}
+				return false;
 			}
 		}
 
@@ -235,7 +263,11 @@ internal class InventorySortPatcher
 		private bool PrefersItemCapacity()
 		{
 			int num = 6 + Containers.Count * 3;
-			return AllItems.Count < num && body.GetTotalEncumberance() < 10f;
+			if (AllItems.Count < num)
+			{
+				return body.GetTotalEncumberance() < 10f;
+			}
+			return false;
 		}
 
 		private void PlanForItemCapacity()
@@ -340,7 +372,11 @@ internal class InventorySortPatcher
 
 		private bool IsSlotBlocked(int slotIndex)
 		{
-			return !includeHandsAndMouth && IsHandOrHeadSlot(slotIndex);
+			if (!includeHandsAndMouth)
+			{
+				return IsHandOrHeadSlot(slotIndex);
+			}
+			return false;
 		}
 
 		private bool IsHandOrHeadSlot(int slotIndex)
@@ -350,7 +386,15 @@ internal class InventorySortPatcher
 				return false;
 			}
 			InventorySlot val = body.slots[slotIndex];
-			return (Object)(object)val != (Object)null && (val.isHand || IsHeadSlot(slotIndex));
+			if ((Object)(object)val != (Object)null)
+			{
+				if (!val.isHand)
+				{
+					return IsHeadSlot(slotIndex);
+				}
+				return true;
+			}
+			return false;
 		}
 
 		private bool IsHeadSlot(int slotIndex)
@@ -360,7 +404,11 @@ internal class InventorySortPatcher
 				return false;
 			}
 			InventorySlot val = body.slots[slotIndex];
-			return (Object)(object)val != (Object)null && (Object)(object)val.limb != (Object)null && val.limb.isHead;
+			if ((Object)(object)val != (Object)null && (Object)(object)val.limb != (Object)null)
+			{
+				return val.limb.isHead;
+			}
+			return false;
 		}
 
 		private ContainerInfo InfoFor(Container container)
@@ -402,7 +450,7 @@ internal class InventorySortPatcher
 
 		private bool PlaceAtTarget(Placement placement)
 		{
-			//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
+			//IL_008b: Unknown result type (might be due to invalid IL or missing references)
 			Item item = placement.Item;
 			if (placement.TargetSlot >= 0)
 			{
@@ -421,12 +469,16 @@ internal class InventorySortPatcher
 			((Component)item).transform.position = ((Component)targetContainer).transform.position;
 			targetContainer.LoadItem(item);
 			Container val = default(Container);
-			return item.TryGetParentContainer(ref val) && (Object)(object)val == (Object)(object)targetContainer;
+			if (item.TryGetParentContainer(ref val))
+			{
+				return (Object)(object)val == (Object)(object)targetContainer;
+			}
+			return false;
 		}
 
 		private void ReturnToSource(Placement placement)
 		{
-			//IL_0116: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00df: Unknown result type (might be due to invalid IL or missing references)
 			Item item = placement.Item;
 			if ((Object)(object)item == (Object)null || (Object)(object)((Component)item).transform.parent != (Object)null || TryPlaceInContainer(item, placement.SourceContainer) || TryPlaceInSlot(item, placement.SourceSlot))
 			{
@@ -460,7 +512,7 @@ internal class InventorySortPatcher
 
 		private bool TryPlaceInContainer(Item item, Container container)
 		{
-			//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0027: Unknown result type (might be due to invalid IL or missing references)
 			if ((Object)(object)container == (Object)null || !container.CanHoldItem(item))
 			{
 				return false;
@@ -469,7 +521,11 @@ internal class InventorySortPatcher
 			((Component)item).transform.position = ((Component)container).transform.position;
 			container.LoadItem(item);
 			Container val = default(Container);
-			return item.TryGetParentContainer(ref val) && (Object)(object)val == (Object)(object)container;
+			if (item.TryGetParentContainer(ref val))
+			{
+				return (Object)(object)val == (Object)(object)container;
+			}
+			return false;
 		}
 
 		private bool TryPlaceInSlot(Item item, int slotIndex)
@@ -485,7 +541,7 @@ internal class InventorySortPatcher
 
 		private void PrepareDetachedItem(Item item)
 		{
-			//IL_0031: Unknown result type (might be due to invalid IL or missing references)
+			//IL_002b: Unknown result type (might be due to invalid IL or missing references)
 			if ((Object)(object)item.rb != (Object)null)
 			{
 				item.rb.simulated = false;
@@ -512,7 +568,15 @@ internal class InventorySortPatcher
 				return false;
 			}
 			InventorySlot val = body.slots[slotIndex];
-			return (Object)(object)val != (Object)null && val.canPickUp && (!item.Stats.onlyHoldInHands || val.isHand);
+			if ((Object)(object)val != (Object)null && val.canPickUp)
+			{
+				if (item.Stats.onlyHoldInHands)
+				{
+					return val.isHand;
+				}
+				return true;
+			}
+			return false;
 		}
 	}
 
@@ -578,8 +642,7 @@ internal class InventorySortPatcher
 
 	private static void ReorderContainerContentsByCraftingPriority(List<Container> containers)
 	{
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006c: Expected O, but got Unknown
+		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
 		foreach (Container container in containers)
 		{
 			if ((Object)(object)container == (Object)null || ((Component)container).transform.childCount < 2)
@@ -589,8 +652,7 @@ internal class InventorySortPatcher
 			List<Item> currentOrder = new List<Item>();
 			foreach (Transform item in ((Component)container).transform)
 			{
-				Transform val = item;
-				Item component = ((Component)val).GetComponent<Item>();
+				Item component = ((Component)item).GetComponent<Item>();
 				if ((Object)(object)component != (Object)null)
 				{
 					currentOrder.Add(component);
@@ -641,13 +703,9 @@ internal class InventorySortPatcher
 		}
 		foreach (CraftingQuality quality in item.Stats.qualities)
 		{
-			if (quality != null)
+			if (quality != null && string.Equals(TryReadStringMember(quality, "id"), qualityId, StringComparison.OrdinalIgnoreCase))
 			{
-				string a = TryReadStringMember(quality, "id");
-				if (string.Equals(a, qualityId, StringComparison.OrdinalIgnoreCase))
-				{
-					return (TryReadFloatMember(quality, "amount") ?? TryReadFloatMember(quality, "value") ?? TryReadFloatMember(quality, "num") ?? TryReadFloatMember(quality, "quality")).GetValueOrDefault();
-				}
+				return (TryReadFloatMember(quality, "amount") ?? TryReadFloatMember(quality, "value") ?? TryReadFloatMember(quality, "num") ?? TryReadFloatMember(quality, "quality")).GetValueOrDefault();
 			}
 		}
 		return 0f;
@@ -691,9 +749,9 @@ internal class InventorySortPatcher
 		{
 			return null;
 		}
-		if (value is float value2)
+		if (value is float)
 		{
-			return value2;
+			return (float)value;
 		}
 		if (value is int num)
 		{

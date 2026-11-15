@@ -27,8 +27,8 @@ internal static class ControllerProfileResolver
 
 	public static void ApplyProfile(RawControllerState raw, ControllerProfile profile, ControllerState target)
 	{
-		//IL_0003: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
 		target.SetSticks(raw.LeftStick, raw.RightStick);
 		bool pressed = raw.South;
 		bool pressed2 = raw.East;

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace QoL_Unknown;
 
-[BepInPlugin("org.bepinex.plugins.qol_unknown", "QoL Unknown", "1.0.5.2")]
+[BepInPlugin("org.bepinex.plugins.qol_unknown", "QoL Unknown", "1.1.3")]
 [BepInDependency(/*Could not decode attribute arguments.*/)]
 [BepInDependency(/*Could not decode attribute arguments.*/)]
 public class Plugin : BaseUnityPlugin
@@ -37,6 +37,10 @@ public class Plugin : BaseUnityPlugin
 		InitializeComponent("AntiGlarePatcher", delegate
 		{
 			AntiGlarePatcher.Initialize(((BaseUnityPlugin)this).Logger);
+		});
+		InitializeComponent("CameraZoomPatcher", delegate
+		{
+			CameraZoomPatcher.Initialize(((BaseUnityPlugin)this).Logger);
 		});
 		InitializeComponent("PreRunScriptPatcher", delegate
 		{
@@ -73,6 +77,10 @@ public class Plugin : BaseUnityPlugin
 		InitializeComponent("RadlinePatcher", delegate
 		{
 			RadlinePatcher.Initialize(((BaseUnityPlugin)this).Logger);
+		});
+		InitializeComponent("AchievementCheatsPatcher", delegate
+		{
+			AchievementCheatsPatcher.Initialize(((BaseUnityPlugin)this).Logger);
 		});
 		InitializeComponent("SeededRunPatcher", delegate
 		{
@@ -134,11 +142,14 @@ public class Plugin : BaseUnityPlugin
 		{
 			WearableCarouselPatcher.Initialize(((BaseUnityPlugin)this).Logger);
 		});
+		InitializeComponent("TraderItemTooltipPatcher", delegate
+		{
+			TraderItemTooltipPatcher.Initialize(((BaseUnityPlugin)this).Logger);
+		});
 		InitializeComponent("QoLSettingsMenu", delegate
 		{
 			QoLSettingsMenu.Initialize(((BaseUnityPlugin)this).Logger);
 		});
-		InitializeComponent("EmbeddedDllLoader", EmbeddedDllLoader.Init);
 		InitializeComponent("FontPatcher", delegate
 		{
 			FontPatcher.Initialize(((BaseUnityPlugin)this).Logger);
@@ -188,9 +199,13 @@ public class Plugin : BaseUnityPlugin
 		{
 			MinigameQoLPatcher.Initialize(((BaseUnityPlugin)this).Logger);
 		});
-		InitializeComponent("EtomophobiaPatcher", delegate
+		InitializeComponent("EmetophobiaPatcher", delegate
 		{
-			EtomophobiaPatcher.Initialize(((BaseUnityPlugin)this).Logger);
+			EmetophobiaPatcher.Initialize(((BaseUnityPlugin)this).Logger);
+		});
+		InitializeComponent("CreatureGriefingPatcher", delegate
+		{
+			CreatureGriefingPatcher.Initialize(((BaseUnityPlugin)this).Logger);
 		});
 		InitializeComponent("TutorialSelectionPatcher", delegate
 		{
@@ -206,16 +221,12 @@ public class Plugin : BaseUnityPlugin
 				});
 			}
 		}
-		string arg = ((patchersInitialized == patchersTotal) ? "! We're all good to go." : ". We're missing a few..?");
-		((BaseUnityPlugin)this).Logger.LogInfo((object)$"Initialized {patchersInitialized}/{patchersTotal} patchers{arg}");
-	}
-
-	private void Start()
-	{
 		InitializeComponent("QoLModSettings", delegate
 		{
 			QoLModSettings.Initialize(((BaseUnityPlugin)this).Logger);
 		});
+		string arg = ((patchersInitialized == patchersTotal) ? "! We're all good to go." : ". We're missing a few..?");
+		((BaseUnityPlugin)this).Logger.LogInfo((object)$"Initialized {patchersInitialized}/{patchersTotal} patchers{arg}");
 	}
 
 	public static void RegisterLayerArt(int biomeIndex, Sprite banner, Sprite icon)

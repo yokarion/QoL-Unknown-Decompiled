@@ -8,6 +8,7 @@ using HarmonyLib;
 using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace QoL_Unknown;
 
@@ -35,10 +36,12 @@ public static class ModOptionsMenu
 
 	private static bool initialized;
 
+	internal static event Action SettingsLoaded;
+
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0025: Expected O, but got Unknown
+		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0023: Expected O, but got Unknown
 		Logger = logger;
 		if (initialized)
 		{
@@ -47,8 +50,7 @@ public static class ModOptionsMenu
 		initialized = true;
 		try
 		{
-			Harmony harmony = new Harmony("org.bepinex.plugins.qol_unknown.modoptionsmenu");
-			PatchExplicit(harmony);
+			PatchExplicit(new Harmony("org.bepinex.plugins.qol_unknown.modoptionsmenu"));
 		}
 		catch (Exception arg)
 		{
@@ -62,7 +64,7 @@ public static class ModOptionsMenu
 
 	public static bool Register(ModOptionDefinition option)
 	{
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
 		if (option == null || string.IsNullOrWhiteSpace(option.Id) || string.IsNullOrWhiteSpace(option.Label))
 		{
 			ManualLogSource logger = Logger;
@@ -105,8 +107,8 @@ public static class ModOptionsMenu
 
 	public static bool RegisterCustom(ModCustomSettingDefinition definition)
 	{
-		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
 		if (definition == null || string.IsNullOrWhiteSpace(definition.Id) || string.IsNullOrWhiteSpace(definition.Label))
 		{
 			ManualLogSource logger = Logger;
@@ -166,7 +168,11 @@ public static class ModOptionsMenu
 
 	internal static bool IsRegistered(string id)
 	{
-		return !string.IsNullOrEmpty(id) && RegisteredIds.Contains(id);
+		if (!string.IsNullOrEmpty(id))
+		{
+			return RegisteredIds.Contains(id);
+		}
+		return false;
 	}
 
 	private static void RegisterLiteralLocale(string id, string label, string description)
@@ -193,29 +199,68 @@ public static class ModOptionsMenu
 		for (int i = 0; i < Definitions.Count; i++)
 		{
 			ModOptionDefinition definition = Definitions[i];
-			if (definition != null && !Settings.settings.Any((Setting setting) => setting != null && setting.name == definition.Id))
+			if (definition == null || Settings.settings.Any((Setting setting) => setting != null && setting.name == definition.Id))
 			{
-				Setting val = definition.CreateSetting();
-				if (restoreSavedValues && definition.RestoreSavedValue)
-				{
-					RestoreSavedSettingValue(val);
-				}
-				Settings.settings.Add(val);
-				if (applyAddedSettings)
+				continue;
+			}
+			Setting val = definition.CreateSetting();
+			if (restoreSavedValues && definition.RestoreSavedValue)
+			{
+				RestoreSavedSettingValue(val);
+			}
+			Settings.settings.Add(val);
+			if (applyAddedSettings)
+			{
+				try
 				{
 					val.Apply();
 				}
-				flag = true;
+				catch (Exception arg)
+				{
+					ManualLogSource logger = Logger;
+					if (logger != null)
+					{
+						logger.LogError((object)$"Failed to apply mod setting '{val.name}' during registration: {arg}");
+					}
+				}
 			}
+			flag = true;
 		}
 		if (flag)
 		{
-			ManualLogSource logger = Logger;
-			if (logger != null)
+			ManualLogSource logger2 = Logger;
+			if (logger2 != null)
 			{
-				logger.LogDebug((object)$"Merged {Definitions.Count} registered mod settings into the live Settings list.");
+				logger2.LogDebug((object)$"Merged {Definitions.Count} registered mod settings into the live Settings list.");
 			}
 		}
+	}
+
+	internal static void BindBlankAwareIntInput(GameObject row, SettingInt setting)
+	{
+		TMP_InputField input = (((Object)(object)row != (Object)null) ? ((Component)row.transform.GetChild(1)).GetComponent<TMP_InputField>() : null);
+		if ((Object)(object)input == (Object)null || setting == null)
+		{
+			return;
+		}
+		input.SetTextWithoutNotify((setting.value < 0) ? string.Empty : setting.value.ToString());
+		((UnityEventBase)input.onEndEdit).RemoveAllListeners();
+		((UnityEvent<string>)(object)input.onEndEdit).AddListener((UnityAction<string>)delegate(string text)
+		{
+			int result;
+			if (string.IsNullOrWhiteSpace(text) && setting.min < 0)
+			{
+				result = setting.min;
+			}
+			else if (!int.TryParse(text, out result))
+			{
+				result = setting.value;
+			}
+			result = Mathf.Clamp(result, setting.min, setting.max);
+			input.SetTextWithoutNotify((result < 0) ? string.Empty : result.ToString());
+			((Setting)setting).SetValue((object)result);
+			((Setting)setting).Apply();
+		});
 	}
 
 	private static void RestoreSavedSettingValue(Setting setting)
@@ -282,13 +327,13 @@ public static class ModOptionsMenu
 
 	private static void AppendCustomSettings(SettingsMenu menu, SettingCategory category)
 	{
-		//IL_0243: Unknown result type (might be due to invalid IL or missing references)
-		//IL_024e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01e0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ff: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01fa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0205: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01a5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01b6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01c3: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)menu == (Object)null || (Object)(object)menu.content == (Object)null || CustomDefinitions.Count == 0)
 		{
 			return;
@@ -384,6 +429,11 @@ public static class ModOptionsMenu
 				val3.skipLocale = true;
 				val3.tipName = value.Label;
 				val3.tipDesc = value.Description ?? string.Empty;
+				SettingInt val4 = (SettingInt)(object)((val2 is SettingInt) ? val2 : null);
+				if (val4 != null && value.IntRowBinder != null)
+				{
+					value.IntRowBinder(val, val4);
+				}
 				ModManagementSettings.PrepareSpawnedRow(val, val2);
 			}
 		}
@@ -391,28 +441,28 @@ public static class ModOptionsMenu
 
 	private static void RefreshSettingsMenu(SettingsMenu menu, SettingCategory category)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
 		RelabelStandardRows(menu, category);
 		AppendCustomSettings(menu, category);
 	}
 
 	private static void PatchExplicit(Harmony harmony)
 	{
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0036: Expected O, but got Unknown
-		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006c: Expected O, but got Unknown
-		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a2: Expected O, but got Unknown
-		//IL_00f7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0105: Expected O, but got Unknown
-		//IL_0151: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015e: Expected O, but got Unknown
-		//IL_01ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01dc: Expected O, but got Unknown
-		//IL_0198: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a5: Expected O, but got Unknown
+		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0035: Expected O, but got Unknown
+		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006b: Expected O, but got Unknown
+		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a1: Expected O, but got Unknown
+		//IL_00f3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0101: Expected O, but got Unknown
+		//IL_0147: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0154: Expected O, but got Unknown
+		//IL_01bd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01cb: Expected O, but got Unknown
+		//IL_0188: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0195: Expected O, but got Unknown
 		harmony.Patch((MethodBase)AccessTools.Method(typeof(Settings), "DefaultSettings", (Type[])null, (Type[])null), (HarmonyMethod)null, new HarmonyMethod(typeof(ModOptionsMenu), "DefaultSettingsPostfix", (Type[])null), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
 		harmony.Patch((MethodBase)AccessTools.Method(typeof(Settings), "LoadSettings", (Type[])null, (Type[])null), (HarmonyMethod)null, new HarmonyMethod(typeof(ModOptionsMenu), "LoadSettingsPostfix", (Type[])null), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
 		harmony.Patch((MethodBase)AccessTools.Method(typeof(Locale), "GetOther", (Type[])null, (Type[])null), new HarmonyMethod(typeof(ModOptionsMenu), "LocaleGetOtherPrefix", (Type[])null), (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null, (HarmonyMethod)null);
@@ -440,7 +490,7 @@ public static class ModOptionsMenu
 
 	private static float GetSpawnedSettingsHeight(List<GameObject> spawnedSettings)
 	{
-		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
 		if (spawnedSettings == null || spawnedSettings.Count == 0)
 		{
 			return 0f;
@@ -463,8 +513,6 @@ public static class ModOptionsMenu
 
 	private static SettingCategory ResolveCustomCategory(string customCategory)
 	{
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
 		string key = NormalizeCategoryKey(customCategory);
 		if (!CustomCategoriesByKey.TryGetValue(key, out var value))
 		{
@@ -499,6 +547,18 @@ public static class ModOptionsMenu
 	public static void LoadSettingsPostfix()
 	{
 		SyncRegisteredDefinitionsIntoLoadedSettings(restoreSavedValues: false, applyAddedSettings: false);
+		try
+		{
+			ModOptionsMenu.SettingsLoaded?.Invoke();
+		}
+		catch (Exception arg)
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogError((object)$"Failed to run settings-loaded callbacks: {arg}");
+			}
+		}
 	}
 
 	public static bool LocaleGetOtherPrefix(string str, ref string __result)
@@ -523,7 +583,7 @@ public static class ModOptionsMenu
 
 	public static void SettingsMenuStartPostfix(SettingsMenu __instance)
 	{
-		ModManagementSettings.RegisterSettings();
+		TryRegisterModSettings();
 		EnsureRegisteredDefinitionsInLiveSettings(restoreSavedValues: false, applyAddedSettings: false);
 		SettingsMenuCategoryExtender.EnsureAttached(__instance);
 		ModManagementSettings.RefreshMenuAffordances(__instance, (SettingCategory)0);
@@ -531,15 +591,31 @@ public static class ModOptionsMenu
 
 	public static void SettingsMenuSelectTabCategoryPostfix(SettingsMenu __instance, SettingCategory category)
 	{
-		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
-		ModManagementSettings.RegisterSettings();
+		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
+		TryRegisterModSettings();
 		EnsureRegisteredDefinitionsInLiveSettings(restoreSavedValues: false, applyAddedSettings: false);
 		SettingsMenuCategoryExtender.EnsureAttached(__instance);
 		(((Object)(object)__instance != (Object)null) ? ((Component)__instance).GetComponent<SettingsMenuCategoryExtender>() : null)?.OnTabSelected(category);
 		RefreshSettingsMenu(__instance, category);
 		ModManagementSettings.RefreshMenuAffordances(__instance, category);
+	}
+
+	private static void TryRegisterModSettings()
+	{
+		try
+		{
+			ModManagementSettings.RegisterSettings();
+		}
+		catch (Exception arg)
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogError((object)$"Failed to register mod management settings: {arg}");
+			}
+		}
 	}
 
 	public static bool SettingsMenuResetToDefaultPrefix(SettingsMenu __instance)

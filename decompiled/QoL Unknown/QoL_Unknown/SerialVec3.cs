@@ -14,9 +14,9 @@ public struct SerialVec3
 
 	public SerialVec3(Vector3 v)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
 		x = v.x;
 		y = v.y;
 		z = v.z;
@@ -24,9 +24,7 @@ public struct SerialVec3
 
 	public Vector3 ToVector3()
 	{
-		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0012: Unknown result type (might be due to invalid IL or missing references)
 		return new Vector3(x, y, z);
 	}
 }

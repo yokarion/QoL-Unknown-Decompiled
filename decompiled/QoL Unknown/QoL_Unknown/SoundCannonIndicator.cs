@@ -80,10 +80,10 @@ internal class SoundCannonIndicator
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0060: Expected O, but got Unknown
-		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0079: Expected O, but got Unknown
+		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005b: Expected O, but got Unknown
+		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
 		if (initialized)
 		{
 			return;
@@ -100,10 +100,9 @@ internal class SoundCannonIndicator
 			}
 		}
 		GameObject val = new GameObject("SoundCannonIndicatorRuntime");
-		Object.DontDestroyOnLoad((Object)(object)val);
+		Object.DontDestroyOnLoad((Object)val);
 		val.AddComponent<RuntimeCleaner>();
-		Harmony val2 = new Harmony("org.bepinex.plugins.qol.soundcannonindicator");
-		val2.PatchAll(typeof(SoundCannonIndicator));
+		new Harmony("org.bepinex.plugins.qol.soundcannonindicator").PatchAll(typeof(SoundCannonIndicator));
 	}
 
 	[HarmonyPatch(typeof(SoundCannon), "Update")]
@@ -213,42 +212,40 @@ internal class SoundCannonIndicator
 
 	private static void RefreshArrow(CannonTracker tracker)
 	{
-		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ac: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00da: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ab: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00e3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00eb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0109: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0114: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0100: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0105: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0112: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0119: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011e: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0125: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_012f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0133: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0147: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0154: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0167: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0172: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0177: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0197: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ad: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0134: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0153: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0168: Unknown result type (might be due to invalid IL or missing references)
+		//IL_018f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
 		if (tracker == null || (Object)(object)tracker.Cannon == (Object)null)
 		{
 			return;
@@ -259,8 +256,7 @@ internal class SoundCannonIndicator
 			DestroyArrow(tracker);
 			return;
 		}
-		PlayerSoundState playerState = GetPlayerState(val);
-		if (playerState != PlayerSoundState.Normal)
+		if (GetPlayerState(val) != PlayerSoundState.Normal)
 		{
 			DestroyArrow(tracker);
 			return;
@@ -269,18 +265,17 @@ internal class SoundCannonIndicator
 		if (!((Object)(object)tracker.ArrowObject == (Object)null))
 		{
 			Vector2 val2 = Vector2.op_Implicit(((Component)val).transform.position);
-			Vector2 val3 = Vector2.op_Implicit(((Component)tracker.Cannon).transform.position);
-			Vector2 val4 = val3 - val2;
-			if (((Vector2)(ref val4)).sqrMagnitude < 0.0001f)
+			Vector2 val3 = Vector2.op_Implicit(((Component)tracker.Cannon).transform.position) - val2;
+			if (((Vector2)(ref val3)).sqrMagnitude < 0.0001f)
 			{
-				val4 = Vector2.left;
+				val3 = Vector2.left;
 			}
-			Vector2 normalized = ((Vector2)(ref val4)).normalized;
-			Vector2 val5 = default(Vector2);
-			((Vector2)(ref val5))._002Ector(0f - normalized.y, normalized.x);
+			Vector2 normalized = ((Vector2)(ref val3)).normalized;
+			Vector2 val4 = default(Vector2);
+			((Vector2)(ref val4))._002Ector(0f - normalized.y, normalized.x);
 			float num = DeterministicSpread(((Object)tracker.Cannon).GetInstanceID());
-			Vector2 val6 = val2 + Vector2.up * 2.2f + normalized * 1.6f + val5 * num * 1.25f;
-			tracker.ArrowObject.transform.position = new Vector3(val6.x, val6.y, 0f);
+			Vector2 val5 = val2 + Vector2.up * 2.2f + normalized * 1.6f + val4 * num * 1.25f;
+			tracker.ArrowObject.transform.position = new Vector3(val5.x, val5.y, 0f);
 			float num2 = Vector2.SignedAngle(Vector2.left, normalized);
 			tracker.ArrowObject.transform.rotation = Quaternion.Euler(0f, 0f, num2);
 			tracker.ArrowObject.transform.localScale = Vector3.one * (0.5f * (1f + Mathf.Sin(Time.unscaledTime * 2.6f) * 0.25f));
@@ -295,11 +290,11 @@ internal class SoundCannonIndicator
 
 	private static void EnsureArrow(CannonTracker tracker)
 	{
-		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0049: Expected O, but got Unknown
-		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003d: Expected O, but got Unknown
+		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)tracker.ArrowObject != (Object)null) && !((Object)(object)indicatorSprite == (Object)null))
 		{
 			GameObject val = new GameObject($"SoundCannonIndicator_{((Object)tracker.Cannon).GetInstanceID()}");
@@ -315,13 +310,12 @@ internal class SoundCannonIndicator
 
 	private static float DeterministicSpread(int seed)
 	{
-		int num = seed * 1103515245 + 69420;
-		float num2 = (float)(num & 0x3FF) / 1023f * 2f - 1f;
-		if (Mathf.Abs(num2) < 0.2f)
+		float num = (float)((seed * 1103515245 + 69420) & 0x3FF) / 1023f * 2f - 1f;
+		if (Mathf.Abs(num) < 0.2f)
 		{
-			num2 = ((num2 >= 0f) ? 0.2f : (-0.2f));
+			num = ((num >= 0f) ? 0.2f : (-0.2f));
 		}
-		return num2;
+		return num;
 	}
 
 	private static void DestroyArrow(CannonTracker tracker)
@@ -350,7 +344,11 @@ internal class SoundCannonIndicator
 			return false;
 		}
 		GameObject gameObject = ((Component)tracker.Cannon).gameObject;
-		return (Object)(object)gameObject != (Object)null && gameObject.activeInHierarchy;
+		if ((Object)(object)gameObject != (Object)null)
+		{
+			return gameObject.activeInHierarchy;
+		}
+		return false;
 	}
 
 	private static void PruneDestroyedCannons()

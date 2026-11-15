@@ -20,8 +20,8 @@ public static class SeedManager
 
 	public static bool EnsureNonZeroSeedForLoadedRun()
 	{
-		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0036: Invalid comparison between Unknown and I4
+		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002a: Invalid comparison between Unknown and I4
 		if (!SaveSystem.loadedRun)
 		{
 			return false;
@@ -68,7 +68,11 @@ public static class SeedManager
 			num *= 16777619;
 		}
 		int num2 = (int)num;
-		return (num2 == 0) ? 1 : num2;
+		if (num2 != 0)
+		{
+			return num2;
+		}
+		return 1;
 	}
 
 	public static int GetStableHash(string str)

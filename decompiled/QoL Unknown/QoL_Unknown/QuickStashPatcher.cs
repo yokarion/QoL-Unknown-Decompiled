@@ -33,11 +33,9 @@ internal class QuickStashPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.quickstash");
-		val.PatchAll(typeof(QuickStashPatcher));
+		new Harmony("org.bepinex.plugins.qol.quickstash").PatchAll(typeof(QuickStashPatcher));
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "Update")]
@@ -147,8 +145,7 @@ internal class QuickStashPatcher
 		}
 		Body body = cam.body;
 		int[] array = new int[6] { 0, 1, 2, 3, 4, 5 };
-		int[] array2 = array;
-		foreach (int num in array2)
+		foreach (int num in array)
 		{
 			if (num >= body.slots.Length || ShouldSkipSlotForQuickStash(item, num) || (Object)(object)body.GetItem(num) != (Object)null)
 			{
@@ -186,19 +183,19 @@ internal class QuickStashPatcher
 
 	private static Item GetItemUnderMouse(PlayerCamera cam, out MiddleClickTargetState targetState)
 	{
-		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Expected O, but got Unknown
-		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0132: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0137: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0140: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001e: Expected O, but got Unknown
+		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0108: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0114: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011a: Unknown result type (might be due to invalid IL or missing references)
 		targetState = MiddleClickTargetState.Clear;
 		PointerEventData val = new PointerEventData(EventSystem.current)
 		{
@@ -242,24 +239,22 @@ internal class QuickStashPatcher
 			}
 		}
 		Vector3 val4 = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-		Vector2 val5 = default(Vector2);
-		((Vector2)(ref val5))._002Ector(val4.x, val4.y);
-		Collider2D val6 = Physics2D.OverlapPoint(val5, LayerMask.GetMask(new string[1] { "Item" }));
-		if ((Object)(object)val6 != (Object)null)
+		Collider2D val5 = Physics2D.OverlapPoint(new Vector2(val4.x, val4.y), LayerMask.GetMask(new string[1] { "Item" }));
+		if ((Object)(object)val5 != (Object)null)
 		{
-			Item val7 = ((Component)val6).GetComponent<Item>() ?? ((Component)val6).GetComponentInParent<Item>();
-			if ((Object)(object)val7 != (Object)null)
+			Item val6 = ((Component)val5).GetComponent<Item>() ?? ((Component)val5).GetComponentInParent<Item>();
+			if ((Object)(object)val6 != (Object)null)
 			{
 				targetState = MiddleClickTargetState.Item;
-				bool flag2 = cam.body.DoPickupCheck(val7, false);
-				if (IsLineOfSightBlocked(cam.body, val7))
+				bool flag2 = cam.body.DoPickupCheck(val6, false);
+				if (IsLineOfSightBlocked(cam.body, val6))
 				{
 					targetState = MiddleClickTargetState.LineOfSightBlocked;
 					return null;
 				}
 				if (flag2)
 				{
-					return val7;
+					return val6;
 				}
 			}
 		}
@@ -268,41 +263,46 @@ internal class QuickStashPatcher
 
 	internal static bool ShouldSuppressMultiplayerPointPingNow()
 	{
-		return MultiplayerCompat.IsActive && Time.frameCount <= suppressMultiplayerPointPingThroughFrame;
+		if (MultiplayerCompat.IsActive)
+		{
+			return Time.frameCount <= suppressMultiplayerPointPingThroughFrame;
+		}
+		return false;
 	}
 
 	internal static bool TryGetPickupableWorldItemUnderMouse(PlayerCamera cam, out Item item)
 	{
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
 		item = null;
 		if ((Object)(object)cam == (Object)null || (Object)(object)cam.body == (Object)null || (Object)(object)Camera.main == (Object)null)
 		{
 			return false;
 		}
-		Vector2 val = Vector2.op_Implicit(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-		Collider2D val2 = Physics2D.OverlapPoint(val, LayerMask.GetMask(new string[1] { "Item" }));
-		item = (((Object)(object)val2 != (Object)null) ? (((Component)val2).GetComponent<Item>() ?? ((Component)val2).GetComponentInParent<Item>()) : null);
-		return (Object)(object)item != (Object)null && !IsLineOfSightBlocked(cam.body, item) && cam.body.DoPickupCheck(item, true);
+		Collider2D val = Physics2D.OverlapPoint(Vector2.op_Implicit(Camera.main.ScreenToWorldPoint(Input.mousePosition)), LayerMask.GetMask(new string[1] { "Item" }));
+		item = (((Object)(object)val != (Object)null) ? (((Component)val).GetComponent<Item>() ?? ((Component)val).GetComponentInParent<Item>()) : null);
+		if ((Object)(object)item != (Object)null && !IsLineOfSightBlocked(cam.body, item))
+		{
+			return cam.body.DoPickupCheck(item, true);
+		}
+		return false;
 	}
 
 	private static bool IsLineOfSightBlocked(Body body, Item item)
 	{
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0078: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)body == (Object)null || (Object)(object)item == (Object)null)
 		{
 			return false;
@@ -405,7 +405,7 @@ internal class QuickStashPatcher
 
 	private static bool TryMoveToBestContainer(PlayerCamera cam, Item item)
 	{
-		//IL_0212: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01c0: Unknown result type (might be due to invalid IL or missing references)
 		Body body = cam.body;
 		List<Container> list = new List<Container>();
 		for (int i = 0; i < body.slots.Length; i++)
@@ -469,7 +469,11 @@ internal class QuickStashPatcher
 	{
 		Item component = ((Component)container).GetComponent<Item>();
 		int num = (((Object)(object)component != (Object)null) ? Array.IndexOf(StashPriorityIds, component.id) : (-1));
-		return (num >= 0) ? num : StashPriorityIds.Length;
+		if (num < 0)
+		{
+			return StashPriorityIds.Length;
+		}
+		return num;
 	}
 
 	private static bool TryMoveToSlot(PlayerCamera cam, Item item)
@@ -504,7 +508,11 @@ internal class QuickStashPatcher
 
 	private static bool ShouldSkipSlotForQuickStash(Item item, int slot)
 	{
-		return slot == 0 && (Object)(object)item != (Object)null && item.id == "lightbulb";
+		if (slot == 0 && (Object)(object)item != (Object)null)
+		{
+			return item.id == "lightbulb";
+		}
+		return false;
 	}
 
 	private static bool CanUseContainerForMp(Container container)
@@ -514,7 +522,11 @@ internal class QuickStashPatcher
 			return false;
 		}
 		Item component = ((Component)container).GetComponent<Item>();
-		return (Object)(object)component == (Object)null || MultiplayerCompat.CanMoveItemNow(component);
+		if (!((Object)(object)component == (Object)null))
+		{
+			return MultiplayerCompat.CanMoveItemNow(component);
+		}
+		return true;
 	}
 
 	private static void SuppressMpRadialPing(PlayerCamera cam)
@@ -528,13 +540,17 @@ internal class QuickStashPatcher
 
 	private static bool IsRadialSuppressionActive()
 	{
-		return Time.frameCount <= suppressRadialThroughFrame && MultiplayerCompat.IsActive;
+		if (Time.frameCount <= suppressRadialThroughFrame)
+		{
+			return MultiplayerCompat.IsActive;
+		}
+		return false;
 	}
 
 	private static void ForceCloseRadialPing(PlayerCamera cam)
 	{
-		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0049: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)cam == (Object)null))
 		{
 			cam.radialOpen = false;

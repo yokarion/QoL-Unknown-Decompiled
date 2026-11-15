@@ -27,8 +27,9 @@ public class ItemHighlightManager : MonoBehaviour
 
 	internal static ItemHighlightManager EnsureInstance()
 	{
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Expected O, but got Unknown
+		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Expected O, but got Unknown
 		if ((Object)(object)Instance != (Object)null)
 		{
 			return Instance;
@@ -40,7 +41,7 @@ public class ItemHighlightManager : MonoBehaviour
 			return itemHighlightManager;
 		}
 		GameObject val = new GameObject("ItemHighlightManager");
-		Object.DontDestroyOnLoad((Object)(object)val);
+		Object.DontDestroyOnLoad((Object)val);
 		return val.AddComponent<ItemHighlightManager>();
 	}
 
@@ -76,22 +77,22 @@ public class ItemHighlightManager : MonoBehaviour
 
 	private void UpdateHighlight(ControllerInputManager controller)
 	{
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0124: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0152: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010d: Unknown result type (might be due to invalid IL or missing references)
 		Camera main = Camera.main;
 		if ((Object)(object)main == (Object)null)
 		{
@@ -100,8 +101,7 @@ public class ItemHighlightManager : MonoBehaviour
 		}
 		Vector3 virtualMousePos = controller.VirtualMousePos;
 		Vector3 val = main.ScreenToWorldPoint(virtualMousePos);
-		Vector2 val2 = default(Vector2);
-		((Vector2)(ref val2))._002Ector(val.x, val.y);
+		Vector2 val2 = new Vector2(val.x, val.y);
 		float num = 150f * (main.orthographicSize * 2f / (float)Mathf.Max(1, Screen.height));
 		if (num <= 0f)
 		{
@@ -149,7 +149,11 @@ public class ItemHighlightManager : MonoBehaviour
 
 	private static bool IsDroppedItemCandidate(Item item)
 	{
-		return (Object)(object)item != (Object)null && ((Component)item).gameObject.activeInHierarchy && (Object)(object)((Component)item).transform.parent == (Object)null && (Object)(object)item.rb != (Object)null;
+		if ((Object)(object)item != (Object)null && ((Component)item).gameObject.activeInHierarchy && (Object)(object)((Component)item).transform.parent == (Object)null)
+		{
+			return (Object)(object)item.rb != (Object)null;
+		}
+		return false;
 	}
 
 	private static void EnsureOutlineMaterialLoaded()
@@ -162,13 +166,13 @@ public class ItemHighlightManager : MonoBehaviour
 
 	private void SetHighlight(Item item)
 	{
-		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0043: Expected O, but got Unknown
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0132: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Expected O, but got Unknown
+		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011a: Unknown result type (might be due to invalid IL or missing references)
 		ClearHighlight();
 		if ((Object)(object)item == (Object)null)
 		{

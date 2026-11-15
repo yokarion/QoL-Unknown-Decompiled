@@ -39,11 +39,9 @@ internal class TimerMenuPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.timerpanel");
-		val.PatchAll(typeof(TimerMenuPatcher));
+		new Harmony("org.bepinex.plugins.qol.timerpanel").PatchAll(typeof(TimerMenuPatcher));
 		SceneManager.sceneUnloaded += delegate
 		{
 			pausePanelRef = null;
@@ -131,42 +129,42 @@ internal class TimerMenuPatcher
 
 	private static void BuildTimerUI()
 	{
-		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0036: Expected O, but got Unknown
-		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0130: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0155: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015f: Expected O, but got Unknown
+		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002a: Expected O, but got Unknown
+		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0073: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0114: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0140: Expected O, but got Unknown
 		if (!((Object)(object)timerPanelObj != (Object)null) && !((Object)(object)pausePanelRef == (Object)null))
 		{
 			timerPanelObj = new GameObject("TimerPanel");
 			timerPanelObj.transform.SetParent(pausePanelRef.transform.parent, false);
-			RectTransform val = timerPanelObj.AddComponent<RectTransform>();
-			val.anchorMin = new Vector2(0.5f, 0.5f);
-			val.anchorMax = new Vector2(0.5f, 0.5f);
-			val.pivot = new Vector2(0.5f, 0f);
-			val.sizeDelta = new Vector2(440f, 44f);
+			RectTransform obj = timerPanelObj.AddComponent<RectTransform>();
+			obj.anchorMin = new Vector2(0.5f, 0.5f);
+			obj.anchorMax = new Vector2(0.5f, 0.5f);
+			obj.pivot = new Vector2(0.5f, 0f);
+			obj.sizeDelta = new Vector2(440f, 44f);
 			UpdateTimerPanelTransform(((Object)(object)pauseHandlerRef != (Object)null) ? pauseHandlerRef : PauseHandler.main);
-			Image val2 = timerPanelObj.AddComponent<Image>();
-			Sprite val3 = ResourceLookupCache.FindSprite("uiBlock") ?? ResourceLookupCache.FindSpriteContains("uiBlock");
-			if ((Object)(object)val3 != (Object)null)
+			Image val = timerPanelObj.AddComponent<Image>();
+			Sprite val2 = ResourceLookupCache.FindSprite("uiBlock") ?? ResourceLookupCache.FindSpriteContains("uiBlock");
+			if ((Object)(object)val2 != (Object)null)
 			{
-				val2.sprite = val3;
-				val2.type = (Type)1;
+				val.sprite = val2;
+				val.type = (Type)1;
 			}
-			((Graphic)val2).color = new Color(0f, 0f, 0f, 0.7f);
-			((Graphic)val2).raycastTarget = false;
-			HorizontalLayoutGroup val4 = timerPanelObj.AddComponent<HorizontalLayoutGroup>();
-			((LayoutGroup)val4).padding = new RectOffset(12, 12, 8, 8);
-			((HorizontalOrVerticalLayoutGroup)val4).spacing = 20f;
-			((HorizontalOrVerticalLayoutGroup)val4).childControlWidth = true;
-			((HorizontalOrVerticalLayoutGroup)val4).childControlHeight = true;
-			((HorizontalOrVerticalLayoutGroup)val4).childForceExpandWidth = true;
-			((HorizontalOrVerticalLayoutGroup)val4).childForceExpandHeight = true;
-			((LayoutGroup)val4).childAlignment = (TextAnchor)4;
+			((Graphic)val).color = new Color(0f, 0f, 0f, 0.7f);
+			((Graphic)val).raycastTarget = false;
+			HorizontalLayoutGroup obj2 = timerPanelObj.AddComponent<HorizontalLayoutGroup>();
+			((LayoutGroup)obj2).padding = new RectOffset(12, 12, 8, 8);
+			((HorizontalOrVerticalLayoutGroup)obj2).spacing = 20f;
+			((HorizontalOrVerticalLayoutGroup)obj2).childControlWidth = true;
+			((HorizontalOrVerticalLayoutGroup)obj2).childControlHeight = true;
+			((HorizontalOrVerticalLayoutGroup)obj2).childForceExpandWidth = true;
+			((HorizontalOrVerticalLayoutGroup)obj2).childForceExpandHeight = true;
+			((LayoutGroup)obj2).childAlignment = (TextAnchor)4;
 			TMP_FontAsset font = ResourceLookupCache.FindFontContains("sevenish");
 			CreateTimerText("IGT", font, out igtText);
 			CreateTimerText("RTA", font, out rtaText);
@@ -176,26 +174,26 @@ internal class TimerMenuPatcher
 
 	private static void UpdateTimerPanelTransform(PauseHandler pauseHandler)
 	{
+		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0174: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0180: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0109: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0119: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0137: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010b: Unknown result type (might be due to invalid IL or missing references)
 		RectTransform val = (((Object)(object)timerPanelObj != (Object)null) ? timerPanelObj.GetComponent<RectTransform>() : null);
 		object obj;
 		if (!((Object)(object)timerPanelObj != (Object)null))
@@ -270,32 +268,31 @@ internal class TimerMenuPatcher
 
 	private static void CreateTimerText(string label, TMP_FontAsset font, out TextMeshProUGUI timeText)
 	{
-		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0025: Expected O, but got Unknown
-		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b5: Expected O, but got Unknown
-		//IL_010c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0162: Expected O, but got Unknown
-		//IL_01b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0024: Expected O, but got Unknown
+		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013e: Expected O, but got Unknown
+		//IL_0182: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject(label + "Container", new Type[1] { typeof(RectTransform) });
 		val.transform.SetParent(timerPanelObj.transform, false);
-		HorizontalLayoutGroup val2 = val.AddComponent<HorizontalLayoutGroup>();
-		((HorizontalOrVerticalLayoutGroup)val2).spacing = 6f;
-		((LayoutGroup)val2).childAlignment = (TextAnchor)3;
-		((HorizontalOrVerticalLayoutGroup)val2).childControlWidth = true;
-		((HorizontalOrVerticalLayoutGroup)val2).childControlHeight = true;
-		((HorizontalOrVerticalLayoutGroup)val2).childForceExpandWidth = false;
-		((HorizontalOrVerticalLayoutGroup)val2).childForceExpandHeight = true;
-		LayoutElement val3 = val.AddComponent<LayoutElement>();
-		val3.flexibleWidth = 1f;
-		GameObject val4 = new GameObject("Label", new Type[2]
+		HorizontalLayoutGroup obj = val.AddComponent<HorizontalLayoutGroup>();
+		((HorizontalOrVerticalLayoutGroup)obj).spacing = 6f;
+		((LayoutGroup)obj).childAlignment = (TextAnchor)3;
+		((HorizontalOrVerticalLayoutGroup)obj).childControlWidth = true;
+		((HorizontalOrVerticalLayoutGroup)obj).childControlHeight = true;
+		((HorizontalOrVerticalLayoutGroup)obj).childForceExpandWidth = false;
+		((HorizontalOrVerticalLayoutGroup)obj).childForceExpandHeight = true;
+		val.AddComponent<LayoutElement>().flexibleWidth = 1f;
+		GameObject val2 = new GameObject("Label", new Type[2]
 		{
 			typeof(RectTransform),
 			typeof(TextMeshProUGUI)
 		});
-		val4.transform.SetParent(val.transform, false);
-		TextMeshProUGUI component = val4.GetComponent<TextMeshProUGUI>();
+		val2.transform.SetParent(val.transform, false);
+		TextMeshProUGUI component = val2.GetComponent<TextMeshProUGUI>();
 		((TMP_Text)component).text = "<b>" + label + ":</b>";
 		if (Object.op_Implicit((Object)(object)font))
 		{
@@ -306,13 +303,13 @@ internal class TimerMenuPatcher
 		((TMP_Text)component).alignment = (TextAlignmentOptions)4097;
 		((TMP_Text)component).enableWordWrapping = false;
 		((Graphic)component).raycastTarget = false;
-		GameObject val5 = new GameObject("Time", new Type[2]
+		GameObject val3 = new GameObject("Time", new Type[2]
 		{
 			typeof(RectTransform),
 			typeof(TextMeshProUGUI)
 		});
-		val5.transform.SetParent(val.transform, false);
-		timeText = val5.GetComponent<TextMeshProUGUI>();
+		val3.transform.SetParent(val.transform, false);
+		timeText = val3.GetComponent<TextMeshProUGUI>();
 		((TMP_Text)timeText).text = "00:00:00.000";
 		if (Object.op_Implicit((Object)(object)font))
 		{
@@ -323,8 +320,7 @@ internal class TimerMenuPatcher
 		((TMP_Text)timeText).alignment = (TextAlignmentOptions)4100;
 		((TMP_Text)timeText).enableWordWrapping = false;
 		((Graphic)timeText).raycastTarget = false;
-		LayoutElement val6 = val5.AddComponent<LayoutElement>();
-		val6.flexibleWidth = 1f;
+		val3.AddComponent<LayoutElement>().flexibleWidth = 1f;
 	}
 
 	private static void UpdateTimerDisplay()

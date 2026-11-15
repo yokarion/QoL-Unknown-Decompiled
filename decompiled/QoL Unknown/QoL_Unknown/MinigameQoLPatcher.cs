@@ -18,14 +18,16 @@ internal class MinigameQoLPatcher
 
 	private const int KeypadMaxDigitsInclusive = 9;
 
+	private static RectTransform raisedKeypadScreen;
+
+	private static int keypadScreenBaseSiblingIndex;
+
 	private static FieldInfo openableCodeField;
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000c: Expected O, but got Unknown
-		Harmony val = new Harmony("org.bepinex.plugins.qol.minigame");
-		val.PatchAll(typeof(MinigameQoLPatcher));
+		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
+		new Harmony("org.bepinex.plugins.qol.minigame").PatchAll(typeof(MinigameQoLPatcher));
 	}
 
 	private static bool MinigameQoLEnabled()
@@ -56,9 +58,8 @@ internal class MinigameQoLPatcher
 			{
 				float num2 = __instance.pickLevel + 1;
 				float num3 = Time.deltaTime * (0.66f + num2 * 0.065f);
-				float num4 = Mathf.Min(__instance.lockProgress + num3, num) - __instance.lockProgress;
-				float num5 = num4 * 0.20000005f;
-				__instance.lockProgress = Mathf.Clamp(__instance.lockProgress + num5, 0f, num);
+				float num4 = (Mathf.Min(__instance.lockProgress + num3, num) - __instance.lockProgress) * 0.20000005f;
+				__instance.lockProgress = Mathf.Clamp(__instance.lockProgress + num4, 0f, num);
 			}
 		}
 	}
@@ -81,14 +82,46 @@ internal class MinigameQoLPatcher
 		return false;
 	}
 
+	[HarmonyPatch(typeof(KeypadMinigame), "Start")]
+	[HarmonyPostfix]
+	private static void KeypadMinigame_Start_RaiseAboveSavePanel_Postfix()
+	{
+		MinigameBase main = MinigameBase.main;
+		WorldGeneration world = WorldGeneration.world;
+		if (!((Object)(object)main == (Object)null) && !((Object)(object)main.minigameScreen == (Object)null) && !((Object)(object)world == (Object)null) && !((Object)(object)world.savePanel == (Object)null))
+		{
+			Transform transform = ((Component)main.minigameScreen).transform;
+			Transform transform2 = world.savePanel.transform;
+			if (!((Object)(object)transform.parent == (Object)null) && !((Object)(object)transform.parent != (Object)(object)transform2.parent) && transform.GetSiblingIndex() <= transform2.GetSiblingIndex())
+			{
+				raisedKeypadScreen = main.minigameScreen;
+				keypadScreenBaseSiblingIndex = transform.GetSiblingIndex();
+				transform.SetAsLastSibling();
+				transform.SetSiblingIndex(transform2.GetSiblingIndex() + 1);
+			}
+		}
+	}
+
+	[HarmonyPatch(typeof(MinigameBase), "EndMinigame")]
+	[HarmonyPostfix]
+	private static void MinigameBase_EndMinigame_RestoreScreenOrder_Postfix()
+	{
+		RectTransform val = raisedKeypadScreen;
+		raisedKeypadScreen = null;
+		if ((Object)(object)val != (Object)null)
+		{
+			((Component)val).transform.SetSiblingIndex(keypadScreenBaseSiblingIndex);
+		}
+	}
+
 	[HarmonyPatch(typeof(Openable), "OnUse")]
 	[HarmonyPrefix]
 	private static bool Openable_OnUse_Prefix(Openable __instance)
 	{
-		//IL_0103: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010e: Expected O, but got Unknown
-		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ab: Expected O, but got Unknown
+		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e2: Expected O, but got Unknown
+		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008a: Expected O, but got Unknown
 		if (__instance.instantOpen)
 		{
 			((Component)__instance).GetComponent<BuildingEntity>().health = 0f;
@@ -122,14 +155,14 @@ internal class MinigameQoLPatcher
 	[HarmonyPrefix]
 	private static bool PlayerCamera_WoundSpecialAction_Prefix(PlayerCamera __instance)
 	{
-		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a0: Expected O, but got Unknown
-		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0144: Expected O, but got Unknown
-		//IL_015a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0072: Expected O, but got Unknown
+		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0101: Expected O, but got Unknown
+		//IL_0111: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0116: Unknown result type (might be due to invalid IL or missing references)
 		if (!__instance.body.allowUseItem)
 		{
 			__instance.UseFailUnhappiness();
@@ -230,8 +263,7 @@ internal class MinigameQoLPatcher
 
 	private static Item FindInItemTree(Item item, string id)
 	{
-		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005c: Expected O, but got Unknown
+		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)item == (Object)null)
 		{
 			return null;
@@ -246,11 +278,10 @@ internal class MinigameQoLPatcher
 		}
 		foreach (Transform item2 in ((Component)item).transform)
 		{
-			Transform val = item2;
-			Item val2 = FindInItemTree(((Component)val).GetComponent<Item>(), id);
-			if ((Object)(object)val2 != (Object)null)
+			Item val = FindInItemTree(((Component)item2).GetComponent<Item>(), id);
+			if ((Object)(object)val != (Object)null)
 			{
-				return val2;
+				return val;
 			}
 		}
 		return null;

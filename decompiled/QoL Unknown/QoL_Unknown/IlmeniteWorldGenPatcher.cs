@@ -15,11 +15,9 @@ internal static class IlmeniteWorldGenPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.ilmeniteworldgen");
-		val.PatchAll(typeof(IlmeniteWorldGenPatcher));
+		new Harmony("org.bepinex.plugins.qol.ilmeniteworldgen").PatchAll(typeof(IlmeniteWorldGenPatcher));
 	}
 
 	public static bool IsEnabled()
@@ -47,10 +45,10 @@ internal static class IlmeniteWorldGenPatcher
 
 	private static void GenerateIlmeniteUsingV6Threshold(WorldGeneration world)
 	{
-		//IL_0118: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0158: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0162: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0141: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0146: Unknown result type (might be due to invalid IL or missing references)
 		float runSettingFloat = WorldGeneration.GetRunSettingFloat("oreamount");
 		if (!(WorldBlocksField?.GetValue(world) is ushort[,] array))
 		{

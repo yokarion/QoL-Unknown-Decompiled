@@ -42,12 +42,20 @@ internal static class CraftFavourites
 
 	public static bool IsFavourited(string simpleName)
 	{
-		return !string.IsNullOrEmpty(simpleName) && Favourites.Contains(simpleName);
+		if (!string.IsNullOrEmpty(simpleName))
+		{
+			return Favourites.Contains(simpleName);
+		}
+		return false;
 	}
 
 	public static bool IsFavourited(Recipe recipe)
 	{
-		return recipe != null && IsFavourited(recipe.simpleName);
+		if (recipe != null)
+		{
+			return IsFavourited(recipe.simpleName);
+		}
+		return false;
 	}
 
 	public static void Toggle(string simpleName)
@@ -72,13 +80,13 @@ internal static class CraftFavourites
 
 	internal static Button CreatePinStyleButton(PlayerCamera camera, string name, string spriteName, int slot, string tipName, string tipDesc)
 	{
-		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0112: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0153: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015d: Expected O, but got Unknown
+		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ad: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0125: Expected O, but got Unknown
 		if ((Object)(object)camera == (Object)null || (Object)(object)camera.craftingPanel == (Object)null)
 		{
 			return null;
@@ -105,10 +113,10 @@ internal static class CraftFavourites
 		Image component = val2.GetComponent<Image>();
 		component.sprite = Helper.LoadEmbeddedSprite(spriteName);
 		((Graphic)component).color = Color.white;
-		UITooltip val3 = val2.GetComponent<UITooltip>() ?? val2.AddComponent<UITooltip>();
-		val3.skipLocale = true;
-		val3.tipName = tipName;
-		val3.tipDesc = tipDesc;
+		UITooltip obj2 = val2.GetComponent<UITooltip>() ?? val2.AddComponent<UITooltip>();
+		obj2.skipLocale = true;
+		obj2.tipName = tipName;
+		obj2.tipDesc = tipDesc;
 		Button component2 = val2.GetComponent<Button>();
 		component2.onClick = new ButtonClickedEvent();
 		return component2;
@@ -118,8 +126,8 @@ internal static class CraftFavourites
 	[HarmonyPostfix]
 	private static void PlayerCamera_Start_Postfix(PlayerCamera __instance)
 	{
-		//IL_005e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0068: Expected O, but got Unknown
+		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005c: Expected O, but got Unknown
 		if (!QoLModuleManager.IsEnabled("qol_craft_uncrafted"))
 		{
 			return;
@@ -147,8 +155,8 @@ internal static class CraftFavourites
 
 	private static void UpdateButton(PlayerCamera camera)
 	{
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
 		Transform val = camera.craftingPanel.transform.Find("QoL_FavouriteButton");
 		if (!((Object)(object)val == (Object)null))
 		{

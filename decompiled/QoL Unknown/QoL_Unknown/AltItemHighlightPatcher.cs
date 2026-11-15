@@ -11,14 +11,12 @@ internal static class AltItemHighlightPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002c: Expected O, but got Unknown
+		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
 		if (FeatureEnabled)
 		{
 			AltItemHighlightManager.EnsureInstance("startup");
-			Harmony val = new Harmony("org.bepinex.plugins.qol.altitemhighlight");
-			val.PatchAll(typeof(AltItemHighlightPatcher));
+			new Harmony("org.bepinex.plugins.qol.altitemhighlight").PatchAll(typeof(AltItemHighlightPatcher));
 			Logger.LogInfo((object)"AltItemHighlightPatcher initialized");
 		}
 	}

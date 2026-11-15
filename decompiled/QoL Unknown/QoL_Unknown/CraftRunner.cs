@@ -17,7 +17,17 @@ internal static class CraftRunner
 
 	private static bool mpCancelRequested;
 
-	internal static bool IsMultiplayerCraftRunning => mpPlan != null && (Object)(object)mpCamera != (Object)null && ((Behaviour)mpCamera).isActiveAndEnabled && (Object)(object)mpBody != (Object)null && (Object)(object)mpCamera.body == (Object)(object)mpBody && mpBody.conscious && MultiplayerCompat.IsActive;
+	internal static bool IsMultiplayerCraftRunning
+	{
+		get
+		{
+			if (mpPlan != null && (Object)(object)mpCamera != (Object)null && ((Behaviour)mpCamera).isActiveAndEnabled && (Object)(object)mpBody != (Object)null && (Object)(object)mpCamera.body == (Object)(object)mpBody && mpBody.conscious)
+			{
+				return MultiplayerCompat.IsActive;
+			}
+			return false;
+		}
+	}
 
 	internal static void CancelMultiplayerCraft()
 	{
@@ -90,6 +100,7 @@ internal static class CraftRunner
 				if (Time.realtimeSinceStartup >= deadline)
 				{
 					camera.DoAlert("Autocraft stopped waiting for the previous craft's answer.", false);
+					camera.PlayUISound((UISoundType)6, 1f);
 					yield break;
 				}
 				MultiplayerCompat.RequestNativeCraft(camera, plan.FinalRecipe);
@@ -127,14 +138,15 @@ internal static class CraftRunner
 						if (Time.realtimeSinceStartup >= deadline)
 						{
 							camera.DoAlert("Autocraft stopped: ingredients never became ready.", false);
+							camera.PlayUISound((UISoundType)6, 1f);
 							yield break;
 						}
 						yield return null;
 					}
-					MultiplayerCompat.NativeCraftState state = MultiplayerCompat.RequestNativeCraft(camera, step.Recipe);
+					MultiplayerCompat.NativeCraftState nativeCraftState = MultiplayerCompat.RequestNativeCraft(camera, step.Recipe);
 					while (true)
 					{
-						switch (state)
+						switch (nativeCraftState)
 						{
 						case MultiplayerCompat.NativeCraftState.Pending:
 							yield return null;
@@ -142,18 +154,21 @@ internal static class CraftRunner
 							{
 								if (!(Time.realtimeSinceStartup >= deadline))
 								{
-									state = MultiplayerCompat.RequestNativeCraft(camera, step.Recipe);
-									continue;
+									goto IL_0297;
 								}
 								camera.DoAlert("Autocraft stopped waiting for the host's answer.", false);
+								camera.PlayUISound((UISoundType)6, 1f);
 							}
 							yield break;
 						default:
+							camera.PlayUISound((UISoundType)6, 1f);
 							yield break;
 						case MultiplayerCompat.NativeCraftState.Accepted:
 							break;
 						}
 						break;
+						IL_0297:
+						nativeCraftState = MultiplayerCompat.RequestNativeCraft(camera, step.Recipe);
 					}
 					ReachableItems.InvalidateGround();
 					CraftingModule.InvalidateInventoryCache();
@@ -176,7 +191,11 @@ internal static class CraftRunner
 
 	private static bool StillRunning(PlayerCamera camera, CraftPlan plan)
 	{
-		return mpPlan == plan && IsMultiplayerCraftRunning && !mpCancelRequested && (Object)(object)camera == (Object)(object)PlayerCamera.main;
+		if (mpPlan == plan && IsMultiplayerCraftRunning && !mpCancelRequested)
+		{
+			return (Object)(object)camera == (Object)(object)PlayerCamera.main;
+		}
+		return false;
 	}
 
 	private static bool ApplyCombines(Body body, List<CraftCombine> combines)

@@ -47,38 +47,36 @@ internal static class KeybindCombos
 
 	public static bool IsCombo(KeyCode key)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0009: Invalid comparison between Unknown and I4
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0008: Invalid comparison between Unknown and I4
 		return (key & 0x40000000) > 0;
 	}
 
 	public static KeyCode Combine(KeyCode baseKey, Modifiers modifiers)
 	{
+		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
 		return (KeyCode)(0x40000000 | ((int)modifiers << 16) | baseKey);
 	}
 
 	public static void Split(KeyCode key, out KeyCode baseKey, out Modifiers modifiers)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000a: Expected I4, but got Unknown
-		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected I4, but got Unknown
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0009: Expected I4, but got Unknown
+		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0011: Expected I4, but got Unknown
 		baseKey = (KeyCode)(key & 0xFFFF);
 		modifiers = (Modifiers)((key >> 16) & 7);
 	}
 
 	public static string Format(KeyCode key)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
 		Split(key, out var baseKey, out var modifiers);
 		StringBuilder stringBuilder = new StringBuilder();
 		AppendModifier(stringBuilder, modifiers, Modifiers.Ctrl, "Ctrl");
@@ -90,19 +88,19 @@ internal static class KeybindCombos
 
 	public static bool GetKey(KeyCode key)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
 		return Refresh(key).Held;
 	}
 
 	public static bool GetKeyDown(KeyCode key)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
 		return Refresh(key).Pressed;
 	}
 
 	public static bool GetKeyUp(KeyCode key)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
 		return Refresh(key).Released;
 	}
 
@@ -115,19 +113,19 @@ internal static class KeybindCombos
 		KeyCode pendingModifier = (KeyCode)0;
 		while (true)
 		{
-			bool pressedIsModifier;
-			KeyCode pressed = FindPressedKey(out pressedIsModifier);
-			if ((int)pressed > 0 && pressedIsModifier)
+			bool isModifier;
+			KeyCode val = FindPressedKey(out isModifier);
+			if ((int)val > 0 && isModifier)
 			{
 				if ((int)pendingModifier == 0)
 				{
-					pendingModifier = pressed;
+					pendingModifier = val;
 				}
 			}
-			else if ((int)pressed > 0)
+			else if ((int)val != 0)
 			{
 				Modifiers modifiers = HeldModifiers();
-				Commit(keybind, text, (modifiers == Modifiers.None) ? pressed : Combine(pressed, modifiers));
+				Commit(keybind, text, (modifiers == Modifiers.None) ? val : Combine(val, modifiers));
 				yield break;
 			}
 			if ((int)pendingModifier != 0 && HeldModifiers() == Modifiers.None)
@@ -153,10 +151,10 @@ internal static class KeybindCombos
 
 	private static PressState Refresh(KeyCode key)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
 		Split(key, out var baseKey, out var modifiers);
 		if (!states.TryGetValue(key, out var value))
 		{
@@ -193,19 +191,27 @@ internal static class KeybindCombos
 
 	private static bool RawHeld(KeyCode baseKey)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		int num = MouseButtonIndex(baseKey);
-		return (num >= 0) ? Input.GetMouseButton(num) : Input.GetKey(baseKey);
+		if (num < 0)
+		{
+			return Input.GetKey(baseKey);
+		}
+		return Input.GetMouseButton(num);
 	}
 
 	private static int MouseButtonIndex(KeyCode key)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0009: Expected I4, but got Unknown
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0008: Expected I4, but got Unknown
 		int num = key - 323;
-		return (num >= 0 && num <= 6) ? num : (-1);
+		if (num < 0 || num > 6)
+		{
+			return -1;
+		}
+		return num;
 	}
 
 	private static bool ModifiersHeld(Modifiers modifiers)
@@ -245,37 +251,39 @@ internal static class KeybindCombos
 
 	private static bool IsModifier(KeyCode key)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0007: Invalid comparison between Unknown and I4
-		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000f: Invalid comparison between Unknown and I4
-		//IL_0011: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0017: Invalid comparison between Unknown and I4
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001f: Invalid comparison between Unknown and I4
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0027: Invalid comparison between Unknown and I4
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002f: Invalid comparison between Unknown and I4
-		return (int)key == 306 || (int)key == 305 || (int)key == 304 || (int)key == 303 || (int)key == 308 || (int)key == 307;
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Invalid comparison between Unknown and I4
+		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000e: Invalid comparison between Unknown and I4
+		//IL_0010: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0016: Invalid comparison between Unknown and I4
+		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001e: Invalid comparison between Unknown and I4
+		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0026: Invalid comparison between Unknown and I4
+		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002e: Invalid comparison between Unknown and I4
+		if ((int)key != 306 && (int)key != 305 && (int)key != 304 && (int)key != 303 && (int)key != 308)
+		{
+			return (int)key == 307;
+		}
+		return true;
 	}
 
 	private static KeyCode FindPressedKey(out bool isModifier)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0035: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0038: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0047: Invalid comparison between Unknown and I4
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0051: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
 		KeyCode val = (KeyCode)0;
 		foreach (KeyCode value in Enum.GetValues(typeof(KeyCode)))
 		{
@@ -298,7 +306,7 @@ internal static class KeybindCombos
 
 	private static void Commit(SettingKeybind keybind, TextMeshProUGUI text, KeyCode value)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		((Setting)keybind).SetValue((object)value);
 		((Setting)keybind).Apply();
 		if ((Object)(object)text != (Object)null)

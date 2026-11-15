@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using BepInEx.Bootstrap;
 using BepInEx.Logging;
 using HarmonyLib;
 using TMPro;
@@ -33,7 +34,7 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 		[HarmonyAfter(new string[] { "net.cucorelib" })]
 		private static void Postfix(SettingsMenu __instance, SettingCategory category)
 		{
-			//IL_002d: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0025: Unknown result type (might be due to invalid IL or missing references)
 			if (!suppressSearchRefresh)
 			{
 				EnsureAttached(__instance);
@@ -107,7 +108,7 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	private TextMeshProUGUI emptyStateText;
 
-	private int activeCategoryIndex = 0;
+	private int activeCategoryIndex;
 
 	private bool searchModeActive;
 
@@ -115,15 +116,13 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	internal static void Initialize(ManualLogSource log)
 	{
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002a: Expected O, but got Unknown
+		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
 		logger = log;
 		if (!initialized)
 		{
 			initialized = true;
 			CacheCuCoreLibReflection();
-			Harmony val = new Harmony("org.bepinex.plugins.qol_unknown.settingssearch");
-			val.PatchAll(typeof(SettingsMenuSearchController));
+			new Harmony("org.bepinex.plugins.qol_unknown.settingssearch").PatchAll(typeof(SettingsMenuSearchController));
 		}
 	}
 
@@ -160,14 +159,17 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	private static void CacheCuCoreLibReflection()
 	{
-		Type type = AccessTools.TypeByName("CUCoreLib.Registries.ModOptionsRegistry");
-		Type type2 = AccessTools.TypeByName("CUCoreLib.Registries.ModOptionCategoryEntry");
-		cuCoreLibTryGetOwnedCustomCategoryMethod = ((type != null) ? AccessTools.Method(type, "TryGetOwnedCustomCategory", new Type[2]
+		if (Chainloader.PluginInfos.ContainsKey("net.cucorelib"))
 		{
-			typeof(SettingCategory),
-			type2?.MakeByRefType()
-		}, (Type[])null) : null);
-		cuCoreLibDisplayNameProperty = type2?.GetProperty("DisplayName", AccessTools.all);
+			Type type = AccessTools.TypeByName("CUCoreLib.Registries.ModOptionsRegistry");
+			Type type2 = AccessTools.TypeByName("CUCoreLib.Registries.ModOptionCategoryEntry");
+			cuCoreLibTryGetOwnedCustomCategoryMethod = ((type != null) ? AccessTools.Method(type, "TryGetOwnedCustomCategory", new Type[2]
+			{
+				typeof(SettingCategory),
+				type2?.MakeByRefType()
+			}, (Type[])null) : null);
+			cuCoreLibDisplayNameProperty = type2?.GetProperty("DisplayName", AccessTools.all);
+		}
 	}
 
 	private void InitializeInstance(SettingsMenu settingsMenu)
@@ -260,45 +262,49 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	private void CreateSearchUi()
 	{
-		//IL_00e5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00eb: Expected O, but got Unknown
-		//IL_0117: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00de: Expected O, but got Unknown
+		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0130: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0145: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0173: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01ba: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0200: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0207: Expected O, but got Unknown
-		//IL_0226: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0233: Unknown result type (might be due to invalid IL or missing references)
-		//IL_024a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0261: Unknown result type (might be due to invalid IL or missing references)
-		//IL_028b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02c4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02cb: Expected O, but got Unknown
-		//IL_02eb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0305: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0312: Unknown result type (might be due to invalid IL or missing references)
-		//IL_033e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0370: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03d6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_03e3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_043d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0444: Expected O, but got Unknown
-		//IL_0472: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0489: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04a0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04b7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_04ce: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0528: Unknown result type (might be due to invalid IL or missing references)
-		//IL_055e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_056d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_057c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_058b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_059a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_05a9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0159: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0198: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01da: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e1: Expected O, but got Unknown
+		//IL_01fc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0207: Unknown result type (might be due to invalid IL or missing references)
+		//IL_021c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0230: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0259: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0290: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0295: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02a8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02b2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02be: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02ca: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02d6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02e0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0300: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0330: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0390: Unknown result type (might be due to invalid IL or missing references)
+		//IL_039c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03f3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03f8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_040f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0420: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0435: Unknown result type (might be due to invalid IL or missing references)
+		//IL_044a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_045f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0473: Unknown result type (might be due to invalid IL or missing references)
+		//IL_047d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04c7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_04f4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0503: Unknown result type (might be due to invalid IL or missing references)
+		//IL_050f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_051e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0529: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0538: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)menu == (Object)null) && !((Object)(object)menu.content == (Object)null))
 		{
 			Button val = ((menu.buttons != null) ? menu.buttons.FirstOrDefault((Button button) => (Object)(object)button != (Object)null) : null);
@@ -411,13 +417,14 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	private static TextMeshProUGUI CreateInputText(Transform parent, string name, string value, TMP_FontAsset font, Color color)
 	{
-		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0028: Expected O, but got Unknown
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
 		GameObject val = new GameObject(name, new Type[2]
 		{
 			typeof(RectTransform),
@@ -460,20 +467,20 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	internal void OnTabSelected(SettingCategory category)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0008: Expected I4, but got Unknown
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0007: Expected I4, but got Unknown
 		activeCategoryIndex = (int)category;
 		QueueRefresh();
 	}
 
 	private void BuildSearchResults(string query)
 	{
-		//IL_017b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0196: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01b7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01c6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ac: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0114: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_017a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0189: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
 		List<SearchResultDefinition> list = FindMatches(query);
 		List<GameObject> list2 = SpawnedSettingsRef.Invoke(menu);
 		if (list2 == null)
@@ -518,8 +525,8 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	private List<SearchResultDefinition> FindMatches(string query)
 	{
-		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_019b: Unknown result type (might be due to invalid IL or missing references)
 		string[] tokens = (from token in query.Split(new char[1] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
 			select token.Trim().ToLowerInvariant() into token
 			where token.Length > 0
@@ -527,16 +534,14 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 		List<SearchResultDefinition> list = new List<SearchResultDefinition>();
 		HashSet<string> hashSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		IEnumerable<Setting> allSettings = Settings.GetAllSettings();
-		IEnumerable<Setting> enumerable = allSettings ?? Enumerable.Empty<Setting>();
-		foreach (Setting item in enumerable)
+		foreach (Setting item in allSettings ?? Enumerable.Empty<Setting>())
 		{
 			if (item != null)
 			{
 				string settingLabel = GetSettingLabel(item);
 				string settingDescription = GetSettingDescription(item);
 				string categoryDisplayName = GetCategoryDisplayName(item.category);
-				string haystack = string.Join(" ", new string[4] { item.name, settingLabel, settingDescription, categoryDisplayName }.Where((string part) => !string.IsNullOrWhiteSpace(part))).ToLowerInvariant();
-				if (MatchesAllTokens(haystack, tokens) && hashSet.Add(item.name))
+				if (MatchesAllTokens(string.Join(" ", new string[4] { item.name, settingLabel, settingDescription, categoryDisplayName }.Where((string part) => !string.IsNullOrWhiteSpace(part))).ToLowerInvariant(), tokens) && hashSet.Add(item.name))
 				{
 					list.Add(new SearchResultDefinition
 					{
@@ -552,8 +557,7 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 			if (visibleCustomDefinition != null)
 			{
 				string categoryDisplayName2 = GetCategoryDisplayName(visibleCustomDefinition.Category);
-				string haystack2 = string.Join(" ", new string[4] { visibleCustomDefinition.Id, visibleCustomDefinition.Label, visibleCustomDefinition.Description, categoryDisplayName2 }.Where((string part) => !string.IsNullOrWhiteSpace(part))).ToLowerInvariant();
-				if (MatchesAllTokens(haystack2, tokens) && hashSet.Add(visibleCustomDefinition.Id))
+				if (MatchesAllTokens(string.Join(" ", new string[4] { visibleCustomDefinition.Id, visibleCustomDefinition.Label, visibleCustomDefinition.Description, categoryDisplayName2 }.Where((string part) => !string.IsNullOrWhiteSpace(part))).ToLowerInvariant(), tokens) && hashSet.Add(visibleCustomDefinition.Id))
 				{
 					list.Add(new SearchResultDefinition
 					{
@@ -597,13 +601,16 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	private GameObject CreateCategoryHeader(string categoryName)
 	{
-		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a1: Expected O, but got Unknown
-		//IL_00cb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e3: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00f7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0101: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0140: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0151: Expected O, but got Unknown
 		if ((Object)(object)menu == (Object)null || (Object)(object)menu.content == (Object)null)
 		{
 			return null;
@@ -632,10 +639,10 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	private GameObject CreateStandardRow(Setting setting)
 	{
-		//IL_0507: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0511: Expected O, but got Unknown
-		//IL_0315: Unknown result type (might be due to invalid IL or missing references)
-		//IL_031f: Expected O, but got Unknown
+		//IL_03a9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_03b3: Expected O, but got Unknown
+		//IL_021d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0227: Expected O, but got Unknown
 		if ((Object)(object)menu == (Object)null || (Object)(object)menu.content == (Object)null || setting == null)
 		{
 			return null;
@@ -672,47 +679,32 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 		else
 		{
 			Setting obj2 = setting;
-			SettingInt settingInt = (SettingInt)(object)((obj2 is SettingInt) ? obj2 : null);
-			if (settingInt != null)
+			SettingInt val3 = (SettingInt)(object)((obj2 is SettingInt) ? obj2 : null);
+			if (val3 != null)
 			{
 				val = Utils.Create("Special/GameSettingInt", (Transform)(object)menu.content);
-				TMP_InputField input = (((Object)(object)val != (Object)null) ? ((Component)val.transform.GetChild(1)).GetComponent<TMP_InputField>() : null);
-				if ((Object)(object)input != (Object)null)
-				{
-					input.SetTextWithoutNotify(settingInt.value.ToString());
-					((UnityEvent<string>)(object)input.onEndEdit).AddListener((UnityAction<string>)delegate(string value)
-					{
-						if (!int.TryParse(value, out var result))
-						{
-							result = settingInt.value;
-						}
-						result = Mathf.Clamp(result, settingInt.min, settingInt.max);
-						input.SetTextWithoutNotify(result.ToString());
-						setting.SetValue((object)result);
-						setting.Apply();
-					});
-				}
+				ModOptionsMenu.BindBlankAwareIntInput(val, val3);
 			}
 			else
 			{
 				Setting obj3 = setting;
-				SettingDropdown val3 = (SettingDropdown)(object)((obj3 is SettingDropdown) ? obj3 : null);
-				if (val3 != null)
+				SettingDropdown val4 = (SettingDropdown)(object)((obj3 is SettingDropdown) ? obj3 : null);
+				if (val4 != null)
 				{
 					val = Utils.Create("Special/GameSettingDropdown", (Transform)(object)menu.content);
-					TMP_Dropdown val4 = (((Object)(object)val != (Object)null) ? ((Component)val.transform.GetChild(1)).GetComponent<TMP_Dropdown>() : null);
-					if ((Object)(object)val4 != (Object)null)
+					TMP_Dropdown val5 = (((Object)(object)val != (Object)null) ? ((Component)val.transform.GetChild(1)).GetComponent<TMP_Dropdown>() : null);
+					if ((Object)(object)val5 != (Object)null)
 					{
 						List<OptionData> list = new List<OptionData>();
-						string[] array = val3.choices ?? Array.Empty<string>();
+						string[] array = val4.choices ?? Array.Empty<string>();
 						for (int num = 0; num < array.Length; num++)
 						{
 							list.Add(new OptionData(Locale.GetOther("gameset" + setting.name + array[num])));
 						}
-						val4.ClearOptions();
-						val4.AddOptions(list);
-						val4.SetValueWithoutNotify(val3.value);
-						((UnityEvent<int>)(object)val4.onValueChanged).AddListener((UnityAction<int>)delegate(int value)
+						val5.ClearOptions();
+						val5.AddOptions(list);
+						val5.SetValueWithoutNotify(val4.value);
+						((UnityEvent<int>)(object)val5.onValueChanged).AddListener((UnityAction<int>)delegate(int value)
 						{
 							setting.SetValue((object)value);
 							setting.Apply();
@@ -722,11 +714,11 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 				else if (setting is SettingBool)
 				{
 					val = Utils.Create("Special/GameSettingBool", (Transform)(object)menu.content);
-					Toggle val5 = (((Object)(object)val != (Object)null) ? ((Component)val.transform.GetChild(1)).GetComponent<Toggle>() : null);
-					if ((Object)(object)val5 != (Object)null)
+					Toggle val6 = (((Object)(object)val != (Object)null) ? ((Component)val.transform.GetChild(1)).GetComponent<Toggle>() : null);
+					if ((Object)(object)val6 != (Object)null)
 					{
-						val5.SetIsOnWithoutNotify((bool)setting.GetValue());
-						((UnityEvent<bool>)(object)val5.onValueChanged).AddListener((UnityAction<bool>)delegate(bool value)
+						val6.SetIsOnWithoutNotify((bool)setting.GetValue());
+						((UnityEvent<bool>)(object)val6.onValueChanged).AddListener((UnityAction<bool>)delegate(bool value)
 						{
 							setting.SetValue((object)value);
 							setting.Apply();
@@ -740,15 +732,15 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 					if (keybind != null)
 					{
 						val = Utils.Create("Special/GameSettingInput", (Transform)(object)menu.content);
-						Button val6 = (((Object)(object)val != (Object)null) ? ((Component)val.transform.GetChild(1)).GetComponent<Button>() : null);
-						if ((Object)(object)val6 != (Object)null)
+						Button val7 = (((Object)(object)val != (Object)null) ? ((Component)val.transform.GetChild(1)).GetComponent<Button>() : null);
+						if ((Object)(object)val7 != (Object)null)
 						{
-							TextMeshProUGUI text = ((Component)val6).GetComponentInChildren<TextMeshProUGUI>();
+							TextMeshProUGUI text = ((Component)val7).GetComponentInChildren<TextMeshProUGUI>();
 							if ((Object)(object)text != (Object)null)
 							{
 								((TMP_Text)text).text = keybind.GetDisplayString();
 							}
-							((UnityEvent)val6.onClick).AddListener((UnityAction)delegate
+							((UnityEvent)val7.onClick).AddListener((UnityAction)delegate
 							{
 								((MonoBehaviour)this).StartCoroutine(WaitForKeyPress(keybind, text));
 							});
@@ -822,8 +814,8 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	private static void PositionRow(GameObject row, float currentHeight)
 	{
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)row == (Object)null))
 		{
 			RectTransform component = row.GetComponent<RectTransform>();
@@ -839,17 +831,17 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 		if (!((Object)(object)content == (Object)null))
 		{
 			TMP_Dropdown[] componentsInChildren = ((Component)content).GetComponentsInChildren<TMP_Dropdown>(true);
-			foreach (TMP_Dropdown dropdown in componentsInChildren)
+			for (int i = 0; i < componentsInChildren.Length; i++)
 			{
-				FixDropdown(dropdown);
+				FixDropdown(componentsInChildren[i]);
 			}
 		}
 	}
 
 	private static void FixDropdown(TMP_Dropdown dropdown)
 	{
-		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)dropdown == (Object)null || (Object)(object)dropdown.template == (Object)null)
 		{
 			return;
@@ -928,10 +920,10 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	private unsafe static string GetCategoryDisplayName(SettingCategory category)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0021: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Expected I4, but got Unknown
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0035: Expected I4, but got Unknown
 		if (ModOptionsMenu.TryGetCustomCategoryDisplayName(category, out var displayName) && !string.IsNullOrWhiteSpace(displayName))
 		{
 			return displayName;
@@ -949,7 +941,7 @@ internal sealed class SettingsMenuSearchController : MonoBehaviour
 
 	private static bool TryGetCuCoreLibCategoryDisplayName(SettingCategory category, out string displayName)
 	{
-		//IL_0032: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
 		displayName = null;
 		if (cuCoreLibTryGetOwnedCustomCategoryMethod == null || cuCoreLibDisplayNameProperty == null)
 		{

@@ -16,7 +16,17 @@ internal sealed class CraftPlan
 
 	public readonly List<CraftStep> Intermediates = new List<CraftStep>();
 
-	public bool HasPreparations => Combines.Count > 0 || Intermediates.Count > 0;
+	public bool HasPreparations
+	{
+		get
+		{
+			if (Combines.Count <= 0)
+			{
+				return Intermediates.Count > 0;
+			}
+			return true;
+		}
+	}
 
 	public int TotalSteps
 	{

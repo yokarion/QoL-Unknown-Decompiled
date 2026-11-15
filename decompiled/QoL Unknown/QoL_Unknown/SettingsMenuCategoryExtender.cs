@@ -67,18 +67,18 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 
 	internal void OnTabSelected(SettingCategory category)
 	{
-		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0008: Expected I4, but got Unknown
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0007: Expected I4, but got Unknown
 		activeCategoryIndex = (int)category;
 		ApplyButtonSprites();
 	}
 
 	internal void RefreshVisibleTab()
 	{
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0022: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0027: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0079: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)menu == (Object)null))
 		{
 			Vector2 anchoredPosition = (((Object)(object)menu.content != (Object)null) ? menu.content.anchoredPosition : Vector2.zero);
@@ -93,15 +93,15 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 
 	private void RebuildButtons()
 	{
-		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0144: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0152: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0157: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0198: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a2: Expected O, but got Unknown
-		//IL_01b2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01bc: Expected O, but got Unknown
+		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0130: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0169: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0173: Expected O, but got Unknown
+		//IL_0182: Unknown result type (might be due to invalid IL or missing references)
+		//IL_018c: Expected O, but got Unknown
 		RemoveCustomButtons();
 		buttonCategoryIndices.Clear();
 		RestoreBuiltInLayout();
@@ -207,14 +207,18 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 
 	private float GetBuiltInSpacing()
 	{
-		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
 		if (builtInAnchoredPositions.Count < 2)
 		{
 			return 116f;
 		}
 		float num = builtInAnchoredPositions[1].x - builtInAnchoredPositions[0].x;
-		return (Mathf.Abs(num) > 0.01f) ? num : 116f;
+		if (!(Mathf.Abs(num) > 0.01f))
+		{
+			return 116f;
+		}
+		return num;
 	}
 
 	private void ApplyButtonSprites()
@@ -241,8 +245,8 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 
 	private void CaptureBuiltInLayoutIfNeeded()
 	{
-		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
 		if (capturedBuiltInLayout || (Object)(object)menu == (Object)null || menu.buttons == null)
 		{
 			return;
@@ -275,8 +279,8 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 
 	private void RestoreBuiltInLayout()
 	{
-		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
 		if (!capturedBuiltInLayout || (Object)(object)menu == (Object)null || menu.buttons == null)
 		{
 			return;
@@ -305,15 +309,15 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 
 	private void ReflowButtonsIntoOriginalBand()
 	{
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0163: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0154: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0168: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0175: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0199: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_013c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0150: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0156: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0176: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0180: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)menu == (Object)null || menu.buttons == null || menu.buttons.Count == 0 || builtInAnchoredPositions.Count == 0)
 		{
 			return;
@@ -357,12 +361,12 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 
 	private float GetTabStripRightEdge(float firstLeft, int builtInCount)
 	{
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0081: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
 		object obj;
 		if (!((Object)(object)menu.buttons[0] != (Object)null))
 		{
@@ -386,12 +390,12 @@ internal sealed class SettingsMenuCategoryExtender : MonoBehaviour
 
 	private void NormalizeTabLabel(TMP_Text label)
 	{
-		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0061: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)label == (Object)null))
 		{
 			Transform transform = label.transform;

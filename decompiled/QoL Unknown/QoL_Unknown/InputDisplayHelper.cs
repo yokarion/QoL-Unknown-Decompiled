@@ -77,14 +77,13 @@ public static class InputDisplayHelper
 
 	public unsafe static Sprite GetKeySprite(KeyCode key)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0049: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
 		if (spriteCache.TryGetValue(key, out var value))
 		{
 			return value;
 		}
-		string name = "Key_" + ((object)(*(KeyCode*)(&key))/*cast due to constrained. prefix*/).ToString();
-		Sprite val = ResourceLookupCache.FindSprite(name);
+		Sprite val = ResourceLookupCache.FindSprite("Key_" + ((object)(*(KeyCode*)(&key))/*cast due to constrained. prefix*/).ToString());
 		if ((Object)(object)val != (Object)null)
 		{
 			spriteCache[key] = val;
@@ -95,9 +94,9 @@ public static class InputDisplayHelper
 
 	public unsafe static string GetFriendlyName(KeyCode key)
 	{
-		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0008: Unknown result type (might be due to invalid IL or missing references)
 		if (KeybindCombos.IsCombo(key))
 		{
 			return KeybindCombos.Format(key);

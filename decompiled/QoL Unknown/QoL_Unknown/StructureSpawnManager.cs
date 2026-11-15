@@ -81,6 +81,10 @@ public static class StructureSpawnManager
 
 	private static float NormalizeMultiplier(float value)
 	{
-		return (float.IsNaN(value) || float.IsInfinity(value)) ? 1f : Mathf.Clamp(value, 0f, 3f);
+		if (!float.IsNaN(value) && !float.IsInfinity(value))
+		{
+			return Mathf.Clamp(value, 0f, 3f);
+		}
+		return 1f;
 	}
 }

@@ -5,6 +5,7 @@ using System.IO;
 using BepInEx.Logging;
 using HarmonyLib;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using QoL_Unknown.Images;
 using TMPro;
 using UnityEngine;
@@ -41,21 +42,19 @@ internal class SaveSaveMenuPatcher
 
 	private const float PANEL_PAUSE_MENU_GAP = 24f;
 
-	private const int LAYER_BACKGROUND_COUNT = 5;
+	private const int LAYER_BACKGROUND_COUNT = 12;
 
 	private static string SaveFolder => Application.persistentDataPath;
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003d: Expected O, but got Unknown
+		//IL_002b: Unknown result type (might be due to invalid IL or missing references)
 		if (!initialized && QoLModuleManager.IsEnabled("qol_save_menu"))
 		{
 			Logger = logger;
 			SaveSlotRegistry.Logger = logger;
 			LoadLayerImages();
-			Harmony val = new Harmony("org.bepinex.plugins.qol.savesavemenu");
-			val.PatchAll(typeof(SaveSaveMenuPatcher));
+			new Harmony("org.bepinex.plugins.qol.savesavemenu").PatchAll(typeof(SaveSaveMenuPatcher));
 			initialized = true;
 			SceneManager.sceneUnloaded += delegate
 			{
@@ -71,7 +70,7 @@ internal class SaveSaveMenuPatcher
 
 	private static void LoadLayerImages()
 	{
-		for (int i = 0; i < 5; i++)
+		for (int i = 0; i < 12; i++)
 		{
 			Sprite val = Helper.LoadEmbeddedSprite($"layer{i}");
 			if ((Object)(object)val != (Object)null && !layerBackgrounds.ContainsKey(i))
@@ -162,18 +161,19 @@ internal class SaveSaveMenuPatcher
 
 	private static void BuildSaveUI()
 	{
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0046: Expected O, but got Unknown
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0161: Unknown result type (might be due to invalid IL or missing references)
-		//IL_016b: Expected O, but got Unknown
-		//IL_01d0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01d7: Expected O, but got Unknown
-		//IL_0238: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003e: Expected O, but got Unknown
+		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_014a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0154: Expected O, but got Unknown
+		//IL_01b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01b5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01cb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0203: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)savePanelObj != (Object)null)
 		{
 			return;
@@ -197,22 +197,22 @@ internal class SaveSaveMenuPatcher
 			component2.sprite = ResourceLookupCache.FindSpriteContains("uiBlockNano");
 			component2.type = (Type)(((Object)(object)component2.sprite != (Object)null) ? 1 : 0);
 			((Graphic)component2).color = new Color(0f, 0f, 0f, 0.92f);
-			VerticalLayoutGroup val = savePanelObj.AddComponent<VerticalLayoutGroup>();
-			((LayoutGroup)val).padding = new RectOffset(14, 14, 14, 14);
-			((HorizontalOrVerticalLayoutGroup)val).spacing = 8f;
-			((HorizontalOrVerticalLayoutGroup)val).childControlHeight = true;
-			((HorizontalOrVerticalLayoutGroup)val).childControlWidth = true;
-			((HorizontalOrVerticalLayoutGroup)val).childForceExpandHeight = false;
-			((HorizontalOrVerticalLayoutGroup)val).childForceExpandWidth = true;
+			VerticalLayoutGroup obj = savePanelObj.AddComponent<VerticalLayoutGroup>();
+			((LayoutGroup)obj).padding = new RectOffset(14, 14, 14, 14);
+			((HorizontalOrVerticalLayoutGroup)obj).spacing = 8f;
+			((HorizontalOrVerticalLayoutGroup)obj).childControlHeight = true;
+			((HorizontalOrVerticalLayoutGroup)obj).childControlWidth = true;
+			((HorizontalOrVerticalLayoutGroup)obj).childForceExpandHeight = false;
+			((HorizontalOrVerticalLayoutGroup)obj).childForceExpandWidth = true;
 			TMP_FontAsset saveMenuFont = GetSaveMenuFont();
 			Sprite uiSprite = ResourceLookupCache.FindSpriteContains("uiBlockNano");
-			GameObject val2 = new GameObject("Header", new Type[2]
+			GameObject val = new GameObject("Header", new Type[2]
 			{
 				typeof(RectTransform),
 				typeof(TextMeshProUGUI)
 			});
-			val2.transform.SetParent(savePanelObj.transform, false);
-			TextMeshProUGUI component3 = val2.GetComponent<TextMeshProUGUI>();
+			val.transform.SetParent(savePanelObj.transform, false);
+			TextMeshProUGUI component3 = val.GetComponent<TextMeshProUGUI>();
 			((TMP_Text)component3).text = "SAVE SLOTS";
 			if (Object.op_Implicit((Object)(object)saveMenuFont))
 			{
@@ -221,9 +221,9 @@ internal class SaveSaveMenuPatcher
 			((TMP_Text)component3).fontSize = 24f;
 			((TMP_Text)component3).alignment = (TextAlignmentOptions)514;
 			((Graphic)component3).color = Color.yellow;
-			LayoutElement val3 = val2.AddComponent<LayoutElement>();
-			val3.minHeight = 38f;
-			val3.preferredHeight = 38f;
+			LayoutElement obj2 = val.AddComponent<LayoutElement>();
+			obj2.minHeight = 38f;
+			obj2.preferredHeight = 38f;
 			slotList = new SaveSlotListView(savePanelObj.transform, saveMenuFont, uiSprite, delegate(int slot)
 			{
 				DoSave(SaveSlotRegistry.FileName(slot), slot);
@@ -254,26 +254,26 @@ internal class SaveSaveMenuPatcher
 
 	private static void UpdateSavePanelTransform(PauseHandler pauseHandler)
 	{
+		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0145: Unknown result type (might be due to invalid IL or missing references)
-		//IL_014b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0174: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0180: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0109: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0119: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0131: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0137: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_016b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
+		//IL_010b: Unknown result type (might be due to invalid IL or missing references)
 		RectTransform val = (((Object)(object)savePanelObj != (Object)null) ? savePanelObj.GetComponent<RectTransform>() : null);
 		object obj;
 		if (!((Object)(object)savePanelObj != (Object)null))
@@ -328,8 +328,7 @@ internal class SaveSaveMenuPatcher
 	private static TMP_FontAsset GetSaveMenuFont()
 	{
 		TextMeshProUGUI[] componentsInChildren = pauseMenuRef.GetComponentsInChildren<TextMeshProUGUI>(true);
-		TextMeshProUGUI[] array = componentsInChildren;
-		foreach (TextMeshProUGUI val in array)
+		foreach (TextMeshProUGUI val in componentsInChildren)
 		{
 			TMP_FontAsset val2 = (((Object)(object)val != (Object)null) ? ((TMP_Text)val).font : null);
 			if ((Object)(object)val2 != (Object)null && ((Object)val2).name.IndexOf("LiberationSans", StringComparison.OrdinalIgnoreCase) < 0)
@@ -492,7 +491,7 @@ internal class SaveSaveMenuPatcher
 	{
 		string text = Path.Combine(SaveFolder, filename);
 		string path = Path.Combine(SaveFolder, filename + ".meta");
-		string destinationPath = Path.Combine(SaveFolder, "save.sv");
+		string text2 = Path.Combine(SaveFolder, "save.sv");
 		if (!File.Exists(text))
 		{
 			if ((Object)(object)PlayerCamera.main != (Object)null)
@@ -511,8 +510,7 @@ internal class SaveSaveMenuPatcher
 		{
 			try
 			{
-				string text2 = File.ReadAllText(path);
-				saveMetadata = JsonConvert.DeserializeObject<SaveMetadata>(text2);
+				saveMetadata = JsonConvert.DeserializeObject<SaveMetadata>(File.ReadAllText(path));
 			}
 			catch (Exception arg)
 			{
@@ -582,20 +580,30 @@ internal class SaveSaveMenuPatcher
 			MultiplayerSaveLoadPatcher.MarkMultiplayerSlotLoad();
 		}
 		SaveSystemPatcher.TryRestoreRunSettingsFromSave(text);
-		if (!SaveFileStore.TryCopyAtomic(text, destinationPath, Logger, $"stage slot {index} for loading"))
+		if (!SaveFileStore.TryCopyAtomic(text, text2, Logger, $"stage slot {index} for loading"))
 		{
 			PlayerCamera main4 = PlayerCamera.main;
 			if (main4 != null)
 			{
 				main4.DoAlert("Could not stage this save for loading. The existing save was left untouched.", false);
 			}
+			return;
 		}
-		else
+		try
 		{
-			SaveSystem.loadedRun = true;
-			Time.timeScale = 1f;
-			SceneManager.LoadScene("SampleScene");
+			PreRunScript.characterSelected = ((int?)JObject.Parse(SaveSystem.Unzip(File.ReadAllBytes(text2)))["character"]).GetValueOrDefault();
 		}
+		catch (Exception ex)
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)$"Could not read saved character from slot {index}: {ex.Message}");
+			}
+		}
+		SaveSystem.loadedRun = true;
+		Time.timeScale = 1f;
+		SceneManager.LoadScene("SampleScene");
 	}
 
 	private static void BeginHostMultiplayerLoad(string filename, SaveMetadata meta, bool restoreHostBundle)

@@ -63,13 +63,14 @@ public class UpdateChecker : MonoBehaviour
 
 	private static void OnSceneLoadedStatic(Scene scene, LoadSceneMode mode)
 	{
+		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
 		//IL_001c: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0022: Expected O, but got Unknown
 		RemoveUpdateUI();
 		if ((Object)(object)instance == (Object)null)
 		{
 			GameObject val = new GameObject("QoL_UpdateChecker");
-			Object.DontDestroyOnLoad((Object)(object)val);
+			Object.DontDestroyOnLoad((Object)val);
 			instance = val.AddComponent<UpdateChecker>();
 		}
 		if (!hasChecked)
@@ -109,32 +110,31 @@ public class UpdateChecker : MonoBehaviour
 			}
 			try
 			{
-				Dictionary<string, string> versions = JsonConvert.DeserializeObject<Dictionary<string, string>>(www.downloadHandler.text);
-				if (versions == null || !versions.TryGetValue("org.bepinex.plugins.qol_unknown", out var latestVersion))
+				Dictionary<string, string> dictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(www.downloadHandler.text);
+				if (dictionary == null || !dictionary.TryGetValue("org.bepinex.plugins.qol_unknown", out var value))
 				{
 					Logger.LogWarning((object)"No Nexus version published for org.bepinex.plugins.qol_unknown yet.");
 					yield break;
 				}
-				int versionComparison = CompareVersions(currentVersion, latestVersion);
-				if (versionComparison < 0)
+				int num = CompareVersions(currentVersion, value);
+				if (num < 0)
 				{
 					updateAvailable = true;
-					newVersion = latestVersion;
+					newVersion = value;
 					Logger.LogWarning((object)("QoL is out of date! " + currentVersion + " -> " + newVersion));
 					Scene activeScene = SceneManager.GetActiveScene();
-					string sceneName = ((Scene)(ref activeScene)).name;
-					if (sceneName == "PreGen")
+					if (((Scene)(ref activeScene)).name == "PreGen")
 					{
 						((MonoBehaviour)this).StartCoroutine(CreateUpdateUIDelayed());
 					}
 				}
-				else if (versionComparison > 0)
+				else if (num > 0)
 				{
-					Logger.LogInfo((object)("QoL is (more then) up to date " + currentVersion + " -> " + latestVersion + " (what?)"));
+					Logger.LogInfo((object)("QoL is (more then) up to date " + currentVersion + " -> " + value + " (what?)"));
 				}
 				else
 				{
-					Logger.LogInfo((object)("QoL is up to date! " + currentVersion + " -> " + latestVersion));
+					Logger.LogInfo((object)("QoL is up to date! " + currentVersion + " -> " + value));
 				}
 			}
 			catch (Exception ex)
@@ -171,10 +171,9 @@ public class UpdateChecker : MonoBehaviour
 			{
 				yield break;
 			}
-			GameObject canvasObj = GameObject.Find("Canvas");
-			if ((Object)(object)canvasObj != (Object)null)
+			if ((Object)(object)PreRunScript.instance != (Object)null)
 			{
-				canvas = canvasObj.GetComponent<Canvas>();
+				canvas = PreRunScript.instance.mainCanvas;
 			}
 			if ((Object)(object)canvas == (Object)null)
 			{
@@ -191,42 +190,42 @@ public class UpdateChecker : MonoBehaviour
 		{
 			yield break;
 		}
-		GameObject textObj = new GameObject("QoLUpdateText", new Type[2]
+		GameObject val = new GameObject("QoLUpdateText", new Type[2]
 		{
 			typeof(RectTransform),
 			typeof(TextMeshProUGUI)
 		});
-		textObj.transform.SetParent(((Component)canvas).transform, false);
-		RectTransform rect = textObj.GetComponent<RectTransform>();
-		rect.anchorMin = new Vector2(0f, 0f);
-		rect.anchorMax = new Vector2(0f, 0f);
-		rect.pivot = new Vector2(0f, 0f);
-		rect.anchoredPosition = new Vector2(22f, 90f);
-		rect.sizeDelta = new Vector2(600f, 50f);
-		TextMeshProUGUI tmp = textObj.GetComponent<TextMeshProUGUI>();
-		TMP_FontAsset font = ResourceLookupCache.FindFontContains("Retro GamingPix");
-		if (Object.op_Implicit((Object)(object)font))
+		val.transform.SetParent(((Component)canvas).transform, false);
+		RectTransform component = val.GetComponent<RectTransform>();
+		component.anchorMin = new Vector2(0f, 0f);
+		component.anchorMax = new Vector2(0f, 0f);
+		component.pivot = new Vector2(0f, 0f);
+		component.anchoredPosition = new Vector2(22f, 90f);
+		component.sizeDelta = new Vector2(600f, 50f);
+		TextMeshProUGUI component2 = val.GetComponent<TextMeshProUGUI>();
+		TMP_FontAsset val2 = ResourceLookupCache.FindFontContains("Retro GamingPix");
+		if (Object.op_Implicit((Object)(object)val2))
 		{
-			((TMP_Text)tmp).font = font;
+			((TMP_Text)component2).font = val2;
 		}
-		((TMP_Text)tmp).fontSize = 20f;
-		((TMP_Text)tmp).alignment = (TextAlignmentOptions)1025;
-		((Graphic)tmp).color = new Color(1f, 0.3f, 0.3f);
-		((TMP_Text)tmp).text = "QoL is out of date! (" + currentVersion + " -> " + newVersion + ")\n(Click here to open the github release)";
-		Button btn = textObj.AddComponent<Button>();
-		((Selectable)btn).transition = (Transition)1;
-		((Selectable)btn).targetGraphic = (Graphic)(object)tmp;
-		ButtonClickedEvent onClick = btn.onClick;
-		object obj = _003C_003Ec._003C_003E9__12_0;
-		if (obj == null)
+		((TMP_Text)component2).fontSize = 20f;
+		((TMP_Text)component2).alignment = (TextAlignmentOptions)1025;
+		((Graphic)component2).color = new Color(1f, 0.3f, 0.3f);
+		((TMP_Text)component2).text = "QoL is out of date! (" + currentVersion + " -> " + newVersion + ")\n(Click here to open the github release)";
+		Button obj = val.AddComponent<Button>();
+		((Selectable)obj).transition = (Transition)1;
+		((Selectable)obj).targetGraphic = (Graphic)(object)component2;
+		ButtonClickedEvent onClick = obj.onClick;
+		object obj2 = _003C_003Ec._003C_003E9__12_0;
+		if (obj2 == null)
 		{
-			UnityAction val = delegate
+			UnityAction val3 = delegate
 			{
 				Application.OpenURL("https://github.com/jimmyking9999999/QoL-Unknown/releases");
 			};
-			_003C_003Ec._003C_003E9__12_0 = val;
-			obj = (object)val;
+			_003C_003Ec._003C_003E9__12_0 = val3;
+			obj2 = (object)val3;
 		}
-		((UnityEvent)onClick).AddListener((UnityAction)obj);
+		((UnityEvent)onClick).AddListener((UnityAction)obj2);
 	}
 }

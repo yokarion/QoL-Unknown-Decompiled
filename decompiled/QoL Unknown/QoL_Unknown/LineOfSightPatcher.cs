@@ -18,6 +18,10 @@ internal class LineOfSightPatcher
 
 	private static ManualLogSource Logger;
 
+	private static readonly FieldRef<PlayerCamera, float> SoundCannonWarnTimeRef = AccessTools.FieldRefAccess<PlayerCamera, float>("soundCannonWarnTime");
+
+	private static readonly FieldRef<PlayerCamera, Vector2> SoundCannonPosRef = AccessTools.FieldRefAccess<PlayerCamera, Vector2>("soundCannonPos");
+
 	private static bool disableLineOfSight;
 
 	private static bool maskClearedWhileSkipped;
@@ -30,25 +34,23 @@ internal class LineOfSightPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Expected O, but got Unknown
+		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
 		disableLineOfSight = PlayerPrefs.GetInt("DisableLineOfSight", 0) == 1;
 		if (!initialized)
 		{
 			initialized = true;
-			Harmony val = new Harmony("org.bepinex.plugins.qol.los.patch");
-			val.PatchAll(typeof(LineOfSightPatcher));
+			new Harmony("org.bepinex.plugins.qol.los.patch").PatchAll(typeof(LineOfSightPatcher));
 		}
 	}
 
 	internal static void SetLineOfSightDisabled(bool disabled)
 	{
-		bool flag = disableLineOfSight;
+		bool num = disableLineOfSight;
 		disableLineOfSight = disabled;
 		PlayerPrefs.SetInt("DisableLineOfSight", disabled ? 1 : 0);
 		PlayerPrefs.Save();
-		RefreshLineOfSightShader(flag && !disabled);
+		RefreshLineOfSightShader(num && !disabled);
 	}
 
 	internal static void RefreshLineOfSightShader(bool rebuildLineOfSightMask)
@@ -69,20 +71,18 @@ internal class LineOfSightPatcher
 
 	private static void ClearLineOfSightHazardsAbovePlayer(PlayerCamera camera)
 	{
+		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0025: Unknown result type (might be due to invalid IL or missing references)
 		//IL_002a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0035: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)camera?.body == (Object)null)
 		{
 			return;
@@ -106,6 +106,42 @@ internal class LineOfSightPatcher
 		}
 	}
 
+	private static void UpdateSoundCannonWarn(PlayerCamera camera)
+	{
+		//IL_00fd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0102: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0112: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ba: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e6: Unknown result type (might be due to invalid IL or missing references)
+		if (!((Object)(object)camera.soundCannonWarn == (Object)null) && !((Object)(object)camera.body == (Object)null))
+		{
+			float num = SoundCannonWarnTimeRef.Invoke(camera) - Time.deltaTime;
+			SoundCannonWarnTimeRef.Invoke(camera) = num;
+			if (num > 0f)
+			{
+				float num2 = num * 0.2f;
+				camera.soundCannonWarn.color = Color.Lerp(camera.soundCannonWarn.color, new Color(1f, num2, num2, 0.3f + (1f - num2) * 0.7f), Time.deltaTime * 8f);
+				Transform transform = ((Component)camera.soundCannonWarn).transform;
+				Vector2 down = Vector2.down;
+				Vector2 val = SoundCannonPosRef.Invoke(camera) - Vector2.op_Implicit(((Component)camera.body).transform.position);
+				transform.eulerAngles = new Vector3(0f, 0f, Vector2.SignedAngle(down, ((Vector2)(ref val)).normalized));
+			}
+			else
+			{
+				camera.soundCannonWarn.color = Color.Lerp(camera.soundCannonWarn.color, Color.clear, Time.deltaTime * 8f);
+			}
+		}
+	}
+
 	[HarmonyPatch(typeof(PlayerCamera), "HandleLineOfSight")]
 	[HarmonyPrefix]
 	private static bool HandleLineOfSight_Prefix(PlayerCamera __instance)
@@ -124,11 +160,13 @@ internal class LineOfSightPatcher
 				val.ClearMask();
 				maskClearedWhileSkipped = true;
 			}
+			UpdateSoundCannonWarn(__instance);
 			return false;
 		}
 		maskClearedWhileSkipped = false;
 		if (Time.frameCount % 3 != 0)
 		{
+			UpdateSoundCannonWarn(__instance);
 			return false;
 		}
 		ClearLineOfSightHazardsAbovePlayer(__instance);

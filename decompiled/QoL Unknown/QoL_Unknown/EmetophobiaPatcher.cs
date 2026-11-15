@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace QoL_Unknown;
 
-internal static class EtomophobiaPatcher
+internal static class EmetophobiaPatcher
 {
-	private const string PrefKey = "Etomophobia";
+	private const string PrefKey = "Emetophobia";
 
 	private static ManualLogSource Logger;
 
@@ -15,14 +15,14 @@ internal static class EtomophobiaPatcher
 
 	private static GameObject blankSplatPrefab;
 
-	internal static bool Enabled => PlayerPrefs.GetInt("Etomophobia", 0) == 1;
+	internal static bool Enabled => PlayerPrefs.GetInt("Emetophobia", 0) == 1;
 
 	private static GameObject BlankSplatPrefab
 	{
 		get
 		{
-			//IL_0016: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0020: Expected O, but got Unknown
+			//IL_0012: Unknown result type (might be due to invalid IL or missing references)
+			//IL_001c: Expected O, but got Unknown
 			if ((Object)(object)blankSplatPrefab == (Object)null)
 			{
 				blankSplatPrefab = new GameObject("QoLBlankSplat");
@@ -36,20 +36,18 @@ internal static class EtomophobiaPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0023: Expected O, but got Unknown
+		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
 		if (!initialized)
 		{
 			initialized = true;
-			Harmony val = new Harmony("org.bepinex.plugins.qol.etomophobia");
-			val.PatchAll(typeof(EtomophobiaPatcher));
+			new Harmony("org.bepinex.plugins.qol.emetophobia").PatchAll(typeof(EmetophobiaPatcher));
 		}
 	}
 
 	internal static void SetEnabled(bool enabled)
 	{
-		PlayerPrefs.SetInt("Etomophobia", enabled ? 1 : 0);
+		PlayerPrefs.SetInt("Emetophobia", enabled ? 1 : 0);
 		PlayerPrefs.Save();
 	}
 
@@ -105,15 +103,15 @@ internal static class EtomophobiaPatcher
 		if (body.alive)
 		{
 			body.DropItem(2);
-			float vomitPower = t.Field("vomitPower").GetValue<float>();
+			float value = t.Field("vomitPower").GetValue<float>();
 			body.happiness -= 2.5f;
-			body.hunger -= 17f + vomitPower * 5f;
-			body.thirst -= 10f + vomitPower * 5f;
-			body.sicknessAmount -= 8f + vomitPower * 5f;
+			body.hunger -= 17f + value * 5f;
+			body.thirst -= 10f + value * 5f;
+			body.sicknessAmount -= 8f + value * 5f;
 			body.bloodVolume -= 1f;
-			if (vomitPower > 0f)
+			if (value > 0f)
 			{
-				body.internalBleeding += vomitPower * 10f;
+				body.internalBleeding += value * 10f;
 			}
 			body.temporarySlowdown = 0.95f;
 			if (body.sleeping && !Object.op_Implicit((Object)(object)((Component)body).GetComponent<SleepingPills>()))
@@ -173,23 +171,23 @@ internal static class EtomophobiaPatcher
 	[HarmonyPrefix]
 	private static bool BleedParticle_Start_Prefix(BleedParticle __instance)
 	{
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0083: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
 		if (!__instance.vomit || !Enabled)
 		{
 			return true;
 		}
-		Traverse val = Traverse.Create((object)__instance);
-		val.Field("every").SetValue((object)1);
+		Traverse obj = Traverse.Create((object)__instance);
+		obj.Field("every").SetValue((object)1);
 		ParticleSystem component = ((Component)__instance).GetComponent<ParticleSystem>();
-		val.Field("part").SetValue((object)component);
-		val.Field("wallBleed").SetValue((object)BlankSplatPrefab);
-		val.Field("groundBleed").SetValue((object)BlankSplatPrefab);
-		Traverse obj = val.Field("particles");
+		obj.Field("part").SetValue((object)component);
+		obj.Field("wallBleed").SetValue((object)BlankSplatPrefab);
+		obj.Field("groundBleed").SetValue((object)BlankSplatPrefab);
+		Traverse obj2 = obj.Field("particles");
 		MainModule main = component.main;
-		obj.SetValue((object)new Particle[((MainModule)(ref main)).maxParticles]);
+		obj2.SetValue((object)new Particle[((MainModule)(ref main)).maxParticles]);
 		if ((Object)(object)component != (Object)null)
 		{
 			EmissionModule emission = component.emission;

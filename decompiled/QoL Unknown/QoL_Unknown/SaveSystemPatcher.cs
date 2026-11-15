@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using BepInEx.Logging;
 using HarmonyLib;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
@@ -18,13 +19,13 @@ internal class SaveSystemPatcher
 	{
 		public static readonly _003C_003Ec _003C_003E9 = new _003C_003Ec();
 
-		public static Action _003C_003E9__23_0;
+		public static Action _003C_003E9__28_0;
 
-		public static Predicate<Command> _003C_003E9__31_0;
+		public static Predicate<Command> _003C_003E9__36_0;
 
-		public static Action _003C_003E9__31_1;
+		public static Action _003C_003E9__36_1;
 
-		internal void _003CRegisterCommands_Postfix_003Eb__23_0(string[] args)
+		internal void _003CRegisterCommands_Postfix_003Eb__28_0(string[] args)
 		{
 			if (SeedManager.IsSeeded && !string.IsNullOrEmpty(SeedManager.InputString))
 			{
@@ -36,12 +37,16 @@ internal class SaveSystemPatcher
 			}
 		}
 
-		internal bool _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__31_0(Command c)
+		internal bool _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__36_0(Command c)
 		{
-			return c != null && c.name == "saveandquit";
+			if (c != null)
+			{
+				return c.name == "saveandquit";
+			}
+			return false;
 		}
 
-		internal void _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__31_1(string[] args)
+		internal void _003CRegisterAllCommands_SaveAndQuitPatch_003Eb__36_1(string[] args)
 		{
 			ConsoleHelper.CheckForWorld(ConsoleScript.instance);
 			SaveSystem.SaveGame();
@@ -62,11 +67,15 @@ internal class SaveSystemPatcher
 
 	private static int saveGameNesting;
 
+	private static DateTime saveSvWriteBaselineUtc;
+
 	public static Vector3? PendingLoadPosition = null;
 
 	public static float? PendingRadLineY = null;
 
 	public static bool? PendingRadLineActive = null;
+
+	public static float? PendingRadLineRemainingSeconds = null;
 
 	public static bool BypassDepthFix = false;
 
@@ -78,13 +87,13 @@ internal class SaveSystemPatcher
 
 	internal static bool LastSaveRedirectSucceeded { get; private set; } = true;
 
+	private static string DefaultSavePath => Path.Combine(Application.persistentDataPath, "save.sv");
+
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.savesystem");
-		val.PatchAll(typeof(SaveSystemPatcher));
+		new Harmony("org.bepinex.plugins.qol.savesystem").PatchAll(typeof(SaveSystemPatcher));
 	}
 
 	[HarmonyPatch(typeof(SaveSystem), "SaveGame")]
@@ -94,11 +103,15 @@ internal class SaveSystemPatcher
 	{
 		__state = null;
 		LastSaveRedirectSucceeded = false;
-		if (saveGameNesting++ <= 0 && !BypassDepthFix && (Object)(object)WorldGeneration.world != (Object)null)
+		if (saveGameNesting++ <= 0)
 		{
-			__state = WorldGeneration.world.biomeDepth;
-			WorldGeneration world = WorldGeneration.world;
-			world.biomeDepth--;
+			saveSvWriteBaselineUtc = File.GetLastWriteTimeUtc(DefaultSavePath);
+			if (!BypassDepthFix && (Object)(object)WorldGeneration.world != (Object)null)
+			{
+				__state = WorldGeneration.world.biomeDepth;
+				WorldGeneration world = WorldGeneration.world;
+				world.biomeDepth--;
+			}
 		}
 	}
 
@@ -109,6 +122,7 @@ internal class SaveSystemPatcher
 	private static void SaveGame_Postfix_RestoreDepthForCapture(int? __state)
 	{
 		RestoreSavedDepth(__state);
+		PersistCargoState();
 	}
 
 	[HarmonyPatch(typeof(SaveSystem), "SaveGame")]
@@ -121,7 +135,7 @@ internal class SaveSystemPatcher
 			RestoreSavedDepth(__state);
 			if (__exception == null)
 			{
-				LastSaveRedirectSucceeded = HandleFileMove();
+				LastSaveRedirectSucceeded = File.GetLastWriteTimeUtc(DefaultSavePath) > saveSvWriteBaselineUtc && HandleFileMove();
 			}
 		}
 		catch (Exception arg)
@@ -140,7 +154,6 @@ internal class SaveSystemPatcher
 	[HarmonyFinalizer]
 	private static Exception TryLoadGame_Finalizer(Exception __exception)
 	{
-		CuCoreLibTransitionCompat.SkipWorldRestore = false;
 		RestorePendingVanillaSave();
 		return __exception;
 	}
@@ -164,6 +177,38 @@ internal class SaveSystemPatcher
 		if (state.HasValue && !((Object)(object)WorldGeneration.world == (Object)null))
 		{
 			WorldGeneration.world.biomeDepth = state.Value;
+		}
+	}
+
+	private static void PersistCargoState()
+	{
+		if ((Object)(object)PlayerCamera.main == (Object)null || (Object)(object)PlayerCamera.main.body == (Object)null || !PlayerCamera.main.body.hasCargo)
+		{
+			return;
+		}
+		string defaultSavePath = DefaultSavePath;
+		if (!File.Exists(defaultSavePath))
+		{
+			return;
+		}
+		try
+		{
+			JObject val = JObject.Parse(SaveSystem.Unzip(File.ReadAllBytes(defaultSavePath)));
+			JToken obj = val["body"];
+			JObject val2 = (JObject)(object)((obj is JObject) ? obj : null);
+			if (val2 != null)
+			{
+				val2["hasCargo"] = JToken.op_Implicit(true);
+				File.WriteAllBytes(defaultSavePath, SaveSystem.Zip(JsonConvert.SerializeObject((object)val, (Formatting)0)));
+			}
+		}
+		catch (Exception ex)
+		{
+			ManualLogSource logger = Logger;
+			if (logger != null)
+			{
+				logger.LogWarning((object)("Failed to persist cargo state into save: " + ex.Message));
+			}
 		}
 	}
 
@@ -233,44 +278,43 @@ internal class SaveSystemPatcher
 		}
 		try
 		{
-			JObject val = JObject.Parse(SaveSystem.Unzip(File.ReadAllBytes(savePath)));
-			JToken val2 = val["runSettings"];
-			if (val2 == null)
+			JToken val = JObject.Parse(SaveSystem.Unzip(File.ReadAllBytes(savePath)))["runSettings"];
+			if (val == null)
 			{
 				return false;
 			}
-			List<(string, string)> list = val2.ToObject<List<(string, string)>>();
+			List<(string, string)> list = val.ToObject<List<(string, string)>>();
 			if (list != null && list.Count > 0)
 			{
 				WorldGeneration.runSettings = SaveSystem.TupleListToDic(list);
 				return true;
 			}
-			JArray val3 = (JArray)(object)((val2 is JArray) ? val2 : null);
-			if (val3 == null)
+			JArray val2 = (JArray)(object)((val is JArray) ? val : null);
+			if (val2 == null)
 			{
 				return false;
 			}
 			Dictionary<string, object> dictionary = new Dictionary<string, object>(RunSettings.GetPreset("normal").presetValues);
-			for (int i = 0; i < ((JContainer)val3).Count; i++)
+			for (int i = 0; i < ((JContainer)val2).Count; i++)
 			{
-				JToken obj = val3[i];
-				JObject val4 = (JObject)(object)((obj is JObject) ? obj : null);
-				string text = ((val4 == null) ? null : ((object)val4["Item1"])?.ToString()) ?? ((val4 == null) ? null : ((object)val4["Key"])?.ToString());
-				JToken val5 = ((val4 != null) ? val4["Item2"] : null) ?? ((val4 != null) ? val4["Value"] : null);
-				if (!string.IsNullOrEmpty(text) && val5 != null)
+				JToken obj = val2[i];
+				JObject val3 = (JObject)(object)((obj is JObject) ? obj : null);
+				string text = ((val3 == null) ? null : ((object)val3["Item1"])?.ToString()) ?? ((val3 == null) ? null : ((object)val3["Key"])?.ToString());
+				JToken val4 = ((val3 != null) ? val3["Item2"] : null) ?? ((val3 != null) ? val3["Value"] : null);
+				if (!string.IsNullOrEmpty(text) && val4 != null)
 				{
 					RunSetting setting = RunSettings.GetSetting(text);
 					if (setting is RunSettingFloat)
 					{
-						dictionary[text] = Extensions.Value<float>((IEnumerable<JToken>)val5);
+						dictionary[text] = Extensions.Value<float>((IEnumerable<JToken>)val4);
 					}
 					else if (setting is RunSettingBool)
 					{
-						dictionary[text] = Extensions.Value<bool>((IEnumerable<JToken>)val5);
+						dictionary[text] = Extensions.Value<bool>((IEnumerable<JToken>)val4);
 					}
 					else if (setting is RunSettingDropdown)
 					{
-						dictionary[text] = Extensions.Value<int>((IEnumerable<JToken>)val5);
+						dictionary[text] = Extensions.Value<int>((IEnumerable<JToken>)val4);
 					}
 				}
 			}
@@ -292,13 +336,13 @@ internal class SaveSystemPatcher
 	[HarmonyPostfix]
 	private static void RegisterCommands_Postfix()
 	{
-		//IL_0035: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003f: Expected O, but got Unknown
-		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0029: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002f: Expected O, but got Unknown
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003e: Expected O, but got Unknown
+		//IL_0023: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0028: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002e: Expected O, but got Unknown
 		List<Command> commands = ConsoleScript.Commands;
-		object obj = _003C_003Ec._003C_003E9__23_0;
+		object obj = _003C_003Ec._003C_003E9__28_0;
 		if (obj == null)
 		{
 			Action val = delegate
@@ -312,7 +356,7 @@ internal class SaveSystemPatcher
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, $"<color=grey>{SeedManager.CurrentSeed}</color>");
 				}
 			};
-			_003C_003Ec._003C_003E9__23_0 = val;
+			_003C_003Ec._003C_003E9__28_0 = val;
 			obj = (object)val;
 		}
 		commands.Add(new Command("seed", "Displays the current world seed.", (Action)obj, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>()));
@@ -344,22 +388,26 @@ internal class SaveSystemPatcher
 
 	private static void ApplyPendingLoadStateAfterWorldGeneration()
 	{
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0052: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0123: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0145: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00dd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0069: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0126: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0142: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ac: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e6: Unknown result type (might be due to invalid IL or missing references)
 		deletedAutosaveForCurrentDeath = false;
 		bool isLoadingMultiplayerSlot = MultiplayerSaveLoadPatcher.IsLoadingMultiplayerSlot;
 		MultiplayerSaveLoadPatcher.ClearMultiplayerSlotLoad();
 		if (isLoadingMultiplayerSlot && MultiplayerCompat.IsNetworkRunning && MultiplayerCompat.IsServer)
 		{
 			MultiplayerCompat.TeleportClientsToHostAfterDelay(1f);
+		}
+		if ((Object)(object)WorldGeneration.world != (Object)null && WorldGeneration.world.biomeDepth == 10)
+		{
+			WorldGeneration.world.totalTraveled = 0;
 		}
 		if (PendingLoadPosition.HasValue)
 		{
@@ -403,6 +451,21 @@ internal class SaveSystemPatcher
 			PendingRTASeconds = null;
 		}
 		RadlinePatcher.ApplyCurrentState();
+		if (PendingRadLineRemainingSeconds.HasValue && (Object)(object)WorldGeneration.world != (Object)null)
+		{
+			float maxTimePerLayer = WorldGeneration.world.maxTimePerLayer;
+			float num = Mathf.Clamp(PendingRadLineRemainingSeconds.Value, 0f, maxTimePerLayer);
+			WorldGeneration.world.layerTimeSpent = maxTimePerLayer - num;
+			PendingRadLineRemainingSeconds = null;
+		}
+		if ((Object)(object)PlayerCamera.main != (Object)null && (Object)(object)PlayerCamera.main.body != (Object)null)
+		{
+			Body body = PlayerCamera.main.body;
+			if (body.hasCargo && (Object)(object)body.cargo != (Object)null)
+			{
+				body.cargo.SetActive(true);
+			}
+		}
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "Start")]
@@ -414,6 +477,7 @@ internal class SaveSystemPatcher
 		{
 			LoadedFromMenu = false;
 			MultiplayerSaveLoadPatcher.ClearMultiplayerSlotLoad();
+			SteamManager.disableAchievements = false;
 		}
 	}
 
@@ -421,11 +485,11 @@ internal class SaveSystemPatcher
 	[HarmonyPostfix]
 	private static void RegisterAllCommands_SaveAndQuitPatch()
 	{
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0075: Expected O, but got Unknown
-		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Expected O, but got Unknown
+		//IL_0061: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006b: Expected O, but got Unknown
+		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005b: Expected O, but got Unknown
 		try
 		{
 			List<Command> commands = ConsoleScript.Commands;
@@ -434,7 +498,7 @@ internal class SaveSystemPatcher
 			{
 				return;
 			}
-			object obj = _003C_003Ec._003C_003E9__31_1;
+			object obj = _003C_003Ec._003C_003E9__36_1;
 			if (obj == null)
 			{
 				Action val = delegate
@@ -446,7 +510,7 @@ internal class SaveSystemPatcher
 					PlayerCamera.main.ToMainMenu();
 					ConsoleHelper.LogToConsole(ConsoleScript.instance, "Saved the game and quit to menu.");
 				};
-				_003C_003Ec._003C_003E9__31_1 = val;
+				_003C_003Ec._003C_003E9__36_1 = val;
 				obj = (object)val;
 			}
 			commands[num] = new Command("saveandquit", "!! NOT RECOMMENDED !!. Instantly saves the game and exits to the main menu as per vanilla. Loading the save will put you at the beginning of the current layer.", (Action)obj, (Dictionary<int, List<string>>)null, Array.Empty<(string, string)>());
@@ -514,6 +578,7 @@ internal class SaveSystemPatcher
 		PendingLoadPosition = null;
 		PendingRadLineY = null;
 		PendingRadLineActive = null;
+		PendingRadLineRemainingSeconds = null;
 		PendingIGTSeconds = null;
 		PendingRTASeconds = null;
 		MultiplayerSaveLoadPatcher.ClearMultiplayerSlotLoad();

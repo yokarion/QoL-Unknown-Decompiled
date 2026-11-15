@@ -34,12 +34,12 @@ internal class ContainerScrollPatcher
 	[HarmonyPostfix]
 	private static void OpenContainer_Postfix(PlayerCamera __instance)
 	{
-		//IL_00ac: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00fa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00dc: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)__instance == (Object)null || (Object)(object)__instance.containerMenu == (Object)null || (Object)(object)__instance.containerText == (Object)null || (Object)(object)__instance.contPopulate == (Object)null)
 		{
 			return;
@@ -74,8 +74,8 @@ internal class ContainerScrollPatcher
 	[HarmonyPostfix]
 	private static void Update_Postfix(PlayerCamera __instance)
 	{
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)__instance == (Object)null || (Object)(object)__instance.containerMenu == (Object)null || !__instance.containerMenu.activeSelf || (Object)(object)__instance.currentContainer == (Object)null)
 		{
 			return;
@@ -99,9 +99,9 @@ internal class ContainerScrollPatcher
 
 	private static void ApplyScroll(PlayerCamera cam)
 	{
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0047: Unknown result type (might be due to invalid IL or missing references)
 		if (positionsCaptured)
 		{
 			if ((Object)(object)cam != (Object)(object)capturedCamera || (Object)(object)populateRect == (Object)null)
@@ -127,6 +127,17 @@ internal class ContainerScrollPatcher
 				targetScrollY = maxScroll;
 			}
 			ApplyScroll(__instance);
+		}
+	}
+
+	[HarmonyPatch(typeof(PlayerCamera), "RepopulateContainer")]
+	[HarmonyPostfix]
+	[HarmonyPriority(799)]
+	private static void RepopulateContainer_Unsquish(PlayerCamera __instance)
+	{
+		if (QoLModuleManager.IsEnabled("qol_ui_scroll") || QoLModuleManager.IsEnabled("qol_inv_stacking"))
+		{
+			ContainerStackingPatcher.Unsquish(__instance);
 		}
 	}
 

@@ -1,10 +1,10 @@
 using System;
+using System.Collections;
 using System.IO;
 using BepInEx.Logging;
 using HarmonyLib;
 using Newtonsoft.Json;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace QoL_Unknown;
 
@@ -14,34 +14,23 @@ internal class LayerTransitionPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.layertransition");
-		val.PatchAll(typeof(LayerTransitionPatcher));
-		CuCoreLibTransitionCompat.Initialize(val, logger);
+		new Harmony("org.bepinex.plugins.qol.layertransition").PatchAll(typeof(LayerTransitionPatcher));
 	}
 
 	[HarmonyPatch(typeof(WorldGeneration), "RegenerateWorld")]
 	[HarmonyPrefix]
-	private static bool RegenerateWorld_Prefix(WorldGeneration __instance, bool twice)
+	private static bool RegenerateWorld_Prefix(WorldGeneration __instance, ref IEnumerator __result)
 	{
-		//IL_0204: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0209: Unknown result type (might be due to invalid IL or missing references)
 		if (MultiplayerCompat.ShouldBlockQoLLoads)
 		{
 			return true;
 		}
-		GlobalDark.main.Darken();
-		__instance.IncreaseDepthByLayer();
-		if (twice)
+		if (WorldGeneration.GetRunSettingBool("endless") && __instance.biomeDepth == 0)
 		{
-			__instance.IncreaseDepthByLayer();
+			return true;
 		}
-		int num = __instance.biomeDepth + ((!twice) ? 1 : 2);
-		__instance.biomeDepth = ((num >= __instance.amountOfLayers) ? 1 : num);
-		__instance.lootRarityMultiplier *= WorldGeneration.GetRunSettingFloat("lootmultiplier");
-		__instance.trapRarityMultiplier += WorldGeneration.GetRunSettingFloat("trapincrease");
 		string text = Path.Combine(Application.persistentDataPath, "save.sv");
 		string destinationPath = Path.Combine(Application.persistentDataPath, "autosave.sv");
 		try
@@ -55,7 +44,15 @@ internal class LayerTransitionPatcher
 				}
 				SaveSystemPatcher.PendingVanillaSaveRestorePath = text2;
 			}
-			SaveSystem.SaveGame();
+			SaveSystemPatcher.BypassDepthFix = true;
+			try
+			{
+				SaveSystem.SaveGame();
+			}
+			finally
+			{
+				SaveSystemPatcher.BypassDepthFix = false;
+			}
 			if (!SaveSystemPatcher.LastSaveRedirectSucceeded)
 			{
 				throw new IOException("The transition save was not committed.");
@@ -64,7 +61,7 @@ internal class LayerTransitionPatcher
 			{
 				throw new IOException("The transition autosave was not committed.");
 			}
-			if (SaveManager.CurrentSaveFile == "autosave.sv" && !UpdateMetadata(__instance, "autosave.sv"))
+			if (!UpdateMetadata(__instance, "autosave.sv"))
 			{
 				ManualLogSource logger = Logger;
 				if (logger != null)
@@ -81,24 +78,24 @@ internal class LayerTransitionPatcher
 					logger2.LogWarning((object)("Layer transition completed, but metadata for '" + SaveManager.CurrentSaveFile + "' could not be updated."));
 				}
 			}
-			SaveSystem.loadedRun = true;
-			SaveSystemPatcher.PendingLoadPosition = null;
-			SaveSystemPatcher.PendingRadLineY = null;
-			CuCoreLibTransitionCompat.SkipWorldRestore = true;
-			Scene activeScene = SceneManager.GetActiveScene();
-			SceneManager.LoadScene(((Scene)(ref activeScene)).name);
+			SaveSystemPatcher.RestorePendingVanillaSave();
 		}
 		catch (Exception)
 		{
-			SaveSystem.loadedRun = false;
-			CuCoreLibTransitionCompat.SkipWorldRestore = false;
 			SaveSystemPatcher.RestorePendingVanillaSave();
 			if (Object.op_Implicit((Object)(object)PlayerCamera.main))
 			{
-				PlayerCamera.main.DoAlert("Could not save the layer transition. Reload was cancelled to protect your save.", false);
+				PlayerCamera.main.DoAlert("Could not save the layer transition. Descent was cancelled to protect your save.", false);
 			}
+			__result = CompletedRoutine();
+			return false;
 		}
-		return false;
+		return true;
+	}
+
+	private static IEnumerator CompletedRoutine()
+	{
+		yield break;
 	}
 
 	private static bool UpdateMetadata(WorldGeneration world, string filename)
@@ -114,10 +111,23 @@ internal class LayerTransitionPatcher
 		}
 		try
 		{
-			SaveMetadata saveMetadata = MultiplayerSaveBundle.BuildBaseMetadata();
+			int biomeDepth = world.biomeDepth;
+			int totalTraveled = world.totalTraveled;
+			world.totalTraveled = (((world.biomeDepth = ((biomeDepth + 1 >= world.amountOfLayers) ? 1 : (biomeDepth + 1))) != 10) ? (totalTraveled + (int)((float)world.height * 0.3f)) : 0);
+			SaveMetadata saveMetadata;
+			try
+			{
+				saveMetadata = MultiplayerSaveBundle.BuildBaseMetadata();
+			}
+			finally
+			{
+				world.biomeDepth = biomeDepth;
+				world.totalTraveled = totalTraveled;
+			}
 			saveMetadata.SaveKind = "Singleplayer";
 			saveMetadata.SavedDuringMultiplayer = false;
 			saveMetadata.UseVanillaLayerSpawn = true;
+			saveMetadata.RadLineRemainingSeconds = world.maxTimePerLayer;
 			string contents = JsonConvert.SerializeObject((object)saveMetadata, (Formatting)1);
 			return SaveFileStore.TryWriteAllTextAtomic(path + ".meta", contents, Logger, "update metadata for '" + filename + "' during transition");
 		}

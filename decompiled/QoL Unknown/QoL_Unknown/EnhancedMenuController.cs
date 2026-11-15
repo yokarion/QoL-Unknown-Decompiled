@@ -23,9 +23,9 @@ internal class EnhancedMenuController : MonoBehaviour
 
 		private void Update()
 		{
-			//IL_0097: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0090: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0089: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0088: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0081: Unknown result type (might be due to invalid IL or missing references)
+			//IL_007a: Unknown result type (might be due to invalid IL or missing references)
 			if (!((Object)(object)fpsCounterText == (Object)null))
 			{
 				frameCount++;
@@ -92,19 +92,18 @@ internal class EnhancedMenuController : MonoBehaviour
 
 	public static void Initialize(ManualLogSource logger)
 	{
+		//IL_0019: Unknown result type (might be due to invalid IL or missing references)
 		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0024: Expected O, but got Unknown
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0053: Expected O, but got Unknown
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)Instance != (Object)null))
 		{
 			Logger = logger;
 			GameObject val = new GameObject("EnhancedSettingsController");
-			Object.DontDestroyOnLoad((Object)(object)val);
+			Object.DontDestroyOnLoad((Object)val);
 			Instance = val.AddComponent<EnhancedMenuController>();
 			Application.focusChanged += OnApplicationFocusChanged;
-			Harmony val2 = new Harmony("org.bepinex.plugins.qol.enhancedsettings");
-			val2.PatchAll(typeof(EnhancedMenuController));
+			new Harmony("org.bepinex.plugins.qol.enhancedsettings").PatchAll(typeof(EnhancedMenuController));
 		}
 	}
 
@@ -141,6 +140,7 @@ internal class EnhancedMenuController : MonoBehaviour
 
 	public static void ApplyAllSettings()
 	{
+		ModOptionsMenu.EnsureRegisteredDefinitionsInLiveSettings(restoreSavedValues: true, applyAddedSettings: true);
 		SettingInt val = Settings.Get<SettingInt>("framerate");
 		if (val != null)
 		{
@@ -178,8 +178,7 @@ internal class EnhancedMenuController : MonoBehaviour
 		{
 			((Setting)val6).Apply();
 		}
-		float num2 = Settings.Get<SettingFloat>("qol.video.intensity")?.value ?? PlayerPrefs.GetFloat("LightIntensity", 100f);
-		AntiGlarePatcher.MasterLightScale = Mathf.Clamp(num2, 0f, 200f);
+		AntiGlarePatcher.MasterLightScale = Mathf.Clamp(Settings.Get<SettingFloat>("qol.video.intensity")?.value ?? PlayerPrefs.GetFloat("LightIntensity", 100f), 0f, 200f);
 		PlayerPrefs.SetFloat("LightIntensity", AntiGlarePatcher.MasterLightScale);
 		AntiGlarePatcher.SweepAllLights();
 		SettingFloat val7 = Settings.Get<SettingFloat>("qol.video.effects");
@@ -233,7 +232,14 @@ internal class EnhancedMenuController : MonoBehaviour
 		SettingInt val = Settings.Get<SettingInt>(settingId);
 		if (val != null)
 		{
-			PlayerPrefs.SetInt(prefKey, val.value);
+			if (val.value < 0)
+			{
+				PlayerPrefs.DeleteKey(prefKey);
+			}
+			else
+			{
+				PlayerPrefs.SetInt(prefKey, val.value);
+			}
 		}
 	}
 
@@ -401,8 +407,8 @@ internal class EnhancedMenuController : MonoBehaviour
 
 	private static void RefreshCanvasScalerCache(bool forceRefresh = false)
 	{
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
 		float unscaledTime = Time.unscaledTime;
 		if (!forceRefresh && unscaledTime < nextCanvasScalerRefreshTime)
 		{
@@ -426,36 +432,36 @@ internal class EnhancedMenuController : MonoBehaviour
 
 	private static void ApplyUIScale(float uiScale, bool forceRefresh = false)
 	{
-		//IL_007d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bb: Invalid comparison between Unknown and I4
-		//IL_022c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0231: Unknown result type (might be due to invalid IL or missing references)
-		//IL_023a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ef: Unknown result type (might be due to invalid IL or missing references)
-		//IL_024a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_024d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0246: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0252: Unknown result type (might be due to invalid IL or missing references)
-		//IL_025a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_025f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0261: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0266: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0283: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0125: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0128: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0121: Unknown result type (might be due to invalid IL or missing references)
-		//IL_012d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0131: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0136: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0138: Unknown result type (might be due to invalid IL or missing references)
-		//IL_013d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0156: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Invalid comparison between Unknown and I4
+		//IL_01bb: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01c0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01c9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01da: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01d3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01df: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01e7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01ec: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01ee: Unknown result type (might be due to invalid IL or missing references)
+		//IL_01f3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0209: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f9: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00fd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0102: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0104: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0109: Unknown result type (might be due to invalid IL or missing references)
+		//IL_011b: Unknown result type (might be due to invalid IL or missing references)
 		float num = NormalizeUiScale(uiScale);
 		bool flag = Mathf.Abs(num - 1f) > 0.0005f;
 		if (!flag && !hasAppliedCustomUiScale)
@@ -528,40 +534,41 @@ internal class EnhancedMenuController : MonoBehaviour
 
 	private static void CreateFpsCounter()
 	{
-		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0027: Expected O, but got Unknown
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0095: Unknown result type (might be due to invalid IL or missing references)
-		//IL_009b: Expected O, but got Unknown
-		//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00da: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00f0: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0106: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0167: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_01a8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001d: Expected O, but got Unknown
+		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ed: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0101: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0147: Unknown result type (might be due to invalid IL or missing references)
+		//IL_017f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0184: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)fpsCounterObject != (Object)null))
 		{
 			fpsCounterObject = new GameObject("QoL_FPSCounter");
 			Object.DontDestroyOnLoad((Object)(object)fpsCounterObject);
-			Canvas val = fpsCounterObject.AddComponent<Canvas>();
-			val.renderMode = (RenderMode)0;
-			val.sortingOrder = 10000;
-			CanvasScaler val2 = fpsCounterObject.AddComponent<CanvasScaler>();
-			val2.uiScaleMode = (ScaleMode)1;
-			val2.referenceResolution = new Vector2(1920f, 1080f);
+			Canvas obj = fpsCounterObject.AddComponent<Canvas>();
+			obj.renderMode = (RenderMode)0;
+			obj.sortingOrder = 10000;
+			CanvasScaler obj2 = fpsCounterObject.AddComponent<CanvasScaler>();
+			obj2.uiScaleMode = (ScaleMode)1;
+			obj2.referenceResolution = new Vector2(1920f, 1080f);
 			fpsCounterObject.AddComponent<GraphicRaycaster>();
 			fpsCounterObject.AddComponent<FpsCounterTicker>();
-			GameObject val3 = new GameObject("FPSText");
-			val3.transform.SetParent(fpsCounterObject.transform, false);
-			RectTransform val4 = val3.AddComponent<RectTransform>();
-			val4.anchorMin = new Vector2(1f, 1f);
-			val4.anchorMax = new Vector2(1f, 1f);
-			val4.pivot = new Vector2(1f, 1f);
-			val4.anchoredPosition = new Vector2(-18f, -10f);
-			val4.sizeDelta = new Vector2(150f, 30f);
-			fpsCounterText = val3.AddComponent<TextMeshProUGUI>();
+			GameObject val = new GameObject("FPSText");
+			val.transform.SetParent(fpsCounterObject.transform, false);
+			RectTransform obj3 = val.AddComponent<RectTransform>();
+			obj3.anchorMin = new Vector2(1f, 1f);
+			obj3.anchorMax = new Vector2(1f, 1f);
+			obj3.pivot = new Vector2(1f, 1f);
+			obj3.anchoredPosition = new Vector2(-18f, -10f);
+			obj3.sizeDelta = new Vector2(150f, 30f);
+			fpsCounterText = val.AddComponent<TextMeshProUGUI>();
 			((TMP_Text)fpsCounterText).text = "FPS: --";
 			((TMP_Text)fpsCounterText).fontSize = 18f;
 			((TMP_Text)fpsCounterText).alignment = (TextAlignmentOptions)260;

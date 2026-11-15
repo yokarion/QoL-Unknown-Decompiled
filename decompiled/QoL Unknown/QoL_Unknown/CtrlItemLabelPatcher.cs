@@ -88,31 +88,31 @@ internal class CtrlItemLabelPatcher
 
 	private static void Refresh(AltHoverScript instance)
 	{
-		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a9: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0163: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0168: Unknown result type (might be due to invalid IL or missing references)
-		//IL_027c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_029e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02c6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02c8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02cd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02e8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02e1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02ef: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02f4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_02fd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_030c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0086: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0087: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0096: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ab: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0122: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0127: Unknown result type (might be due to invalid IL or missing references)
+		//IL_012c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0220: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0242: Unknown result type (might be due to invalid IL or missing references)
+		//IL_026a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_026c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0271: Unknown result type (might be due to invalid IL or missing references)
+		//IL_028b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0284: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0292: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0297: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02a0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_02ae: Unknown result type (might be due to invalid IL or missing references)
 		List<ItemLabel> list = GetPool(instance);
 		PlayerCamera main = PlayerCamera.main;
 		Camera main2 = Camera.main;
@@ -181,22 +181,22 @@ internal class CtrlItemLabelPatcher
 
 	private static void LayoutLabels()
 	{
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0057: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0113: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0063: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0077: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0088: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0091: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ce: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ff: Unknown result type (might be due to invalid IL or missing references)
 		shownLabels.Sort(CompareLabels);
 		placedRects.Clear();
 		for (int i = 0; i < shownLabels.Count; i++)
@@ -232,7 +232,11 @@ internal class CtrlItemLabelPatcher
 	{
 		if (left.Contained != right.Contained)
 		{
-			return left.Contained ? 1 : (-1);
+			if (!left.Contained)
+			{
+				return -1;
+			}
+			return 1;
 		}
 		float distance = left.Distance;
 		int num = distance.CompareTo(right.Distance);
@@ -245,12 +249,12 @@ internal class CtrlItemLabelPatcher
 
 	private static int CompareLabels(ItemLabel left, ItemLabel right)
 	{
-		//IL_0007: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0020: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0012: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
 		Vector2 anchoredPosition = left.rect.anchoredPosition;
 		Vector2 anchoredPosition2 = right.rect.anchoredPosition;
 		int num = anchoredPosition2.y.CompareTo(anchoredPosition.y);
@@ -268,15 +272,19 @@ internal class CtrlItemLabelPatcher
 
 	private static int GetItemId(ItemLabel label)
 	{
-		return ((Object)(object)label.refItem != (Object)null) ? ((Object)label.refItem).GetInstanceID() : 0;
+		if (!((Object)(object)label.refItem != (Object)null))
+		{
+			return 0;
+		}
+		return ((Object)label.refItem).GetInstanceID();
 	}
 
 	private static bool UpdateDisplayState(AltHoverScript instance)
 	{
-		//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0005: Unknown result type (might be due to invalid IL or missing references)
+		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0042: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
 		KeyCode bind = KeyBinds.GetBind("altview");
 		bool flag = IsActiveField != null && (bool)IsActiveField.GetValue(instance);
 		if (AltHoverScript.toggleActivated)

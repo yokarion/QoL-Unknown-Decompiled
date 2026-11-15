@@ -40,11 +40,11 @@ internal class SeededRunPatcher
 
 		public SeededCoroutine(IEnumerator inner, int seed, string phase, Action onCompleted)
 		{
-			//IL_0056: Unknown result type (might be due to invalid IL or missing references)
-			//IL_002d: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-			//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0041: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0050: Unknown result type (might be due to invalid IL or missing references)
+			//IL_002b: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0030: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0038: Unknown result type (might be due to invalid IL or missing references)
+			//IL_003d: Unknown result type (might be due to invalid IL or missing references)
 			this.inner = inner ?? throw new ArgumentNullException("inner");
 			this.phase = phase;
 			this.onCompleted = onCompleted;
@@ -63,12 +63,12 @@ internal class SeededRunPatcher
 
 		public bool MoveNext()
 		{
-			//IL_0001: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0006: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0079: Unknown result type (might be due to invalid IL or missing references)
-			//IL_007e: Unknown result type (might be due to invalid IL or missing references)
-			//IL_008e: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0015: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0000: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0005: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0065: Unknown result type (might be due to invalid IL or missing references)
+			//IL_006a: Unknown result type (might be due to invalid IL or missing references)
+			//IL_007a: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0013: Unknown result type (might be due to invalid IL or missing references)
 			State state = Random.state;
 			Random worldGenRng = _worldGenRng;
 			string currentGenerationPhase = _currentGenerationPhase;
@@ -77,13 +77,13 @@ internal class SeededRunPatcher
 				Random.state = phaseState;
 				_worldGenRng = phaseRng;
 				_currentGenerationPhase = phase;
-				bool flag = inner.MoveNext();
-				if (!flag && !completed)
+				bool num = inner.MoveNext();
+				if (!num && !completed)
 				{
 					completed = true;
 					onCompleted?.Invoke();
 				}
-				return flag;
+				return num;
 			}
 			finally
 			{
@@ -124,13 +124,18 @@ internal class SeededRunPatcher
 
 		public bool MoveNext()
 		{
-			bool flag = inner.MoveNext();
-			if (!flag && !completed)
+			bool num = inner.MoveNext();
+			if (!num && !completed)
 			{
 				completed = true;
-				onCompleted?.Invoke();
+				Action action = onCompleted;
+				if (action == null)
+				{
+					return num;
+				}
+				action();
 			}
-			return flag;
+			return num;
 		}
 
 		public void Reset()
@@ -171,8 +176,8 @@ internal class SeededRunPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0011: Expected O, but got Unknown
 		Logger = logger;
 		Harmony val = new Harmony("org.bepinex.plugins.qol.seededruns");
 		val.PatchAll(typeof(SeededRunPatcher));
@@ -201,8 +206,8 @@ internal class SeededRunPatcher
 
 	private static RngScopeState BeginRngScope(int seed, string phase, bool resetIsolatedRng = true)
 	{
-		//IL_0013: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0018: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0012: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0017: Unknown result type (might be due to invalid IL or missing references)
 		RngScopeState result = new RngScopeState
 		{
 			Active = true,
@@ -234,7 +239,7 @@ internal class SeededRunPatcher
 
 	private static Exception EndRngScope(Exception exception, RngScopeState state)
 	{
-		//IL_000e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0009: Unknown result type (might be due to invalid IL or missing references)
 		if (state.Active)
 		{
 			try
@@ -278,8 +283,8 @@ internal class SeededRunPatcher
 
 	private static bool ShouldUseQoLSeededWorldgen()
 	{
-		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0036: Invalid comparison between Unknown and I4
+		//IL_0024: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002a: Invalid comparison between Unknown and I4
 		if (!SeedManager.IsSeeded)
 		{
 			return false;
@@ -352,8 +357,8 @@ internal class SeededRunPatcher
 	[HarmonyPrefix]
 	private static void WorldGen_Start_Prefix()
 	{
-		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003a: Invalid comparison between Unknown and I4
+		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0032: Invalid comparison between Unknown and I4
 		if (MultiplayerCompat.IsActive)
 		{
 			_worldGenRng = null;
@@ -486,14 +491,11 @@ internal class SeededRunPatcher
 
 	private static void FinishWorldGeneration_Completed()
 	{
-		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0049: Unknown result type (might be due to invalid IL or missing references)
 		if (!((Object)(object)WorldGeneration.world == (Object)null) && !((Object)(object)PlayerCamera.main == (Object)null) && !((Object)(object)PlayerCamera.main.body == (Object)null) && !ShouldSkipSpawnSafetyForFreshRunStart())
 		{
-			Vector2 spawnPos = Vector2.op_Implicit(((Component)PlayerCamera.main.body).transform.position);
-			KeepEldersAwayFromSpawn(spawnPos, 45f);
+			KeepEldersAwayFromSpawn(Vector2.op_Implicit(((Component)PlayerCamera.main.body).transform.position), 45f);
 			EnsurePlayerOnSolidGroundLikeVanilla();
 			ClearNearbyLiquidsAtSpawn();
 			RemoveNearbyTrapsLikeVanilla();
@@ -686,8 +688,8 @@ internal class SeededRunPatcher
 	[HarmonyPrefix]
 	private static void Trader_GenerateInv_Prefix(TraderScript __instance, out RngScopeState __state)
 	{
-		//IL_0037: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0030: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
 		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen() && !((Object)(object)__instance == (Object)null))
 		{
@@ -707,8 +709,8 @@ internal class SeededRunPatcher
 	[HarmonyPrefix]
 	private static void Openable_OnUse_Prefix(Openable __instance, out RngScopeState __state)
 	{
-		//IL_0026: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0035: Unknown result type (might be due to invalid IL or missing references)
 		__state = default(RngScopeState);
 		if (ShouldUseQoLSeededWorldgen() && !((Object)(object)__instance == (Object)null))
 		{
@@ -828,10 +830,10 @@ internal class SeededRunPatcher
 
 	private static void PatchCustomStructures(Harmony harmony)
 	{
-		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Expected O, but got Unknown
-		//IL_007b: Expected O, but got Unknown
+		//IL_005c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0064: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006f: Expected O, but got Unknown
+		//IL_006f: Expected O, but got Unknown
 		try
 		{
 			Type type = AccessTools.TypeByName("More_Structures.WorldGenerationPatcher");
@@ -868,18 +870,16 @@ internal class SeededRunPatcher
 
 	private static void KeepEldersAwayFromSpawn(Vector2 spawnPos, float minRadius)
 	{
-		//IL_0076: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0062: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0072: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0082: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0084: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
-		//IL_008a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a5: Unknown result type (might be due to invalid IL or missing references)
 		Transform[] array = Object.FindObjectsOfType<Transform>();
 		foreach (Transform val in array)
 		{
@@ -890,9 +890,8 @@ internal class SeededRunPatcher
 			string name = ((Object)((Component)val).gameObject).name;
 			if (name == "thornbackelder" || name == "thornbackelder(Clone)" || name.Contains("thornbackelder"))
 			{
-				Vector2 val2 = Vector2.op_Implicit(val.position);
-				Vector2 val3 = val2 - spawnPos;
-				if (!(((Vector2)(ref val3)).sqrMagnitude >= minRadius * minRadius) && TryFindValidElderPositionAwayFromSpawn(spawnPos, minRadius, out var pos))
+				Vector2 val2 = Vector2.op_Implicit(val.position) - spawnPos;
+				if (!(((Vector2)(ref val2)).sqrMagnitude >= minRadius * minRadius) && TryFindValidElderPositionAwayFromSpawn(spawnPos, minRadius, out var pos))
 				{
 					val.position = new Vector3(pos.x, pos.y, val.position.z);
 				}
@@ -902,12 +901,12 @@ internal class SeededRunPatcher
 
 	private static bool TryFindValidElderPositionAwayFromSpawn(Vector2 spawnPos, float minRadius, out Vector2 pos)
 	{
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0003: Unknown result type (might be due to invalid IL or missing references)
-		//IL_007c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
-		//IL_010e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0113: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0071: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00e3: Unknown result type (might be due to invalid IL or missing references)
 		pos = spawnPos;
 		WorldGeneration world = WorldGeneration.world;
 		if ((Object)(object)world == (Object)null)
@@ -933,14 +932,10 @@ internal class SeededRunPatcher
 
 	private static void EnsurePlayerOnSolidGroundLikeVanilla()
 	{
-		//IL_0046: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0092: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0098: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00a4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0080: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0085: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)PlayerCamera.main == (Object)null || (Object)(object)PlayerCamera.main.body == (Object)null || (Object)(object)WorldGeneration.world == (Object)null)
 		{
 			return;
@@ -951,9 +946,9 @@ internal class SeededRunPatcher
 		if (!IsPlayerStandLocationValid(x, y))
 		{
 			PlayerCamera.main.body.PlaceBody();
-			position = ((Component)PlayerCamera.main.body).transform.position;
-			x = Mathf.RoundToInt(position.x);
-			y = Mathf.RoundToInt(position.y);
+			Vector3 position2 = ((Component)PlayerCamera.main.body).transform.position;
+			x = Mathf.RoundToInt(position2.x);
+			y = Mathf.RoundToInt(position2.y);
 			if (!IsPlayerStandLocationValid(x, y))
 			{
 				MovePlayerToNearestOpenLandIfEmbedded();
@@ -963,16 +958,16 @@ internal class SeededRunPatcher
 
 	private static void RemoveNearbyTrapsLikeVanilla()
 	{
+		//IL_002f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0034: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0039: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0043: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bb: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
+		//IL_008e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0093: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0099: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00aa: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b4: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)PlayerCamera.main == (Object)null || (Object)(object)PlayerCamera.main.body == (Object)null)
 		{
 			return;
@@ -985,9 +980,9 @@ internal class SeededRunPatcher
 			if (!((Object)(object)val2 == (Object)null) && !((Object)(object)((Component)val2).gameObject == (Object)null) && IsTrapObject(((Component)val2).gameObject) && !ShouldPreserveTrapCandidate(((Component)val2).gameObject))
 			{
 				Vector2 val3 = Vector2.op_Implicit(val2.position) - val;
-				bool flag = ((Vector2)(ref val3)).sqrMagnitude <= num;
-				bool flag2 = val2.position.y > val.y - 5f;
-				if (flag || flag2)
+				bool num2 = ((Vector2)(ref val3)).sqrMagnitude <= num;
+				bool flag = val2.position.y > val.y - 5f;
+				if (num2 || flag)
 				{
 					Object.Destroy((Object)(object)((Component)val2).gameObject);
 				}
@@ -1030,26 +1025,27 @@ internal class SeededRunPatcher
 		{
 			return true;
 		}
-		ItemInfo value;
-		return Item.GlobalItems.TryGetValue(item.id, out value) && value.wearable && (Object)(object)body.LimbByName(value.desiredWearLimb) != (Object)null && body.HasWearable(item);
+		if (Item.GlobalItems.TryGetValue(item.id, out var value) && value.wearable && (Object)(object)body.LimbByName(value.desiredWearLimb) != (Object)null)
+		{
+			return body.HasWearable(item);
+		}
+		return false;
 	}
 
 	private static void ClearNearbyLiquidsAtSpawn()
 	{
-		//IL_0055: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0049: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0059: Unknown result type (might be due to invalid IL or missing references)
 		//IL_005a: Unknown result type (might be due to invalid IL or missing references)
 		//IL_005f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0066: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ac: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b5: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b8: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00bd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d7: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a2: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a3: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00a8: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b9: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)PlayerCamera.main == (Object)null || (Object)(object)PlayerCamera.main.body == (Object)null || (Object)(object)WorldGeneration.world == (Object)null || (Object)(object)FluidManager.main == (Object)null)
 		{
 			return;
@@ -1064,9 +1060,8 @@ internal class SeededRunPatcher
 			for (int j = ((Vector2Int)(ref val2)).y - num; j <= ((Vector2Int)(ref val2)).y + num; j++)
 			{
 				((Vector2Int)(ref val3))._002Ector(i, j);
-				Vector2 val4 = WorldGeneration.world.BlockToWorldPos(val3);
-				Vector2 val5 = val4 - val;
-				if (!(((Vector2)(ref val5)).sqrMagnitude > num2) && FluidManager.main.HasLiquid(val3))
+				Vector2 val4 = WorldGeneration.world.BlockToWorldPos(val3) - val;
+				if (!(((Vector2)(ref val4)).sqrMagnitude > num2) && FluidManager.main.HasLiquid(val3))
 				{
 					FluidManager.main.SetLiquid(i, j, (byte)0);
 				}
@@ -1111,17 +1106,17 @@ internal class SeededRunPatcher
 
 	private static void MovePlayerToNearestOpenLandIfEmbedded()
 	{
-		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0050: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00b3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00de: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ef: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0124: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0044: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0075: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0094: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ae: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00be: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cf: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ff: Unknown result type (might be due to invalid IL or missing references)
 		if ((Object)(object)PlayerCamera.main == (Object)null || (Object)(object)PlayerCamera.main.body == (Object)null || (Object)(object)WorldGeneration.world == (Object)null)
 		{
 			return;
@@ -1144,29 +1139,29 @@ internal class SeededRunPatcher
 
 	private static bool TryFindNearestOpenLand(Vector2Int start, int maxRadius, out Vector2Int found)
 	{
+		//IL_0001: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0002: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0003: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0015: Unknown result type (might be due to invalid IL or missing references)
-		//IL_001d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_002e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-		//IL_003c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
-		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c2: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00c3: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00d6: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00da: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e4: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00e7: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0115: Unknown result type (might be due to invalid IL or missing references)
-		//IL_011e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0014: Unknown result type (might be due to invalid IL or missing references)
+		//IL_001b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_003f: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0048: Unknown result type (might be due to invalid IL or missing references)
+		//IL_004d: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0056: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+		//IL_006c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00af: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00b0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00bc: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c0: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00c5: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00cd: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ec: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f5: Unknown result type (might be due to invalid IL or missing references)
 		found = start;
 		HashSet<Vector2Int> hashSet = new HashSet<Vector2Int>();
 		Queue<Vector2Int> queue = new Queue<Vector2Int>();
@@ -1218,16 +1213,15 @@ internal class SeededRunPatcher
 		{
 			return false;
 		}
-		bool flag = IsAirAtWorld(x, y);
-		bool flag2 = IsAirAtWorld(x, y + 1);
-		bool flag3 = !IsAirAtWorld(x, y - 1);
-		return flag && flag2 && flag3;
+		bool num = IsAirAtWorld(x, y);
+		bool flag = IsAirAtWorld(x, y + 1);
+		bool flag2 = !IsAirAtWorld(x, y - 1);
+		return num && flag && flag2;
 	}
 
 	private static bool IsAirAtWorld(int x, int y)
 	{
-		ushort worldBlock = GetWorldBlock(x, y);
-		return worldBlock == 0;
+		return GetWorldBlock(x, y) == 0;
 	}
 
 	private static ushort GetWorldBlock(int x, int y)
@@ -1266,6 +1260,10 @@ internal class SeededRunPatcher
 		}
 		int num = (int)world.width / 2;
 		int num2 = (int)world.height / 2;
-		return x >= -num && x < num && y >= -num2 && y < num2;
+		if (x >= -num && x < num && y >= -num2)
+		{
+			return y < num2;
+		}
+		return false;
 	}
 }

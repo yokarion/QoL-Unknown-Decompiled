@@ -28,7 +28,7 @@ internal static class MultiplayerHoverArbitrationPatcher
 
 		private HoverCandidate(Item item, BuildingEntity building, bool isBody, SpriteRenderer renderer, int stableId)
 		{
-			//IL_0082: Unknown result type (might be due to invalid IL or missing references)
+			//IL_007d: Unknown result type (might be due to invalid IL or missing references)
 			this.item = item;
 			this.building = building;
 			this.renderer = renderer;
@@ -104,13 +104,13 @@ internal static class MultiplayerHoverArbitrationPatcher
 
 		public bool Contains(Vector2 worldPos)
 		{
-			//IL_0055: Unknown result type (might be due to invalid IL or missing references)
-			//IL_005a: Unknown result type (might be due to invalid IL or missing references)
-			//IL_006b: Unknown result type (might be due to invalid IL or missing references)
-			//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00a1: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00ab: Unknown result type (might be due to invalid IL or missing references)
+			//IL_003c: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0041: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0050: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0051: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0082: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0087: Unknown result type (might be due to invalid IL or missing references)
+			//IL_008c: Unknown result type (might be due to invalid IL or missing references)
 			if (IsBody)
 			{
 				return false;
@@ -125,8 +125,7 @@ internal static class MultiplayerHoverArbitrationPatcher
 				((Bounds)(ref bounds)).Expand(0.25f);
 				return ((Bounds)(ref bounds)).Contains(Vector2.op_Implicit(worldPos));
 			}
-			Transform val = (((Object)(object)item != (Object)null) ? ((Component)item).transform : ((Component)building).transform);
-			return Vector2.Distance(Vector2.op_Implicit(val.position), worldPos) <= 0.75f;
+			return Vector2.Distance(Vector2.op_Implicit((((Object)(object)item != (Object)null) ? ((Component)item).transform : ((Component)building).transform).position), worldPos) <= 0.75f;
 		}
 
 		public void Apply(PlayerCamera camera, ref UsableObject usableObject)
@@ -144,10 +143,10 @@ internal static class MultiplayerHoverArbitrationPatcher
 
 		private static void ApplyItem(PlayerCamera camera, Item hoveredItem)
 		{
-			//IL_0032: Unknown result type (might be due to invalid IL or missing references)
-			//IL_006c: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0088: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
+			//IL_002f: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0067: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0082: Unknown result type (might be due to invalid IL or missing references)
+			//IL_009e: Unknown result type (might be due to invalid IL or missing references)
 			SetCursor(camera, 1);
 			GlobalDark.main.SetTooltip(PlayerCamera.ItemHoverDescription(hoveredItem));
 			SpriteRenderer component = ((Component)hoveredItem).GetComponent<SpriteRenderer>();
@@ -163,16 +162,16 @@ internal static class MultiplayerHoverArbitrationPatcher
 
 		private static void ApplyBuilding(PlayerCamera camera, BuildingEntity hoveredBuilding, ref UsableObject usableObject)
 		{
-			//IL_0033: Unknown result type (might be due to invalid IL or missing references)
-			//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0091: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0089: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00cb: Unknown result type (might be due to invalid IL or missing references)
-			//IL_00e7: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0113: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0118: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0124: Unknown result type (might be due to invalid IL or missing references)
-			//IL_0129: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0031: Unknown result type (might be due to invalid IL or missing references)
+			//IL_006b: Unknown result type (might be due to invalid IL or missing references)
+			//IL_008c: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0084: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00c4: Unknown result type (might be due to invalid IL or missing references)
+			//IL_00df: Unknown result type (might be due to invalid IL or missing references)
+			//IL_0109: Unknown result type (might be due to invalid IL or missing references)
+			//IL_010e: Unknown result type (might be due to invalid IL or missing references)
+			//IL_011a: Unknown result type (might be due to invalid IL or missing references)
+			//IL_011f: Unknown result type (might be due to invalid IL or missing references)
 			SetCursor(camera, 2);
 			(string, string) tooltip = (hoveredBuilding.fullNameDisplay, hoveredBuilding.description);
 			SpriteRenderer component = ((Component)hoveredBuilding).GetComponent<SpriteRenderer>();
@@ -203,11 +202,9 @@ internal static class MultiplayerHoverArbitrationPatcher
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.multiplayer_hover_arbitration");
-		val.PatchAll(typeof(MultiplayerHoverArbitrationPatcher));
+		new Harmony("org.bepinex.plugins.qol.multiplayer_hover_arbitration").PatchAll(typeof(MultiplayerHoverArbitrationPatcher));
 	}
 
 	[HarmonyPatch(typeof(PlayerCamera), "HandleWorldHover")]
@@ -216,17 +213,14 @@ internal static class MultiplayerHoverArbitrationPatcher
 	[HarmonyPriority(0)]
 	private static void HandleWorldHover_Postfix(PlayerCamera __instance, ref UsableObject usableObject)
 	{
-		//IL_0060: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0065: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006a: Unknown result type (might be due to invalid IL or missing references)
-		//IL_006f: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0070: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0053: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0058: Unknown result type (might be due to invalid IL or missing references)
+		//IL_005d: Unknown result type (might be due to invalid IL or missing references)
 		if (!MultiplayerCompat.IsActive || (Object)(object)__instance == (Object)null || (Object)(object)__instance.body == (Object)null || !__instance.body.conscious || __instance.radialOpen || (Object)(object)GlobalDark.main == (Object)null || (Object)(object)Camera.main == (Object)null)
 		{
 			return;
 		}
-		Vector2 val = Vector2.op_Implicit(Camera.main.ScreenToWorldPoint(Input.mousePosition));
-		Collider2D[] array = Physics2D.OverlapPointAll(val, LayerMask.GetMask(new string[5] { "Item", "Ground", "Descriptor", "Limb", "Body" }));
+		Collider2D[] array = Physics2D.OverlapPointAll(Vector2.op_Implicit(Camera.main.ScreenToWorldPoint(Input.mousePosition)), LayerMask.GetMask(new string[5] { "Item", "Ground", "Descriptor", "Limb", "Body" }));
 		HoverCandidate hoverCandidate = null;
 		HoverCandidate hoverCandidate2 = null;
 		for (int i = 0; i < array.Length; i++)
@@ -250,19 +244,16 @@ internal static class MultiplayerHoverArbitrationPatcher
 		}
 		if (hoverCandidate == null)
 		{
-			if (!TryApplyLatchedObject(__instance, ref usableObject))
-			{
-			}
+			TryApplyLatchedObject(__instance, ref usableObject);
+			return;
 		}
-		else if (hoverCandidate2 != null && hoverCandidate2.CompareTo(hoverCandidate) > 0)
+		if (hoverCandidate2 != null && hoverCandidate2.CompareTo(hoverCandidate) > 0)
 		{
 			ClearLatchedObject();
+			return;
 		}
-		else
-		{
-			hoverCandidate.Apply(__instance, ref usableObject);
-			LatchObject(hoverCandidate);
-		}
+		hoverCandidate.Apply(__instance, ref usableObject);
+		LatchObject(hoverCandidate);
 	}
 
 	private static void SetCursor(PlayerCamera camera, int value)
@@ -284,11 +275,11 @@ internal static class MultiplayerHoverArbitrationPatcher
 
 	private static bool TryApplyLatchedObject(PlayerCamera camera, ref UsableObject usableObject)
 	{
+		//IL_002c: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0031: Unknown result type (might be due to invalid IL or missing references)
 		//IL_0036: Unknown result type (might be due to invalid IL or missing references)
 		//IL_003b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0040: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0045: Unknown result type (might be due to invalid IL or missing references)
-		//IL_004b: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0041: Unknown result type (might be due to invalid IL or missing references)
 		if (latchedObject == null || Time.frameCount > latchedObjectThroughFrame || (Object)(object)Camera.main == (Object)null)
 		{
 			ClearLatchedObject();

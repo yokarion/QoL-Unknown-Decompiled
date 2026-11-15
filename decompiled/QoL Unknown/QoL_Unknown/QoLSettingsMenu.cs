@@ -24,7 +24,7 @@ internal class QoLSettingsMenu
 
 		public static UnityAction _003C_003E9__13_0;
 
-		public static Func<TextMeshProUGUI, bool> _003C_003E9__28_0;
+		public static Func<TextMeshProUGUI, bool> _003C_003E9__27_0;
 
 		internal void _003CBuildSettingsUI_003Eb__13_0()
 		{
@@ -36,23 +36,18 @@ internal class QoLSettingsMenu
 			EnhancedMenuController.Instance.OpenMenu();
 		}
 
-		internal bool _003CTryGetFooterText_003Eb__28_0(TextMeshProUGUI tmp)
+		internal bool _003CTrySetModdedBetaBuildText_003Eb__27_0(TextMeshProUGUI text)
 		{
-			int result;
-			if ((Object)(object)tmp != (Object)null)
+			if ((Object)(object)text != (Object)null)
 			{
-				Transform transform = ((TMP_Text)tmp).transform;
-				GameObject obj = GameObject.Find("Canvas");
-				if (transform.IsChildOf((obj != null) ? obj.transform : null) && !string.IsNullOrEmpty(((TMP_Text)tmp).text))
+				string text2 = ((TMP_Text)text).text;
+				if (text2 == null || !text2.StartsWith("This is a beta build (", StringComparison.Ordinal))
 				{
-					result = (((TMP_Text)tmp).text.Contains("Wickflix") ? 1 : 0);
-					goto IL_004c;
+					return ((TMP_Text)text).text?.StartsWith("This is a modded beta build (", StringComparison.Ordinal) ?? false;
 				}
+				return true;
 			}
-			result = 0;
-			goto IL_004c;
-			IL_004c:
-			return (byte)result != 0;
+			return false;
 		}
 	}
 
@@ -74,11 +69,9 @@ internal class QoLSettingsMenu
 
 	public static void Initialize(ManualLogSource logger)
 	{
-		//IL_000c: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0012: Expected O, but got Unknown
+		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
 		Logger = logger;
-		Harmony val = new Harmony("org.bepinex.plugins.qol.settingsmenu");
-		val.PatchAll(typeof(QoLSettingsMenu));
+		new Harmony("org.bepinex.plugins.qol.settingsmenu").PatchAll(typeof(QoLSettingsMenu));
 	}
 
 	[HarmonyPatch(typeof(PreRunScript), "Start")]
@@ -119,16 +112,16 @@ internal class QoLSettingsMenu
 
 	private static void BuildSettingsUI()
 	{
-		//IL_00f1: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0107: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00ca: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00df: Unknown result type (might be due to invalid IL or missing references)
+		//IL_00f4: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0109: Unknown result type (might be due to invalid IL or missing references)
 		//IL_011d: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0133: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0149: Unknown result type (might be due to invalid IL or missing references)
-		//IL_015e: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0168: Expected O, but got Unknown
-		//IL_0184: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0189: Unknown result type (might be due to invalid IL or missing references)
-		//IL_018f: Expected O, but got Unknown
+		//IL_012e: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0138: Expected O, but got Unknown
+		//IL_0151: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0156: Unknown result type (might be due to invalid IL or missing references)
+		//IL_015c: Expected O, but got Unknown
 		if ((Object)(object)PreRunScript.instance == (Object)null || (Object)(object)PreRunScript.instance.mainCanvas == (Object)null)
 		{
 			ManualLogSource logger = Logger;
@@ -159,21 +152,21 @@ internal class QoLSettingsMenu
 			{
 				logger3.LogInfo((object)("BuildSettingsUI: Cloning button from " + ((Object)((Component)componentInChildren).gameObject).name));
 			}
-			GameObject val = Object.Instantiate<GameObject>(((Component)componentInChildren).gameObject, ((Component)mainCanvas).transform);
-			((Object)val).name = "EnhancedSettingsButton";
-			RectTransform component = val.GetComponent<RectTransform>();
+			GameObject obj = Object.Instantiate<GameObject>(((Component)componentInChildren).gameObject, ((Component)mainCanvas).transform);
+			((Object)obj).name = "EnhancedSettingsButton";
+			RectTransform component = obj.GetComponent<RectTransform>();
 			component.anchorMin = new Vector2(0f, 1f);
 			component.anchorMax = new Vector2(0f, 1f);
 			component.pivot = new Vector2(0.5f, 1f);
 			component.anchoredPosition = new Vector2(150f, -100f);
 			component.sizeDelta = new Vector2(200f, 60f);
-			Button component2 = val.GetComponent<Button>();
+			Button component2 = obj.GetComponent<Button>();
 			component2.onClick = new ButtonClickedEvent();
 			ButtonClickedEvent onClick = component2.onClick;
-			object obj = _003C_003Ec._003C_003E9__13_0;
-			if (obj == null)
+			object obj2 = _003C_003Ec._003C_003E9__13_0;
+			if (obj2 == null)
 			{
-				UnityAction val2 = delegate
+				UnityAction val = delegate
 				{
 					ManualLogSource logger4 = Logger;
 					if (logger4 != null)
@@ -182,11 +175,11 @@ internal class QoLSettingsMenu
 					}
 					EnhancedMenuController.Instance.OpenMenu();
 				};
-				_003C_003Ec._003C_003E9__13_0 = val2;
-				obj = (object)val2;
+				_003C_003Ec._003C_003E9__13_0 = val;
+				obj2 = (object)val;
 			}
-			((UnityEvent)onClick).AddListener((UnityAction)obj);
-			TextMeshProUGUI componentInChildren2 = val.GetComponentInChildren<TextMeshProUGUI>(true);
+			((UnityEvent)onClick).AddListener((UnityAction)obj2);
+			TextMeshProUGUI componentInChildren2 = obj.GetComponentInChildren<TextMeshProUGUI>(true);
 			if ((Object)(object)componentInChildren2 != (Object)null)
 			{
 				Component component3 = ((Component)componentInChildren2).GetComponent("UILocalizer");
@@ -201,15 +194,10 @@ internal class QoLSettingsMenu
 
 	private static IEnumerator SetupCustomMenu()
 	{
-		Canvas canvas = null;
-		while ((Object)(object)canvas == (Object)null)
+		Canvas canvas = (((Object)(object)PreRunScript.instance != (Object)null) ? PreRunScript.instance.mainCanvas : null);
+		if ((Object)(object)canvas == (Object)null)
 		{
-			GameObject found = GameObject.Find("Canvas");
-			if ((Object)(object)found != (Object)null)
-			{
-				canvas = found.GetComponent<Canvas>();
-			}
-			yield return null;
+			yield break;
 		}
 		Transform menuBg = ((Component)canvas).transform.Find("MenuBackground");
 		if ((Object)(object)menuBg == (Object)null || (Object)(object)menuBg.Find("QoL_Fruit") != (Object)null)
@@ -221,24 +209,24 @@ internal class QoLSettingsMenu
 			yield return (object)new WaitForSeconds(0.2f);
 		}
 		yield return null;
-		Transform mp3 = menuBg.Find("MP3");
+		Transform val = menuBg.Find("MP3");
 		Transform experiment = menuBg.Find("Experiment");
-		if ((Object)(object)mp3 == (Object)null)
+		if ((Object)(object)val == (Object)null)
 		{
 			yield break;
 		}
-		GameObject qolObj = Object.Instantiate<GameObject>(((Component)mp3).gameObject, menuBg);
+		GameObject qolObj = Object.Instantiate<GameObject>(((Component)val).gameObject, menuBg);
 		((Object)qolObj).name = "QoL_Fruit";
 		qolObj.transform.SetAsLastSibling();
 		RectTransform qolRect = qolObj.GetComponent<RectTransform>();
-		RectTransform mp3Rect = ((Component)mp3).GetComponent<RectTransform>();
-		Vector3 stableBasePosition = (((Object)(object)mp3Rect != (Object)null) ? ((Transform)mp3Rect).localPosition : ((Transform)qolRect).localPosition);
+		RectTransform component = ((Component)val).GetComponent<RectTransform>();
+		Vector3 stableBasePosition = (((Object)(object)component != (Object)null) ? ((Transform)component).localPosition : ((Transform)qolRect).localPosition);
 		MenuParallax parallaxScript = ((Component)canvas).GetComponentInChildren<MenuParallax>();
-		if ((Object)(object)parallaxScript != (Object)null && (Object)(object)mp3Rect != (Object)null)
+		if ((Object)(object)parallaxScript != (Object)null && (Object)(object)component != (Object)null)
 		{
 			foreach (ParallaxLayerInfo layer in parallaxScript.parallax.layers)
 			{
-				if ((Object)(object)layer.reference == (Object)(object)mp3Rect)
+				if ((Object)(object)layer.reference == (Object)(object)component)
 				{
 					stableBasePosition = Vector2.op_Implicit(layer.originalPos);
 					break;
@@ -246,184 +234,180 @@ internal class QoLSettingsMenu
 			}
 		}
 		((Transform)qolRect).localPosition = stableBasePosition;
-		RectTransform clickableRect = ((Component)qolObj.transform.Find("Clickable")).GetComponent<RectTransform>();
-		RectTransform textRect = ((Component)qolObj.transform.Find("Text")).GetComponent<RectTransform>();
-		clickableRect.anchoredPosition = new Vector2(-621f, -356f);
-		textRect.anchoredPosition = clickableRect.anchoredPosition + new Vector2(0f, -110f);
-		Image rootImg = qolObj.GetComponent<Image>();
-		if ((Object)(object)rootImg != (Object)null)
+		RectTransform component2 = ((Component)qolObj.transform.Find("Clickable")).GetComponent<RectTransform>();
+		RectTransform component3 = ((Component)qolObj.transform.Find("Text")).GetComponent<RectTransform>();
+		component2.anchoredPosition = new Vector2(-621f, -356f);
+		component3.anchoredPosition = component2.anchoredPosition + new Vector2(0f, -110f);
+		Image component4 = qolObj.GetComponent<Image>();
+		if ((Object)(object)component4 != (Object)null)
 		{
-			rootImg.sprite = Helper.LoadEmbeddedSprite("backQoL", 100f, (FilterMode)0);
-			((Graphic)rootImg).raycastTarget = false;
+			component4.sprite = Helper.LoadEmbeddedSprite("backQoL", 100f, (FilterMode)0);
+			((Graphic)component4).raycastTarget = false;
 		}
 		Transform clickable = qolObj.transform.Find("Clickable");
 		yield return null;
-		AdaptiveButton adaptiveButton = ((Component)clickable).GetComponent<AdaptiveButton>();
-		if ((Object)(object)adaptiveButton != (Object)null)
+		AdaptiveButton component5 = ((Component)clickable).GetComponent<AdaptiveButton>();
+		if ((Object)(object)component5 != (Object)null)
 		{
-			Object.DestroyImmediate((Object)(object)adaptiveButton);
+			Object.DestroyImmediate((Object)(object)component5);
 		}
 		EventTrigger[] components = ((Component)clickable).GetComponents<EventTrigger>();
-		foreach (EventTrigger trigger in components)
+		for (int i = 0; i < components.Length; i++)
 		{
-			Object.DestroyImmediate((Object)(object)trigger);
+			Object.DestroyImmediate((Object)(object)components[i]);
 		}
 		Object.DestroyImmediate((Object)(object)((Component)clickable).GetComponent<Image>());
 		Object.DestroyImmediate((Object)(object)((Component)clickable).GetComponent<UITooltip>());
-		Image clickableImg = ((Component)clickable).GetComponent<Image>();
-		if ((Object)(object)clickableImg != (Object)null)
+		Image component6 = ((Component)clickable).GetComponent<Image>();
+		if ((Object)(object)component6 != (Object)null)
 		{
-			clickableImg.sprite = null;
-			((Graphic)clickableImg).color = Color.clear;
+			component6.sprite = null;
+			((Graphic)component6).color = Color.clear;
 		}
-		Transform overlayChild = qolObj.transform.Find("Overlay");
-		Image overlayImg = ((overlayChild != null) ? ((Component)overlayChild).GetComponent<Image>() : null);
-		if ((Object)(object)overlayImg != (Object)null)
+		Transform obj = qolObj.transform.Find("Overlay");
+		Image val2 = ((obj != null) ? ((Component)obj).GetComponent<Image>() : null);
+		if ((Object)(object)val2 != (Object)null)
 		{
-			overlayImg.sprite = Helper.LoadEmbeddedSprite("geofruitOverlay", 100f, (FilterMode)0);
-			((Graphic)overlayImg).raycastTarget = false;
+			val2.sprite = Helper.LoadEmbeddedSprite("geofruitOverlay", 100f, (FilterMode)0);
+			((Graphic)val2).raycastTarget = false;
 		}
-		Transform textChild = qolObj.transform.Find("Text");
-		TextMeshProUGUI label = null;
-		if ((Object)(object)textChild != (Object)null)
+		Transform val3 = qolObj.transform.Find("Text");
+		TextMeshProUGUI val4 = null;
+		if ((Object)(object)val3 != (Object)null)
 		{
-			Image textImg = ((Component)textChild).GetComponent<Image>();
-			if ((Object)(object)textImg != (Object)null)
+			Image component7 = ((Component)val3).GetComponent<Image>();
+			if ((Object)(object)component7 != (Object)null)
 			{
-				textImg.sprite = null;
-				((Graphic)textImg).color = Color.clear;
+				component7.sprite = null;
+				((Graphic)component7).color = Color.clear;
 			}
-			label = ((Component)textChild).GetComponent<TextMeshProUGUI>();
-			if ((Object)(object)label != (Object)null)
+			val4 = ((Component)val3).GetComponent<TextMeshProUGUI>();
+			if ((Object)(object)val4 != (Object)null)
 			{
-				Component localizer = ((Component)label).GetComponent("UILocalizer");
-				if ((Object)(object)localizer != (Object)null)
+				Component component8 = ((Component)val4).GetComponent("UILocalizer");
+				if ((Object)(object)component8 != (Object)null)
 				{
-					Object.Destroy((Object)(object)localizer);
+					Object.Destroy((Object)(object)component8);
 				}
-				((TMP_Text)label).text = "QoL\nSettings";
-				ApplyGeofruitFont((TMP_Text)(object)label);
+				((TMP_Text)val4).text = "QoL\nSettings";
+				ApplyGeofruitFont((TMP_Text)(object)val4);
 			}
 		}
 		if ((Object)(object)clickable != (Object)null)
 		{
-			QoLMenuButton qolBtn = ((Component)clickable).gameObject.AddComponent<QoLMenuButton>();
-			qolBtn.overlay = overlayImg;
-			qolBtn.label = label;
+			QoLMenuButton qoLMenuButton = ((Component)clickable).gameObject.AddComponent<QoLMenuButton>();
+			qoLMenuButton.overlay = val2;
+			qoLMenuButton.label = val4;
 		}
 		if ((Object)(object)parallaxScript != (Object)null && (Object)(object)experiment != (Object)null)
 		{
-			RectTransform experimentRect = ((Component)experiment).GetComponent<RectTransform>();
-			float targetScale = 0f;
+			RectTransform component9 = ((Component)experiment).GetComponent<RectTransform>();
+			float mouseMoveScale = 0f;
 			foreach (ParallaxLayerInfo layer2 in parallaxScript.parallax.layers)
 			{
-				if ((Object)(object)layer2.reference == (Object)(object)experimentRect)
+				if ((Object)(object)layer2.reference == (Object)(object)component9)
 				{
-					targetScale = layer2.mouseMoveScale;
+					mouseMoveScale = layer2.mouseMoveScale;
 					break;
 				}
 			}
 			parallaxScript.parallax.layers.Add(new ParallaxLayerInfo
 			{
 				reference = qolRect,
-				mouseMoveScale = targetScale,
+				mouseMoveScale = mouseMoveScale,
 				originalPos = Vector2.op_Implicit(stableBasePosition)
 			});
 		}
-		TMP_FontAsset font = GetGeofruitFont();
-		Sprite uiSprite = ResourceLookupCache.FindSpriteContains("uiBlockNano");
+		TMP_FontAsset geofruitFont = GetGeofruitFont();
+		Sprite val5 = ResourceLookupCache.FindSpriteContains("uiBlockNano");
 		GameObject mainContainer = new GameObject("QoLOptionsButton");
-		RectTransform dropdownRect = mainContainer.AddComponent<RectTransform>();
-		((Transform)dropdownRect).SetParent(((Component)canvas).transform, false);
-		((Transform)dropdownRect).SetAsLastSibling();
-		dropdownRect.anchorMax = new Vector2(0f, 1f);
-		dropdownRect.anchorMin = new Vector2(0f, 1f);
-		dropdownRect.pivot = new Vector2(0.5f, 1f);
-		dropdownRect.anchoredPosition = new Vector2(1630f, -90f);
-		VerticalLayoutGroup vlg = mainContainer.AddComponent<VerticalLayoutGroup>();
-		((HorizontalOrVerticalLayoutGroup)vlg).spacing = 15f;
-		((LayoutGroup)vlg).childAlignment = (TextAnchor)1;
-		((HorizontalOrVerticalLayoutGroup)vlg).childControlHeight = false;
-		((HorizontalOrVerticalLayoutGroup)vlg).childForceExpandHeight = false;
-		((HorizontalOrVerticalLayoutGroup)vlg).childControlWidth = false;
-		((HorizontalOrVerticalLayoutGroup)vlg).childForceExpandWidth = false;
-		ContentSizeFitter mainFitter = mainContainer.AddComponent<ContentSizeFitter>();
-		mainFitter.horizontalFit = (FitMode)2;
-		mainFitter.verticalFit = (FitMode)2;
+		RectTransform obj2 = mainContainer.AddComponent<RectTransform>();
+		((Transform)obj2).SetParent(((Component)canvas).transform, false);
+		((Transform)obj2).SetAsLastSibling();
+		obj2.anchorMax = new Vector2(0f, 1f);
+		obj2.anchorMin = new Vector2(0f, 1f);
+		obj2.pivot = new Vector2(0.5f, 1f);
+		obj2.anchoredPosition = new Vector2(1630f, -90f);
+		VerticalLayoutGroup obj3 = mainContainer.AddComponent<VerticalLayoutGroup>();
+		((HorizontalOrVerticalLayoutGroup)obj3).spacing = 15f;
+		((LayoutGroup)obj3).childAlignment = (TextAnchor)1;
+		((HorizontalOrVerticalLayoutGroup)obj3).childControlHeight = false;
+		((HorizontalOrVerticalLayoutGroup)obj3).childForceExpandHeight = false;
+		((HorizontalOrVerticalLayoutGroup)obj3).childControlWidth = false;
+		((HorizontalOrVerticalLayoutGroup)obj3).childForceExpandWidth = false;
+		ContentSizeFitter obj4 = mainContainer.AddComponent<ContentSizeFitter>();
+		obj4.horizontalFit = (FitMode)2;
+		obj4.verticalFit = (FitMode)2;
 		GameObject optionsListObj = new GameObject("QoLOptionsList");
 		geofruitOptionsList = optionsListObj;
 		optionsListObj.transform.SetParent(mainContainer.transform, false);
-		Image bgPanelImg = optionsListObj.AddComponent<Image>();
-		if (Object.op_Implicit((Object)(object)uiSprite))
+		Image val6 = optionsListObj.AddComponent<Image>();
+		if (Object.op_Implicit((Object)(object)val5))
 		{
-			bgPanelImg.sprite = uiSprite;
+			val6.sprite = val5;
 		}
-		bgPanelImg.type = (Type)1;
-		((Graphic)bgPanelImg).color = new Color(1f, 1f, 1f, 0.5f);
-		LayoutElement le = optionsListObj.AddComponent<LayoutElement>();
-		le.minWidth = 580f;
-		VerticalLayoutGroup listLayout = optionsListObj.AddComponent<VerticalLayoutGroup>();
-		((HorizontalOrVerticalLayoutGroup)listLayout).childControlHeight = false;
-		((HorizontalOrVerticalLayoutGroup)listLayout).childControlWidth = false;
-		((HorizontalOrVerticalLayoutGroup)listLayout).childForceExpandHeight = false;
-		((HorizontalOrVerticalLayoutGroup)listLayout).childForceExpandWidth = false;
-		((HorizontalOrVerticalLayoutGroup)listLayout).spacing = 10f;
-		((LayoutGroup)listLayout).padding = new RectOffset(15, 15, 10, 10);
-		ContentSizeFitter listFitter = optionsListObj.AddComponent<ContentSizeFitter>();
-		listFitter.verticalFit = (FitMode)2;
-		listFitter.horizontalFit = (FitMode)2;
+		val6.type = (Type)1;
+		((Graphic)val6).color = new Color(1f, 1f, 1f, 0.5f);
+		optionsListObj.AddComponent<LayoutElement>().minWidth = 580f;
+		VerticalLayoutGroup obj5 = optionsListObj.AddComponent<VerticalLayoutGroup>();
+		((HorizontalOrVerticalLayoutGroup)obj5).childControlHeight = false;
+		((HorizontalOrVerticalLayoutGroup)obj5).childControlWidth = false;
+		((HorizontalOrVerticalLayoutGroup)obj5).childForceExpandHeight = false;
+		((HorizontalOrVerticalLayoutGroup)obj5).childForceExpandWidth = false;
+		((HorizontalOrVerticalLayoutGroup)obj5).spacing = 10f;
+		((LayoutGroup)obj5).padding = new RectOffset(15, 15, 10, 10);
+		ContentSizeFitter obj6 = optionsListObj.AddComponent<ContentSizeFitter>();
+		obj6.verticalFit = (FitMode)2;
+		obj6.horizontalFit = (FitMode)2;
 		foreach (QoLModuleDef module in QoLModuleManager.Modules)
 		{
 			if (module.IsCore || GeofruitBlacklist.Contains(module.ID))
 			{
 				continue;
 			}
-			GameObject rowObj = new GameObject("Toggle_" + module.ID);
-			rowObj.transform.SetParent(optionsListObj.transform, false);
-			RectTransform rowRect = rowObj.AddComponent<RectTransform>();
-			rowRect.sizeDelta = new Vector2(550f, 40f);
-			HorizontalLayoutGroup rowGroup = rowObj.AddComponent<HorizontalLayoutGroup>();
-			((HorizontalOrVerticalLayoutGroup)rowGroup).spacing = 8f;
-			((HorizontalOrVerticalLayoutGroup)rowGroup).childForceExpandWidth = false;
-			((HorizontalOrVerticalLayoutGroup)rowGroup).childForceExpandHeight = false;
-			((HorizontalOrVerticalLayoutGroup)rowGroup).childControlHeight = false;
-			((HorizontalOrVerticalLayoutGroup)rowGroup).childControlWidth = false;
-			((LayoutGroup)rowGroup).childAlignment = (TextAnchor)3;
-			((LayoutGroup)rowGroup).padding = new RectOffset(0, 0, 4, 4);
-			Toggle toggle = rowObj.AddComponent<Toggle>();
-			GameObject bgObj = new GameObject("Background");
-			bgObj.transform.SetParent(rowObj.transform, false);
-			RectTransform bgRect = bgObj.AddComponent<RectTransform>();
-			bgRect.sizeDelta = new Vector2(32.4f, 32.4f);
-			Image bgImg = bgObj.AddComponent<Image>();
-			if (Object.op_Implicit((Object)(object)uiSprite))
+			GameObject val7 = new GameObject("Toggle_" + module.ID);
+			val7.transform.SetParent(optionsListObj.transform, false);
+			val7.AddComponent<RectTransform>().sizeDelta = new Vector2(550f, 40f);
+			HorizontalLayoutGroup obj7 = val7.AddComponent<HorizontalLayoutGroup>();
+			((HorizontalOrVerticalLayoutGroup)obj7).spacing = 8f;
+			((HorizontalOrVerticalLayoutGroup)obj7).childForceExpandWidth = false;
+			((HorizontalOrVerticalLayoutGroup)obj7).childForceExpandHeight = false;
+			((HorizontalOrVerticalLayoutGroup)obj7).childControlHeight = false;
+			((HorizontalOrVerticalLayoutGroup)obj7).childControlWidth = false;
+			((LayoutGroup)obj7).childAlignment = (TextAnchor)3;
+			((LayoutGroup)obj7).padding = new RectOffset(0, 0, 4, 4);
+			Toggle obj8 = val7.AddComponent<Toggle>();
+			GameObject val8 = new GameObject("Background");
+			val8.transform.SetParent(val7.transform, false);
+			val8.AddComponent<RectTransform>().sizeDelta = new Vector2(32.4f, 32.4f);
+			Image val9 = val8.AddComponent<Image>();
+			if (Object.op_Implicit((Object)(object)val5))
 			{
-				bgImg.sprite = uiSprite;
+				val9.sprite = val5;
 			}
-			bgImg.type = (Type)1;
-			GameObject checkObj = new GameObject("Checkmark");
-			checkObj.transform.SetParent(bgObj.transform, false);
-			RectTransform checkRect = checkObj.AddComponent<RectTransform>();
-			checkRect.sizeDelta = new Vector2(20f, 20f);
-			checkRect.anchorMin = new Vector2(0.5f, 0.5f);
-			checkRect.anchorMax = new Vector2(0.5f, 0.5f);
-			checkRect.anchoredPosition = Vector2.zero;
-			Image checkImg = checkObj.AddComponent<Image>();
-			((Selectable)toggle).targetGraphic = (Graphic)(object)bgImg;
-			toggle.graphic = (Graphic)(object)checkImg;
-			toggle.isOn = QoLModuleManager.IsEnabled(module.ID);
+			val9.type = (Type)1;
+			GameObject val10 = new GameObject("Checkmark");
+			val10.transform.SetParent(val8.transform, false);
+			RectTransform obj9 = val10.AddComponent<RectTransform>();
+			obj9.sizeDelta = new Vector2(20f, 20f);
+			obj9.anchorMin = new Vector2(0.5f, 0.5f);
+			obj9.anchorMax = new Vector2(0.5f, 0.5f);
+			obj9.anchoredPosition = Vector2.zero;
+			Image graphic = val10.AddComponent<Image>();
+			((Selectable)obj8).targetGraphic = (Graphic)(object)val9;
+			obj8.graphic = (Graphic)(object)graphic;
+			obj8.isOn = QoLModuleManager.IsEnabled(module.ID);
 			string moduleId = module.ID;
-			GameObject labelObj = new GameObject("Label");
-			labelObj.transform.SetParent(rowObj.transform, false);
-			RectTransform labelRect = labelObj.AddComponent<RectTransform>();
-			labelRect.sizeDelta = new Vector2(550f, 40f);
-			TextMeshProUGUI labelText = labelObj.AddComponent<TextMeshProUGUI>();
-			ApplyGeofruitFont((TMP_Text)(object)labelText, font);
+			GameObject val11 = new GameObject("Label");
+			val11.transform.SetParent(val7.transform, false);
+			val11.AddComponent<RectTransform>().sizeDelta = new Vector2(550f, 40f);
+			TextMeshProUGUI labelText = val11.AddComponent<TextMeshProUGUI>();
+			ApplyGeofruitFont((TMP_Text)(object)labelText, geofruitFont);
 			((TMP_Text)labelText).fontSize = 16f;
 			((TMP_Text)labelText).enableWordWrapping = false;
 			((TMP_Text)labelText).text = module.Name + "\n<color=#aaaaaa><size=80%>" + module.Description + "</size></color>";
-			((UnityEventBase)toggle.onValueChanged).RemoveAllListeners();
-			((UnityEvent<bool>)(object)toggle.onValueChanged).AddListener((UnityAction<bool>)delegate(bool isOn)
+			((UnityEventBase)obj8.onValueChanged).RemoveAllListeners();
+			((UnityEvent<bool>)(object)obj8.onValueChanged).AddListener((UnityAction<bool>)delegate(bool isOn)
 			{
 				QoLModuleManager.SetEnabled(moduleId, isOn);
 				if (!_ModulesChanged.Contains(moduleId))
@@ -443,7 +427,7 @@ internal class QoLSettingsMenu
 			});
 		}
 		optionsListObj.SetActive(false);
-		UnityAction toggleMenuAction = (UnityAction)delegate
+		QoLToggleAction = (UnityAction)delegate
 		{
 			if (IsRunSettingsScreenActive())
 			{
@@ -456,20 +440,20 @@ internal class QoLSettingsMenu
 				bool flag = !optionsListObj.activeSelf;
 				if (flag)
 				{
-					GameObject val = GameObject.Find("CustomOptionsButton");
-					if ((Object)(object)val != (Object)null)
+					GameObject val12 = GameObject.Find("CustomOptionsButton");
+					if ((Object)(object)val12 != (Object)null)
 					{
-						Transform val2 = val.transform.Find("dropdownOptions");
-						if ((Object)(object)val2 != (Object)null && ((Component)val2).gameObject.activeSelf)
+						Transform val13 = val12.transform.Find("dropdownOptions");
+						if ((Object)(object)val13 != (Object)null && ((Component)val13).gameObject.activeSelf)
 						{
-							((Component)val2).gameObject.SetActive(false);
-							Transform val3 = val.transform.Find("CustomOptionsToggle/Label");
-							if ((Object)(object)val3 != (Object)null)
+							((Component)val13).gameObject.SetActive(false);
+							Transform val14 = val12.transform.Find("CustomOptionsToggle/Label");
+							if ((Object)(object)val14 != (Object)null)
 							{
-								TextMeshProUGUI component = ((Component)val3).GetComponent<TextMeshProUGUI>();
-								if ((Object)(object)component != (Object)null)
+								TextMeshProUGUI component10 = ((Component)val14).GetComponent<TextMeshProUGUI>();
+								if ((Object)(object)component10 != (Object)null)
 								{
-									((TMP_Text)component).text = "Show Options";
+									((TMP_Text)component10).text = "Show Options";
 								}
 							}
 						}
@@ -480,7 +464,6 @@ internal class QoLSettingsMenu
 				LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)(object)((transform3 is RectTransform) ? transform3 : null));
 			}
 		};
-		QoLToggleAction = toggleMenuAction;
 		Canvas.ForceUpdateCanvases();
 		Transform transform = mainContainer.transform;
 		LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)(object)((transform is RectTransform) ? transform : null));
@@ -491,8 +474,8 @@ internal class QoLSettingsMenu
 	[HarmonyPrefix]
 	private static bool AdaptiveButton_Clicked_Prefix(AdaptiveButton __instance)
 	{
-		//IL_000b: Unknown result type (might be due to invalid IL or missing references)
-		//IL_0011: Invalid comparison between Unknown and I4
+		//IL_000a: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0010: Invalid comparison between Unknown and I4
 		if ((Object)(object)__instance != (Object)null && (int)__instance.action == 1 && IsGeofruitMenuActive())
 		{
 			return false;
@@ -537,7 +520,11 @@ internal class QoLSettingsMenu
 	internal static bool IsGeofruitMenuActive()
 	{
 		GameObject val = GetGeofruitOptionsList();
-		return (Object)(object)val != (Object)null && val.activeInHierarchy;
+		if ((Object)(object)val != (Object)null)
+		{
+			return val.activeInHierarchy;
+		}
+		return false;
 	}
 
 	private static GameObject GetGeofruitOptionsList()
@@ -562,7 +549,11 @@ internal class QoLSettingsMenu
 
 	private static bool IsRunSettingsScreenActive()
 	{
-		return (Object)(object)PreRunScript.instance != (Object)null && (Object)(object)PreRunScript.instance.runSettingsScreen != (Object)null && PreRunScript.instance.runSettingsScreen.activeSelf;
+		if ((Object)(object)PreRunScript.instance != (Object)null && (Object)(object)PreRunScript.instance.runSettingsScreen != (Object)null)
+		{
+			return PreRunScript.instance.runSettingsScreen.activeSelf;
+		}
+		return false;
 	}
 
 	private static TMP_FontAsset GetGeofruitFont()
@@ -598,19 +589,27 @@ internal class QoLSettingsMenu
 
 	private static bool TrySetModdedBetaBuildText()
 	{
-		//IL_00a6: Unknown result type (might be due to invalid IL or missing references)
+		//IL_0097: Unknown result type (might be due to invalid IL or missing references)
+		//IL_009c: Unknown result type (might be due to invalid IL or missing references)
 		//IL_00ab: Unknown result type (might be due to invalid IL or missing references)
-		//IL_00ba: Unknown result type (might be due to invalid IL or missing references)
 		GlobalDark val = Object.FindObjectOfType<GlobalDark>();
 		if ((Object)(object)val == (Object)null)
 		{
 			return false;
 		}
-		TMP_Text val2 = (TMP_Text)(object)val.betaBuild;
-		if ((Object)(object)val2 == (Object)null)
+		TMP_Text val2 = (TMP_Text)(object)((Component)val).GetComponentsInChildren<TextMeshProUGUI>(true).FirstOrDefault(delegate(TextMeshProUGUI val3)
 		{
-			val2 = (TMP_Text)(object)((Component)val).GetComponentInChildren<TextMeshProUGUI>(true);
-		}
+			if ((Object)(object)val3 != (Object)null)
+			{
+				string text2 = ((TMP_Text)val3).text;
+				if (text2 == null || !text2.StartsWith("This is a beta build (", StringComparison.Ordinal))
+				{
+					return ((TMP_Text)val3).text?.StartsWith("This is a modded beta build (", StringComparison.Ordinal) ?? false;
+				}
+				return true;
+			}
+			return false;
+		});
 		if ((Object)(object)val2 == (Object)null)
 		{
 			return false;
@@ -633,30 +632,20 @@ internal class QoLSettingsMenu
 
 	private static bool TryGetFooterText(out TMP_Text footerText)
 	{
-		GameObject obj = GameObject.Find("Canvas/Text (TMP) (18)");
-		footerText = (TMP_Text)(object)((obj != null) ? obj.GetComponent<TextMeshProUGUI>() : null);
-		if ((Object)(object)footerText != (Object)null)
+		footerText = null;
+		Transform canvas = (((Object)(object)PreRunScript.instance != (Object)null && (Object)(object)PreRunScript.instance.mainCanvas != (Object)null) ? ((Component)PreRunScript.instance.mainCanvas).transform : null);
+		if ((Object)(object)canvas == (Object)null)
 		{
+			return false;
+		}
+		Transform obj = canvas.Find("Text (TMP) (18)");
+		TextMeshProUGUI val = ((obj != null) ? ((Component)obj).GetComponent<TextMeshProUGUI>() : null);
+		if ((Object)(object)val != (Object)null)
+		{
+			footerText = (TMP_Text)(object)val;
 			return true;
 		}
-		footerText = (TMP_Text)(object)Object.FindObjectsOfType<TextMeshProUGUI>(true).FirstOrDefault(delegate(TextMeshProUGUI tmp)
-		{
-			int result;
-			if ((Object)(object)tmp != (Object)null)
-			{
-				Transform transform = ((TMP_Text)tmp).transform;
-				GameObject obj2 = GameObject.Find("Canvas");
-				if (transform.IsChildOf((obj2 != null) ? obj2.transform : null) && !string.IsNullOrEmpty(((TMP_Text)tmp).text))
-				{
-					result = (((TMP_Text)tmp).text.Contains("Wickflix") ? 1 : 0);
-					goto IL_004c;
-				}
-			}
-			result = 0;
-			goto IL_004c;
-			IL_004c:
-			return (byte)result != 0;
-		});
+		footerText = (TMP_Text)(object)Object.FindObjectsOfType<TextMeshProUGUI>(true).FirstOrDefault((TextMeshProUGUI tmp) => (Object)(object)tmp != (Object)null && ((TMP_Text)tmp).transform.IsChildOf(canvas) && !string.IsNullOrEmpty(((TMP_Text)tmp).text) && ((TMP_Text)tmp).text.Contains("Wickflix"));
 		return (Object)(object)footerText != (Object)null;
 	}
 }
